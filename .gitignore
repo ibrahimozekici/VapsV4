@@ -1,0 +1,82 @@
+# ----------------------------
+# Rust (for ChirpStack core)
+# ----------------------------
+/target/
+/**/target/
+**/*.rs.bk
+**/*.rlib
+**/*.lock
+Cargo.lock
+
+# Optional: ignore generated bindings and build metadata
+/.fingerprint/
+/.build/
+/pkg/
+
+# ----------------------------
+# Node.js / Yarn (for UI build)
+# ----------------------------
+**/node_modules/
+**/dist/
+**/build/
+.yarn/*
+.pnp.*
+.yarnrc.yml
+
+# ----------------------------
+# General
+# ----------------------------
+*.log
+*.tmp
+*.swp
+*.bak
+*.old
+*.orig
+*.DS_Store
+*.env
+.env.*
+
+# IDEs and editors
+.vscode/
+.idea/
+*.code-workspace
+
+# ----------------------------
+# Docker
+# ----------------------------
+/docker-compose.override.yml
+**/.docker-compose*
+**/.env.docker*
+
+# ----------------------------
+# Embedded UI assets
+# ----------------------------
+**/ui/build/
+**/ui/node_modules/
+**/ui/.next/
+**/ui/.turbo/
+
+# ----------------------------
+# Protobuf / gRPC generated files
+# ----------------------------
+**/*.pb.go
+**/*.pb.rs
+**/*.pb.cc
+**/*.pb.h
+**/*.pb.c
+**/proto-gen/
+grpc-web/
+
+# ----------------------------
+# ChirpStack Custom
+# ----------------------------
+/chirpstack-api/go/
+**/chirpstack*.sqlite
+
+# Optional: ignore local binary builds
+**/chirpstack
+**/chirpstack-gateway-bridge
+**/chirpstack-rest-api
+
+# Build artifacts
+/build/

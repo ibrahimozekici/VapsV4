@@ -1,0 +1,15 @@
+[workspace]
+  resolver = "2"
+  members = [
+    "chirpstack",
+    "chirpstack-integration",
+    "lrwn",
+    "lrwn-filters",
+    "backend",
+    "api/rust",
+  ]
+
+[profile.release]
+  opt-level = 'z'
+  lto = true
+  codegen-units = 1
