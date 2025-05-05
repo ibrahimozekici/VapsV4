@@ -74,9 +74,7 @@ grpc-web/
 **/chirpstack*.sqlite
 
 # Optional: ignore local binary builds
-**/chirpstack
-**/chirpstack-gateway-bridge
-**/chirpstack-rest-api
+/chirpstack/migrations_postgres
 
 # Build artifacts
 /build/
