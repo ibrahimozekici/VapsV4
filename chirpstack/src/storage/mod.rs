@@ -31,7 +31,7 @@ pub mod metrics;
 pub mod multicast;
 pub mod passive_roaming;
 #[cfg(feature = "postgres")]
-mod postgres;
+pub mod postgres;
 pub mod relay;
 pub mod schema;
 #[cfg(feature = "postgres")]

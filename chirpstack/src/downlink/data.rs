@@ -5,7 +5,6 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
-use lrwn::RelayModeActivation;
 use rand::Rng;
 use tracing::{debug, span, trace, warn, Instrument, Level};
 
@@ -3545,8 +3544,8 @@ mod test {
         let d_relay = device::create(device::Device {
             dev_eui: EUI64::from_be_bytes([1, 1, 1, 1, 1, 1, 1, 1]),
             name: "relay".into(),
-            application_id: app.id,
-            device_profile_id: dp_relay.id,
+            application_id: app.id.into(),
+            device_profile_id: dp_relay.id.into(),
             ..Default::default()
         })
         .await
@@ -3561,8 +3560,8 @@ mod test {
                     name: dev_eui.to_string(),
                     dev_eui: *dev_eui,
                     dev_addr: Some(*dev_addr),
-                    application_id: app.id,
-                    device_profile_id: dp_ed.id,
+                    application_id: app.id.into(),
+                    device_profile_id: dp_ed.id.into(),
                     device_session: Some(
                         internal::DeviceSession {
                             dev_addr: dev_addr.to_vec(),

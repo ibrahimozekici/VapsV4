@@ -1,34 +1,19 @@
-use chrono::Utc;
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::Insertable;
 use diesel::Queryable;
 use diesel::Identifiable;
 use diesel_async::RunQueryDsl;
-use lrwn::EUI64;
+use serde_json::to_string_pretty;
 use serde_json::Value;
-use uuid::Uuid;
-
+use tracing::info;
 use bigdecimal::{BigDecimal, FromPrimitive, ToPrimitive}; // ✅ use correct BigDecimal crate
 
 use crate::storage::device::Device;
 // ⚠️ no `use crate::storage::fields::*;` here to avoid name conflicts
 use crate::storage::schema::device_data_2025;
 
-#[derive(Debug, serde::Deserialize)]
-pub struct LSN50V2JSON {
-    pub bat_v: f32,
-    pub adc_ch0v: f32,
-    pub hum_sht: String,
-    pub temp_c_sht: String,
-    pub ext_sensor: String,
-    pub temp_c_ds: String,
-    pub digital_istatus: String,
-    pub door_status: String,
-    pub exti_trigger: String,
-    pub temp_c1: String,
-    pub work_mode: String,
-}
+
 
 #[derive(Debug, Clone, Queryable, QueryableByName, Identifiable)]
 #[diesel(table_name = device_data_2025)]
@@ -72,16 +57,25 @@ pub struct NewDeviceData2025<'a> {
     pub air_temperature: Option<BigDecimal>,
     pub air_humidity: Option<BigDecimal>,
     pub batv: Option<BigDecimal>,
-    pub org_id: i32,
+    // pub org_id: i32,
     pub device_type_id: i32,
 }
-
+#[derive(Debug, serde::Deserialize)]
+pub struct LSN50V2JSON {
+    pub batv: f32,
+    pub hum_sht: String,
+    pub temp_c_sht: String,
+}
 pub async fn write_data_from_object_json(
     conn: &mut diesel_async::AsyncPgConnection,
     device: &Device,
     object_json: &Value,
-    org_id: i64,
+    // org_id: i64,
 ) -> anyhow::Result<()> {
+    match to_string_pretty(device) {
+        Ok(json) => info!("Device object:\n{}", json),
+        Err(e) => info!("Failed to serialize device object: {}", e),
+    }
     match device.device_type {
         Some(1) => {
             let parsed: LSN50V2JSON = serde_json::from_value(object_json.clone())?;
@@ -113,8 +107,8 @@ pub async fn write_data_from_object_json(
                 dev_eui: &dev_eui_string,
                 air_temperature: BigDecimal::from_f32(temp),
                 air_humidity: BigDecimal::from_f32(hum),
-                batv: BigDecimal::from_f32(parsed.bat_v),
-                org_id: org_id as i32,
+                batv: BigDecimal::from_f32(parsed.batv),
+                // org_id: org_id as i32,
                 device_type_id: device.device_type.unwrap_or(1),
             };
 

@@ -8,6 +8,7 @@ use diesel::{backend::Backend, deserialize, dsl, prelude::*, serialize, sql_type
 use diesel_async::RunQueryDsl;
 use tracing::info;
 use uuid::Uuid;
+use serde::Serialize;
 
 use chirpstack_api::internal;
 use lrwn::{DevAddr, EUI64};
@@ -88,7 +89,7 @@ impl serialize::ToSql<Text, diesel::sqlite::Sqlite> for DeviceClass {
     }
 }
 
-#[derive(Queryable, QueryableByName,Selectable, PartialEq, Debug, Clone)]
+#[derive(Queryable, QueryableByName,Selectable, PartialEq, Debug, Clone, Serialize)]
 #[diesel(table_name = device)]
 #[diesel(check_for_backend(diesel::pg::Pg))] // ✅ HINT for Diesel to implement Selectable<Pg>
 
@@ -103,6 +104,7 @@ pub struct Device {
     pub name: String,
     pub description: String,
     pub external_power_source: bool,
+    #[serde(skip_serializing)]
     pub battery_level: Option<fields::BigDecimal>,
     pub margin: Option<i32>,
     pub dr: Option<i16>,
@@ -110,18 +112,25 @@ pub struct Device {
     pub longitude: Option<f64>,
     pub altitude: Option<f32>,
     pub dev_addr: Option<DevAddr>,
+    #[serde(skip_serializing)]
     pub enabled_class: DeviceClass,
     pub skip_fcnt_check: bool,
     pub is_disabled: bool,
+    #[serde(skip_serializing)]
     pub tags: fields::KeyValue,
+    #[serde(skip_serializing)]
     pub variables: fields::KeyValue,
+    
     pub join_eui: EUI64,
     pub secondary_dev_addr: Option<DevAddr>,
+    #[serde(skip_serializing)]
     pub device_session: Option<fields::DeviceSession>,
     // Additional fields (from Go definition)
     pub data_time: Option<i32>,
     pub organization_id: Option<i32>,
+    #[serde(skip_serializing)]
     pub temperature_calibration: Option<fields::BigDecimal>,
+    #[serde(skip_serializing)]
     pub humadity_calibration: Option<fields::BigDecimal>,
     pub device_profile_name: Option<String>,
     pub device_type: Option<i32>,   

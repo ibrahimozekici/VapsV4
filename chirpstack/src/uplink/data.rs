@@ -10,6 +10,7 @@ use super::{data_fns, filter_rx_info_by_tenant_id, helpers, RelayContext, Uplink
 use crate::api::helpers::ToProto;
 use crate::backend::roaming;
 use crate::helpers::errors::PrintFullError;
+use crate::storage::data_uplink::write_data_from_object_json;
 use crate::storage::error::Error as StorageError;
 use crate::storage::{
     application,
@@ -21,8 +22,11 @@ use crate::storage::{
 use crate::{codec, config, downlink, integration, maccommand, region, stream};
 use chirpstack_api::{common, integration as integration_pb, internal, stream as stream_pb};
 use lrwn::{AES128Key, EUI64};
+// Add this import:
+use crate::storage::get_async_db_conn;
+use crate::storage::postgres::AsyncPgPoolConnection; // or wherever your `get_async_db_conn` lives
 
-pub struct Data {
+pub struct Data<'a> {
     uplink_frame_set: UplinkFrameSet,
     relay_context: Option<RelayContext>,
 
@@ -32,6 +36,7 @@ pub struct Data {
     // To avoid reimplementing all functions that read or modify the phy_payload, we copy it in a
     // separate value.
     phy_payload: lrwn::PhyPayload,
+    db_conn: &'a mut AsyncPgPoolConnection,
 
     reset: bool,
     retransmission: bool,
@@ -49,15 +54,20 @@ pub struct Data {
     device_changeset: device::DeviceChangeset,
 }
 
-impl Data {
+impl<'a> Data<'a> {
     pub async fn handle(ufs: UplinkFrameSet) {
         let span = span!(Level::INFO, "data_up", dev_eui = tracing::field::Empty);
 
-        if let Err(e) = Data::_handle(ufs).instrument(span).await {
+        let mut db_conn = match get_async_db_conn().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                error!(error = %e, "Failed to get DB connection");
+                return;
+            }
+        };
+        if let Err(e) = Data::_handle(ufs, &mut db_conn).instrument(span).await {
             match e.downcast_ref::<Error>() {
-                Some(Error::Abort) => {
-                    // nothing to do
-                }
+                Some(Error::Abort) => {}
                 Some(_) | None => {
                     error!(error = %e.full(), "Handle uplink error");
                 }
@@ -71,8 +81,14 @@ impl Data {
         ufs: UplinkFrameSet,
     ) {
         let span = span!(Level::INFO, "data_up_relayed");
-
-        if let Err(e) = Data::_handle_relayed(relay_ctx, dev_gw_rx_info, ufs)
+        let mut db_conn = match get_async_db_conn().await {
+            Ok(conn) => conn,
+            Err(e) => {
+                error!(error = %e, "Failed to get DB connection");
+                return;
+            }
+        };
+        if let Err(e) = Data::_handle_relayed(relay_ctx, dev_gw_rx_info, ufs, &mut db_conn)
             .instrument(span)
             .await
         {
@@ -87,7 +103,10 @@ impl Data {
         }
     }
 
-    pub async fn _handle(ufs: UplinkFrameSet) -> Result<()> {
+    pub async fn _handle(
+        ufs: UplinkFrameSet,
+        db_conn: &'a mut AsyncPgPoolConnection,
+    ) -> Result<()> {
         let mut ctx = Data {
             phy_payload: ufs.phy_payload.clone(),
             uplink_frame_set: ufs,
@@ -106,6 +125,7 @@ impl Data {
             downlink_mac_commands: Vec::new(),
             device_gateway_rx_info: None,
             device_changeset: Default::default(),
+            db_conn,
         };
 
         ctx.handle_passive_roaming_device().await?;
@@ -160,6 +180,7 @@ impl Data {
         relay_ctx: RelayContext,
         dev_gw_rx_info: internal::DeviceGatewayRxInfo,
         ufs: UplinkFrameSet,
+        db_conn: &'a mut AsyncPgPoolConnection,
     ) -> Result<()> {
         let mut ctx = Data {
             phy_payload: *relay_ctx.req.payload.clone(),
@@ -179,6 +200,7 @@ impl Data {
             must_send_downlink: false,
             downlink_mac_commands: Vec::new(),
             device_changeset: Default::default(),
+            db_conn,
         };
 
         ctx.get_device_for_phy_payload_relayed().await?;
@@ -972,8 +994,31 @@ impl Data {
                         },
                         None => warn!("Codec retuned None for objectJson"),
                     }
+
+                    // 👇 This is the new block
+                    if let Some(ref device) = self.device {
+        
+                        if let Some(pb_struct) = v.as_ref() {
+                            match serde_json::to_value(pb_struct) {
+                                Ok(json_val) => {
+                                    if let Err(e) = write_data_from_object_json(
+                                        self.db_conn.as_mut(),
+                                        device,
+                                        &json_val,
+                                    )
+                                    .await
+                                    {
+                                        warn!(error = %e, "Failed to persist decoded object JSON");
+                                    }
+                                }
+                                Err(e) => {
+                                    warn!(error = %e, "Failed to convert pbjson Struct to serde_json::Value");
+                                }
+                            }
+                        }
+                    }
                     v // <-- don't wrap again in Some(...)
-                },                                
+                }
                 Err(e) => {
                     integration::log_event(
                         app.id.into(),
