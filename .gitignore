@@ -65,7 +65,7 @@ Cargo.lock
 **/*.pb.h
 **/*.pb.c
 **/proto-gen/
-grpc-web/
+# grpc-web/
 
 # ----------------------------
 # ChirpStack Custom

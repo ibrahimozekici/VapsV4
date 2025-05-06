@@ -177,7 +177,6 @@ diesel::table! {
         id -> Int4,
         dev_eui -> Text,
         device_type_id -> Int4,
-        org_id -> Int4,
         air_temperature -> Nullable<Numeric>,
         air_humidity -> Nullable<Numeric>,
         sol_temperature -> Nullable<Numeric>,
@@ -204,6 +203,73 @@ diesel::table! {
         power -> Nullable<Numeric>,
         power_sum -> Nullable<Numeric>,
         voltage -> Nullable<Numeric>,
+    }
+}
+
+diesel::table! {
+    device_data_latest (dev_eui) {
+        id -> Int4,
+        dev_eui -> Text,
+        device_type_id -> Int4,
+        org_id -> Int4,
+        air_temperature -> Nullable<Numeric>,
+        air_humidity -> Nullable<Numeric>,
+        sol_temperature -> Nullable<Numeric>,
+        sol_water -> Nullable<Numeric>,
+        sol_conduct_soil -> Nullable<Numeric>,
+        submission_date -> Nullable<Timestamp>,
+        water_leak_status -> Nullable<Int4>,
+        water_leak_times -> Nullable<Int4>,
+        last_water_leak_duration -> Nullable<Int4>,
+        door_open_status -> Nullable<Int4>,
+        door_open_times -> Nullable<Int4>,
+        last_door_open_duration -> Nullable<Int4>,
+        batv -> Nullable<Numeric>,
+        ro1_status -> Nullable<Int4>,
+        ro2_status -> Nullable<Int4>,
+        ph_soil -> Nullable<Numeric>,
+        co2_ppm -> Nullable<Numeric>,
+        tvoc_ppm -> Nullable<Numeric>,
+        sensecap_light -> Nullable<Numeric>,
+        barometric_pressure -> Nullable<Numeric>,
+        current -> Nullable<Numeric>,
+        factor -> Nullable<Numeric>,
+        power -> Nullable<Numeric>,
+        voltage -> Nullable<Numeric>,
+        power_sum -> Nullable<Numeric>,
+        status -> Nullable<Int4>,
+        power_consumption -> Nullable<Int4>,
+        switch1 -> Nullable<Int4>,
+        switch2 -> Nullable<Int4>,
+        switch3 -> Nullable<Int4>,
+        switch4 -> Nullable<Int4>,
+        switch5 -> Nullable<Int4>,
+        switch6 -> Nullable<Int4>,
+        switch7 -> Nullable<Int4>,
+        switch8 -> Nullable<Int4>,
+        #[max_length = 50]
+        adc_1 -> Nullable<Varchar>,
+        #[max_length = 50]
+        adc_2 -> Nullable<Varchar>,
+        #[max_length = 50]
+        adv_1 -> Nullable<Varchar>,
+        #[max_length = 50]
+        gpio_in_1 -> Nullable<Varchar>,
+        #[max_length = 50]
+        gpio_in_2 -> Nullable<Varchar>,
+        #[max_length = 50]
+        gpio_in_3 -> Nullable<Varchar>,
+        #[max_length = 50]
+        gpio_in_4 -> Nullable<Varchar>,
+        #[max_length = 50]
+        gpio_out_1 -> Nullable<Varchar>,
+        #[max_length = 50]
+        gpio_out_2 -> Nullable<Varchar>,
+        distance -> Nullable<Int4>,
+        #[max_length = 20]
+        position -> Nullable<Varchar>,
+        temperature1 -> Nullable<Numeric>,
+        temperature2 -> Nullable<Numeric>,
     }
 }
 
@@ -661,6 +727,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     automation_rules,
     device,
     device_data_2025,
+    device_data_latest,
     device_keys,
     device_profile,
     device_profile_template,
