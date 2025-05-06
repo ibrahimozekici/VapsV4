@@ -72,6 +72,21 @@ diesel::table! {
 }
 
 diesel::table! {
+    am103 (id) {
+        id -> Int4,
+        #[max_length = 20]
+        dev_eui -> Varchar,
+        device_type_id -> Int4,
+        org_id -> Int4,
+        submission_date -> Nullable<Timestamp>,
+        air_temperature -> Nullable<Numeric>,
+        air_humidity -> Nullable<Numeric>,
+        co2_ppm -> Nullable<Numeric>,
+        batv -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     api_key (id) {
         id -> Uuid,
         created_at -> Timestamptz,
@@ -130,6 +145,19 @@ diesel::table! {
         trigger_type -> Nullable<Varchar>,
         trigger_time -> Nullable<Timestamp>,
         organization_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    dds45lb (id) {
+        id -> Int4,
+        #[max_length = 45]
+        dev_eui -> Varchar,
+        device_type_id -> Int4,
+        org_id -> Int4,
+        submission_date -> Nullable<Timestamp>,
+        distance -> Nullable<Int4>,
+        batv -> Nullable<Numeric>,
     }
 }
 
@@ -443,6 +471,22 @@ diesel::table! {
 }
 
 diesel::table! {
+    em400mud (id) {
+        id -> Int4,
+        #[max_length = 20]
+        dev_eui -> Varchar,
+        device_type_id -> Int4,
+        org_id -> Int4,
+        submission_date -> Nullable<Timestamp>,
+        distance -> Nullable<Int4>,
+        #[max_length = 20]
+        position -> Nullable<Varchar>,
+        air_temperature -> Nullable<Numeric>,
+        batv -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     fuota_deployment (id) {
         id -> Uuid,
         created_at -> Timestamptz,
@@ -533,6 +577,20 @@ diesel::table! {
         tls_certificate -> Nullable<Bytea>,
         tags -> Jsonb,
         properties -> Jsonb,
+    }
+}
+
+diesel::table! {
+    ltc2lb (id) {
+        id -> Int4,
+        #[max_length = 255]
+        dev_eui -> Varchar,
+        temperature1 -> Nullable<Numeric>,
+        temperature2 -> Nullable<Numeric>,
+        batv -> Nullable<Numeric>,
+        org_id -> Nullable<Int4>,
+        device_type_id -> Nullable<Int4>,
+        submission_date -> Nullable<Timestamp>,
     }
 }
 
@@ -650,6 +708,35 @@ diesel::table! {
 }
 
 diesel::table! {
+    uc300 (id) {
+        id -> Int4,
+        #[max_length = 40]
+        dev_eui -> Varchar,
+        device_type_id -> Nullable<Int4>,
+        org_id -> Nullable<Int4>,
+        #[max_length = 20]
+        adc_1 -> Nullable<Varchar>,
+        #[max_length = 20]
+        adc_2 -> Nullable<Varchar>,
+        #[max_length = 20]
+        adv_1 -> Nullable<Varchar>,
+        #[max_length = 20]
+        gpio_in_1 -> Nullable<Varchar>,
+        #[max_length = 20]
+        gpio_in_2 -> Nullable<Varchar>,
+        #[max_length = 20]
+        gpio_in_3 -> Nullable<Varchar>,
+        #[max_length = 20]
+        gpio_in_4 -> Nullable<Varchar>,
+        #[max_length = 20]
+        gpio_out_1 -> Nullable<Varchar>,
+        #[max_length = 20]
+        gpio_out_2 -> Nullable<Varchar>,
+        submission_date -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     user (id) {
         id -> Uuid,
         external_id -> Nullable<Text>,
@@ -674,6 +761,46 @@ diesel::table! {
         expo_key -> Nullable<Varchar>,
         #[max_length = 250]
         web_key -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
+    ws522 (id) {
+        id -> Int4,
+        #[max_length = 40]
+        dev_eui -> Nullable<Varchar>,
+        device_type_id -> Nullable<Int4>,
+        org_id -> Nullable<Int4>,
+        current -> Nullable<Numeric>,
+        factor -> Nullable<Numeric>,
+        power -> Nullable<Numeric>,
+        voltage -> Nullable<Numeric>,
+        power_sum -> Nullable<Numeric>,
+        submission_date -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    ws558 (id) {
+        id -> Int4,
+        #[max_length = 20]
+        dev_eui -> Varchar,
+        device_type_id -> Int4,
+        org_id -> Int4,
+        submission_date -> Nullable<Timestamp>,
+        switch1 -> Nullable<Int4>,
+        switch2 -> Nullable<Int4>,
+        switch3 -> Nullable<Int4>,
+        switch4 -> Nullable<Int4>,
+        switch5 -> Nullable<Int4>,
+        switch6 -> Nullable<Int4>,
+        switch7 -> Nullable<Int4>,
+        switch8 -> Nullable<Int4>,
+        power -> Nullable<Numeric>,
+        power_consumption -> Nullable<Numeric>,
+        factor -> Nullable<Numeric>,
+        current -> Nullable<Numeric>,
+        voltage -> Nullable<Numeric>,
     }
 }
 
@@ -721,10 +848,12 @@ diesel::allow_tables_to_appear_in_same_query!(
     alarm_audit_log,
     alarm_automation_rules,
     alarm_date_time,
+    am103,
     api_key,
     application,
     application_integration,
     automation_rules,
+    dds45lb,
     device,
     device_data_2025,
     device_data_latest,
@@ -734,11 +863,13 @@ diesel::allow_tables_to_appear_in_same_query!(
     device_queue_item,
     door_alarm_date_time,
     door_time_alarm,
+    em400mud,
     fuota_deployment,
     fuota_deployment_device,
     fuota_deployment_gateway,
     fuota_deployment_job,
     gateway,
+    ltc2lb,
     multicast_group,
     multicast_group_device,
     multicast_group_gateway,
@@ -747,6 +878,9 @@ diesel::allow_tables_to_appear_in_same_query!(
     relay_gateway,
     tenant,
     tenant_user,
+    uc300,
     user,
+    ws522,
+    ws558,
     zone,
 );
