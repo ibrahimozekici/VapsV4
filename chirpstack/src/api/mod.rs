@@ -38,6 +38,7 @@ use chirpstack_api::api::multicast_group_service_server::MulticastGroupServiceSe
 use chirpstack_api::api::relay_service_server::RelayServiceServer;
 use chirpstack_api::api::tenant_service_server::TenantServiceServer;
 use chirpstack_api::api::user_service_server::UserServiceServer;
+use chirpstack_api::api::zone_service_server::ZoneServiceServer;
 use chirpstack_api::stream as stream_pb;
 
 use super::config;
@@ -64,6 +65,7 @@ pub mod oidc;
 pub mod relay;
 pub mod tenant;
 pub mod user;
+pub mod zone;
 
 lazy_static! {
     static ref GRPC_COUNTER: Family<GrpcLabels, Counter> = {

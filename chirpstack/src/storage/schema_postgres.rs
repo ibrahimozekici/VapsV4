@@ -809,10 +809,10 @@ diesel::table! {
         zone_id -> Int4,
         #[max_length = 100]
         zone_name -> Nullable<Varchar>,
-        org_id -> Nullable<Int8>,
-        devices -> Nullable<Array<Nullable<Text>>>,
         zone_order -> Nullable<Int8>,
         content_type -> Nullable<Int8>,
+        tanent_id -> Nullable<Uuid>,
+        devices -> Array<Text>,
     }
 }
 

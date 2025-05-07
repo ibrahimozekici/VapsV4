@@ -208,6 +208,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .to_str()
                     .unwrap(),
                 cs_dir.join("api").join("device.proto").to_str().unwrap(),
+                cs_dir.join("api").join("zone.proto").to_str().unwrap(),
                 cs_dir.join("api").join("gateway.proto").to_str().unwrap(),
                 cs_dir
                     .join("api")

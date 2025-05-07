@@ -43,6 +43,7 @@ pub mod search;
 mod sqlite;
 pub mod tenant;
 pub mod user;
+pub mod zone;
 pub mod data_uplink;
 use crate::monitoring::prometheus;
 
