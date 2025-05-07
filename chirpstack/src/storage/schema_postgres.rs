@@ -812,7 +812,18 @@ diesel::table! {
         zone_order -> Nullable<Int8>,
         content_type -> Nullable<Int8>,
         tanent_id -> Nullable<Uuid>,
-        devices -> Array<Text>,
+        devices -> Array<Nullable<Text>>,
+    }
+}
+
+diesel::table! {
+    zone_clean (zone_id) {
+        zone_id -> Int4,
+        #[max_length = 100]
+        zone_name -> Nullable<Varchar>,
+        zone_order -> Nullable<Int8>,
+        content_type -> Nullable<Int8>,
+        tanent_id -> Nullable<Uuid>,
     }
 }
 
@@ -883,4 +894,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     ws522,
     ws558,
     zone,
+    zone_clean,
 );

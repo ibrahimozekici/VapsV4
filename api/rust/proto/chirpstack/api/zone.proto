@@ -241,7 +241,7 @@ message ListZoneRequest {
     // Offset in the result-set (for pagination).
     int64 offset = 2;
 
-    int64 organization_id = 3 [json_name = "orgId"];
+    string organization_id = 3 [json_name = "orgId"];
 }
 
 message ListZoneResponse {
