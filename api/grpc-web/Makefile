@@ -29,7 +29,7 @@ api:
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/gateway.proto
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/multicast_group.proto
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/relay.proto
-	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/zpne.proto
+	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/zone.proto
 
 integration:
 	mkdir -p integration

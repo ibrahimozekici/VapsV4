@@ -219,7 +219,7 @@ message GetZonesItem {
 
     int64 contentType = 6 [json_name = "contentType"];
 
-    repeated string usernames = 7 [json_name = "usernames"];
+    // repeated string usernames = 7 [json_name = "usernames"];
 }
 message CreateZoneRequest {
     // Zone object to create
@@ -241,7 +241,7 @@ message ListZoneRequest {
     // Offset in the result-set (for pagination).
     int64 offset = 2;
 
-    int64 organization_id = 3 [json_name = "orgId"];
+    string organization_id = 3 [json_name = "orgId"];
 }
 
 message ListZoneResponse {

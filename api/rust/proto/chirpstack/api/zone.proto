@@ -42,19 +42,6 @@ service ZoneService {
             body: "*"
         };
     }
-    rpc AddUserToZone (AddUserToZoneRequest) returns (AddUserToZoneResponse) {
-        option (google.api.http) = {
-            put: "/api/zones/addUser/{user_id}"
-            body: "*"
-        };
-    }
-
-    rpc OrderZones(ZonesOrderRequest) returns (ZonesOrderResponse) {
-        option (google.api.http) = {
-            put: "/api/zones/order"
-            body: "*"
-        };
-    }
 }
 message ZoneDevice {
     // Device EUI (HEX encoded).
@@ -107,7 +94,7 @@ message ZoneData {
       int64 device_type_id = 3 [json_name = "device_type_id"];
   
       // hum_SHT.
-      int64 org_id = 4 [json_name = "org_id"];
+      string org_id = 4 [json_name = "org_id"];
   
       // water_SOIL of the device.
       float air_temperature = 5 [json_name = "air_temperature"];
@@ -190,7 +177,7 @@ message Zone {
     string zone_name = 2 [json_name = "zoneName"];
 
     // Organization ID
-    int64 org_id = 3 [json_name = "orgID"];
+    string org_id = 3 [json_name = "orgID"];
 
     // Order index of zone
     int64 order = 4 [json_name = "order"];
@@ -209,7 +196,7 @@ message GetZonesItem {
     string zone_name = 2 [json_name = "zoneName"];
 
     // Organization ID
-    int64 org_id = 3 [json_name = "orgID"];
+    string org_id = 3 [json_name = "orgID"];
 
     // Order index of zone
     int64 order = 4 [json_name = "order"];
@@ -219,7 +206,7 @@ message GetZonesItem {
 
     int64 contentType = 6 [json_name = "contentType"];
 
-    repeated string usernames = 7 [json_name = "usernames"];
+    // repeated string usernames = 7 [json_name = "usernames"];
 }
 message CreateZoneRequest {
     // Zone object to create

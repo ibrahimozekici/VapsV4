@@ -222,6 +222,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 proto_dir.join("google").to_str().unwrap(),
             ],
         )?;
-
+    let descriptor_set = std::fs::read(out_dir.join("api").join("proto_descriptor.bin"))?;
+    pbjson_build::Builder::new()
+        .register_descriptors(&descriptor_set)?
+        .ignore_unknown_fields()
+        .out_dir(out_dir.join("api"))
+        .extern_path(".common", "crate::common")
+        .extern_path(".gw", "crate::gw")
+        .build(&[".api"])?; // 👈 this is the key line
     Ok(())
 }

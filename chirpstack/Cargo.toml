@@ -12,6 +12,7 @@
 [dependencies]
   # CLI interface
   clap = { version = "4.5", features = ["derive"] }
+  
 
   # Configuration
   serde = { version = "1.0", features = ["derive", "rc"] }
@@ -49,7 +50,7 @@
   ], default-features = true }
 
   # ChirpStack API definitions
-  chirpstack_api = { path = "../api/rust", features = ["default", "internal"] }
+  chirpstack_api = { path = "../api/rust", features = ["default", "internal", "json"] }
   lrwn = { path = "../lrwn", features = [
     "serde",
     "diesel",
@@ -88,6 +89,8 @@
   prost-types = "0.13"
   prost = "0.13"
   pbjson-types = "0.7"
+  pbjson = "0.7"
+  pbjson-build = "0.7"
 
   # gRPC and HTTP multiplexing
   axum = "0.7"
@@ -165,6 +168,7 @@ rust_decimal = "1.37.1"
 
 [features]
   default = ["postgres"]
+  json = []
   postgres = [
     "tokio-postgres",
     "tokio-postgres-rustls",
