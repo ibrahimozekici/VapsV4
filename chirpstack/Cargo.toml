@@ -1,7 +1,7 @@
 [package]
   name = "chirpstack"
   description = "ChirpStack is an open-source LoRaWAN(TM) Network Server"
-  repository = "https://github.com/chirpstack/chirpstack"
+  repository = "https://github.com/ibrahimozekici/VapsV4"
   homepage = "https://www.chirpstack.io/"
   version = "4.11.0"
   authors = ["Orne Brocaar <info@brocaar.com>"]

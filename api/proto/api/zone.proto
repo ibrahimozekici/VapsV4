@@ -1,6 +1,16 @@
 syntax = "proto3";
 
 package api;
+
+option go_package = "github.com/ibrahimozekici/VapsV4/api/go/v4/api";
+option java_package = "io.chirpstack.api";
+option java_multiple_files = true;
+option java_outer_classname = "ZoneProto";
+option csharp_namespace = "Chirpstack.Api";
+option php_namespace = "Chirpstack\\Api";
+option php_metadata_namespace = "GPBMetadata\\Chirpstack\\Api";
+
+
 import "google/protobuf/empty.proto";
 import "google/api/annotations.proto";
 import "google/protobuf/struct.proto";  // Importing the Struct type
@@ -42,19 +52,7 @@ service ZoneService {
             body: "*"
         };
     }
-    rpc AddUserToZone (AddUserToZoneRequest) returns (AddUserToZoneResponse) {
-        option (google.api.http) = {
-            put: "/api/zones/addUser/{user_id}"
-            body: "*"
-        };
-    }
 
-    rpc OrderZones(ZonesOrderRequest) returns (ZonesOrderResponse) {
-        option (google.api.http) = {
-            put: "/api/zones/order"
-            body: "*"
-        };
-    }
 }
 message ZoneDevice {
     // Device EUI (HEX encoded).
@@ -107,7 +105,7 @@ message ZoneData {
       int64 device_type_id = 3 [json_name = "device_type_id"];
   
       // hum_SHT.
-      int64 org_id = 4 [json_name = "org_id"];
+      string org_id = 4 [json_name = "org_id"];
   
       // water_SOIL of the device.
       float air_temperature = 5 [json_name = "air_temperature"];
@@ -190,7 +188,7 @@ message Zone {
     string zone_name = 2 [json_name = "zoneName"];
 
     // Organization ID
-    int64 org_id = 3 [json_name = "orgID"];
+    string org_id = 3 [json_name = "orgID"];
 
     // Order index of zone
     int64 order = 4 [json_name = "order"];
@@ -209,7 +207,7 @@ message GetZonesItem {
     string zone_name = 2 [json_name = "zoneName"];
 
     // Organization ID
-    int64 org_id = 3 [json_name = "orgID"];
+    string org_id = 3 [json_name = "orgID"];
 
     // Order index of zone
     int64 order = 4 [json_name = "order"];

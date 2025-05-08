@@ -1,4 +1,4 @@
-module github.com/chirpstack/chirpstack/api/go/v4
+module github.com/ibrahimozekici/VapsV4/api/go/v4
 
 go 1.21
 

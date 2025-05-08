@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::storage::zone::{self, ZoneDataSerde, ZoneDeviceProfileSerde, ZoneDeviceSerde};
 use crate::{api::error::ToStatus, storage::zone::GetZonesItemSerde};
 use chirpstack_api::api::zone_service_server::ZoneService;
-use chirpstack_api::api::{self, GetZonesItem, ZoneDevice, ZoneDeviceProfile};
+use chirpstack_api::api::{self, AddUserToZoneRequest, AddUserToZoneResponse, GetZonesItem, ZoneDevice, ZoneDeviceProfile, ZonesOrderRequest};
 
 use super::auth::{validator, AuthID};
 
@@ -159,6 +159,7 @@ impl ZoneService for Zone {
 
         Ok(resp)
     }
+
 }
 impl From<zone::Zone> for api::Zone {
     fn from(z: zone::Zone) -> Self {

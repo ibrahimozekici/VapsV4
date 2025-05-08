@@ -15,7 +15,7 @@ protobuf definitions. The result is that this package structure matches that
 of the protobuf definitions.
 
 The protobuf definitions can be found here:
-[https://github.com/chirpstack/chirpstack/tree/master/api/proto](https://github.com/chirpstack/chirpstack/tree/master/api/proto)
+[https://github.com/ibrahimozekici/VapsV4/tree/master/api/proto](https://github.com/ibrahimozekici/VapsV4/tree/master/api/proto)
 
 ## Links
 
