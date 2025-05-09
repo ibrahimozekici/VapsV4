@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/ibrahimozekici/VapsV4/api/go/v4/stream"
+	"github.com/ibrahimozekici/VapsV4/api/go/stream"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
