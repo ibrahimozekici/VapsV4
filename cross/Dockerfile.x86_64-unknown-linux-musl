@@ -1,13 +1,19 @@
-FROM ghcr.io/cross-rs/x86_64-unknown-linux-musl:main
+# Force build for amd64 to avoid platform mismatch
+FROM --platform=linux/amd64 ghcr.io/cross-rs/x86_64-unknown-linux-musl:0.2.5
 
+# Install protoc and dependencies
 RUN apt-get update && \
     apt-get --assume-yes install \
-    protobuf-compiler \
-    libprotobuf-dev
+        protobuf-compiler \
+        libprotobuf-dev \
+        curl \
+        build-essential \
+        pkg-config \
+        libssl-dev
 
+# Optional: Build SQLite statically for musl if you need it
 ENV MUSL_PREFIX=x86_64-linux-musl
 ENV SQLITE_VERSION=3460000
-
 RUN echo "Building SQLite" && \
   cd /tmp && \
   curl -fLO "https://sqlite.org/2024/sqlite-autoconf-$SQLITE_VERSION.tar.gz" && \

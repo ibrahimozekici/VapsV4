@@ -59,18 +59,12 @@ Cargo.lock
 # ----------------------------
 # Protobuf / gRPC generated files
 # ----------------------------
-**/*.pb.go
-**/*.pb.rs
-**/*.pb.cc
-**/*.pb.h
-**/*.pb.c
-**/proto-gen/
+
 # grpc-web/
 
 # ----------------------------
 # ChirpStack Custom
 # ----------------------------
-/chirpstack-api/go/
 **/chirpstack*.sqlite
 
 # Optional: ignore local binary builds

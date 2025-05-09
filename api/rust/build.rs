@@ -21,6 +21,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     #[cfg(not(feature = "json"))]
     let well_known_types_path = "::prost_types";
+    println!("PROTOC = {:?}", std::process::Command::new("protoc").arg("--version").output());
 
     // common
     tonic_build::configure()
@@ -35,6 +36,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 proto_dir.join("google").to_str().unwrap(),
             ],
         )?;
+        println!("✅ Successfully compiled: common.proto");
+
 
     #[cfg(feature = "json")]
     {
@@ -60,6 +63,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 proto_dir.join("google").to_str().unwrap(),
             ],
         )?;
+        println!("✅ Successfully compiled: gw.proto");
 
     #[cfg(feature = "json")]
     {
@@ -208,7 +212,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .to_str()
                     .unwrap(),
                 cs_dir.join("api").join("device.proto").to_str().unwrap(),
-                cs_dir.join("api").join("zone.proto").to_str().unwrap(),
                 cs_dir.join("api").join("gateway.proto").to_str().unwrap(),
                 cs_dir
                     .join("api")
@@ -216,19 +219,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .to_str()
                     .unwrap(),
                 cs_dir.join("api").join("relay.proto").to_str().unwrap(),
+                cs_dir.join("api").join("zone.proto").to_str().unwrap(),
+                // cs_dir.join("api").join("fuota.proto").to_str().unwrap(),
             ],
             &[
                 proto_dir.join("chirpstack").to_str().unwrap(),
                 proto_dir.join("google").to_str().unwrap(),
             ],
         )?;
-    let descriptor_set = std::fs::read(out_dir.join("api").join("proto_descriptor.bin"))?;
-    pbjson_build::Builder::new()
-        .register_descriptors(&descriptor_set)?
-        .ignore_unknown_fields()
-        .out_dir(out_dir.join("api"))
-        .extern_path(".common", "crate::common")
-        .extern_path(".gw", "crate::gw")
-        .build(&[".api"])?; // 👈 this is the key line
+
     Ok(())
 }
