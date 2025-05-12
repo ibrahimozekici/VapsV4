@@ -153,7 +153,7 @@ message UserTenantLink {
 
 message LoginRequest {
   // Email of the user.
-  string email = 1;
+  string username = 1;
 
   // Password of the user.
   string password = 2;
@@ -162,8 +162,146 @@ message LoginRequest {
 message LoginResponse {
   // The JWT tag to be used to access chirpstack-application-server interfaces.
   string jwt = 1;
+  GetLandingResponse user = 2;
+}
+message GetLandingResponse {
+    // User ID.
+	// Will be set automatically on create.
+	int64 id = 1;
+    
+    // E-mail of the user.
+    string email = 2;
+
+    bool is_active = 3 [json_name = "is_active"];
+
+    // User web key
+	string web_key = 4 [json_name = "web_key"];
+
+	// User ios key
+	string ios_key = 5 [json_name = "ios_key"];
+
+	// User android key
+	string android_key = 6 [json_name = "android_key"];
+
+	// Phone number of User
+	string phone_number = 7 [json_name = "phone_number"];
+
+    string name = 8 [json_name = "name"];
+    
+    string note = 9 [json_name = "note"];
+
+    string username = 10 [json_name = "username"];
+    
+    LandingOrganizationList organizationList = 11;
+    
+    LandingZoneList zoneList = 12;
+
+    repeated int64 organization_id_list = 13 [json_name = "organization_id_list"];
+
+    bool training =  14 [json_name = "training"];
 }
 
+message LandingZoneList {
+    repeated LandingZone zones = 1 [json_name = "zones"];
+}
+
+message LandingZone {
+    int64 zone_id = 1 [json_name = "zone_id"];
+
+    string zone_name = 2 [json_name = "zone_name"];
+
+    int64 org_id = 3 [json_name = "org_id"];
+
+    int64 order = 4 [json_name = "order"];
+
+    int64 contentType = 5 [json_name = "contentType"];
+
+    repeated LandingDevice devices = 6 [json_name = "devices"];
+
+}
+
+message LandingOrganizationList {
+    repeated LandingOrganization organizations = 1 [json_name = "organizations"];
+}
+
+message LandingOrganization {
+    // Organization ID.
+	int64 organization_id = 1 [json_name = "organization_id"];
+	
+	// Organization name.
+	string organization_name = 2 [json_name = "organization_name"];
+
+	// Organization display name.
+    string organization_display_name = 3 [json_name = "organization_display_name"];
+    
+    // Organization Applications
+    // repeated LandingApplication applications = 4 [json_name = "applications"];
+}
+message LandingDevice {
+    // Device EUI (HEX encoded).
+    string device_dev_eui = 1 [json_name = "device_dev_eui"]; 
+    
+    // device_created_at
+    string device_created_at = 2 [json_name = "device_created_at"];
+
+    // device_updated_at
+    string device_updated_at = 3 [json_name = "device_updated_at"];
+
+    // Device-profile ID attached to the device.
+    string device_profile_id = 4 [json_name = "device_profile_id"];
+
+    // Name of the device.
+    string device_name = 5 [json_name = "device_name"];
+ 
+    // Description of the device.
+    string device_description = 6 [json_name = "device_description"];
+
+    // device_last_seen_at
+    string device_last_seen_at = 7 [json_name = "device_last_seen_at"];
+
+    // data time
+    int64 device_data_time = 8 [json_name = "device_data_time"];
+
+    // device lat value
+    double device_lat = 9 [json_name = "device_lat"];
+
+    // device lng value
+    double device_lng = 10 [json_name = "device_lng"];
+
+    int64 device_application_id = 11 [json_name = "device_application_id"];
+
+    // device landing alarms
+    repeated LandingAlarm alerts = 12 [json_name = "alerts"];
+
+    repeated LandingDeviceProfile device_profile_name = 13 [json_name= "device_profile_name"];
+}
+
+message LandingDeviceProfile {
+    string name = 1 [json_name = "name"];
+}
+message LandingAlarm {
+
+    // Alarm id.
+    int64 id = 1 [json_name = "id"];
+
+    // Device EUI (HEX encoded).
+    string dev_eui = 2 [json_name = "dev_eui"]; 
+
+     // Condition of alarm
+     float min_treshold = 3 [json_name = "minTreshold"];
+
+     // Value of alarm
+     float max_treshold = 4 [json_name = "maxTreshold"];
+ 
+     bool sms = 5 [json_name = "sms"];
+     bool email = 6 [json_name = "email"];
+     bool temperature = 7 [json_name = "temperature"];
+     bool humadity = 8 [json_name = "humadity"];
+     bool ec = 9 [json_name = "ec"];
+     bool door = 10 [json_name = "door"];
+     bool w_leak = 11 [json_name = "w_leak"];
+
+}
 message ProfileResponse {
   // User object.
   User user = 1;

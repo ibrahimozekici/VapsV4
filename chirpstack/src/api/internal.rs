@@ -1,4 +1,5 @@
 use std::pin::Pin;
+use std::ptr::null;
 use std::str::FromStr;
 use std::task::{Context, Poll};
 use std::time::Duration;
@@ -147,7 +148,7 @@ impl InternalService for Internal {
         request: Request<api::LoginRequest>,
     ) -> Result<Response<api::LoginResponse>, Status> {
         let req = request.get_ref();
-        let u = user::get_by_email_and_pw(&req.email, &req.password)
+        let u = user::get_by_email_and_pw(&req.username, &req.password)
             .await
             .map_err(|e| e.status())?;
 
@@ -155,7 +156,9 @@ impl InternalService for Internal {
             .encode(self.jwt_secret.as_ref())
             .map_err(|e| e.status())?;
 
-        Ok(Response::new(api::LoginResponse { jwt: token }))
+            let login_info = user::get_login(&u.id)
+            .await?;
+        Ok(Response::new(api::LoginResponse { jwt: token, user: Some(login_info) }))
     }
 
     async fn profile(
