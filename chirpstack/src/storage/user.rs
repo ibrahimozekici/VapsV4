@@ -1,30 +1,30 @@
+use super::error::Error;
+use super::schema::user;
+use super::{fields, get_async_db_conn};
 use anyhow::Result;
 use chirpstack_api::api::GetLandingResponse;
-use chirpstack_api::api::LandingOrganization;
-use chirpstack_api::api::LandingZoneList;
 use chirpstack_api::api::LandingAlarm;
 use chirpstack_api::api::LandingDevice;
 use chirpstack_api::api::LandingDeviceProfile;
-use chirpstack_api::api::LandingZone;
+use chirpstack_api::api::LandingOrganization;
 use chirpstack_api::api::LandingOrganizationList;
-use diesel::sql_query;
+use chirpstack_api::api::LandingZone;
+use chirpstack_api::api::LandingZoneList;
 use chrono::{DateTime, Utc};
+use diesel::sql_query;
+use diesel::sql_types::{Nullable, Text, Uuid as SqlUuid};
 use diesel::{dsl, prelude::*};
 use diesel_async::RunQueryDsl;
-use diesel::sql_types::{Text, Nullable, Uuid as SqlUuid};
 use email_address::EmailAddress;
 use pbkdf2::{
     password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Algorithm, Pbkdf2,
 };
 use rand_core::OsRng;
+use serde::Deserialize;
+use tonic::Status;
 use tracing::info;
 use uuid::Uuid;
-use serde::{Deserialize};
-use super::error::Error;
-use super::schema::user;
-use super::{fields, get_async_db_conn};
-use tonic::Status;
 
 #[derive(Queryable, Insertable, PartialEq, Eq, Debug, Clone)]
 #[diesel(table_name = user)]
@@ -47,7 +47,6 @@ pub struct User {
     pub training: bool,
     pub expo_key: Option<String>,
     pub web_key: Option<String>,
-
 }
 
 #[derive(Debug, Deserialize)]
@@ -59,7 +58,7 @@ pub struct SerdeLandingZoneList {
 pub struct SerdeLandingZone {
     pub zone_id: i64,
     pub zone_name: String,
-    pub org_id: i64,
+    pub org_id: String,
     pub order: i64,
     pub contentType: i64,
     pub devices: Vec<SerdeLandingDevice>,
@@ -73,13 +72,13 @@ pub struct SerdeLandingDevice {
     pub device_profile_id: String,
     pub device_name: String,
     pub device_description: String,
-    pub device_last_seen_at: String,
+    // pub device_last_seen_at: String,
     pub device_data_time: i64,
-    pub device_lat: f64,
-    pub device_lng: f64,
-    pub device_application_id: i64,
-    pub alerts: Vec<SerdeLandingAlarm>,
-    pub device_profile_name: Vec<SerdeLandingDeviceProfile>,
+    // pub device_lat: f64,
+    // pub device_lng: f64,
+    pub device_application_id: String,
+    // pub alerts: Vec<SerdeLandingAlarm>,
+    // pub device_profile_name: Vec<SerdeLandingDeviceProfile>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -130,18 +129,18 @@ impl Default for User {
 }
 #[derive(Debug, Deserialize)]
 pub struct GetLandingResponseSerde {
-    pub id: i64,
+    pub id: String,
     pub email: String,
     pub is_active: bool,
     pub web_key: String,
-    pub ios_key: String,
+    // pub ios_key: String,
     pub android_key: String,
     pub phone_number: String,
     pub name: String,
     pub note: String,
     pub username: String,
     pub training: bool,
-    pub organization_id_list: Vec<i64>,
+    pub organization_id_list: Vec<String>,
     pub organizationList: SerdeLandingOrganizationList,
     pub zoneList: SerdeLandingZoneList,
 }
@@ -151,11 +150,11 @@ pub struct SerdeLandingOrganizationList {
     pub organizations: Vec<SerdeLandingOrganization>,
 }
 
+
 #[derive(Debug, Deserialize)]
 pub struct SerdeLandingOrganization {
-    pub organization_id: i64,
+    pub organization_id: String,
     pub organization_name: String,
-    pub organization_display_name: String,
 }
 impl User {
     pub fn validate(&self) -> Result<(), Error> {
@@ -235,7 +234,9 @@ pub async fn get_by_email_and_pw(username: &str, pw: &str) -> Result<User, Error
 }
 
 pub async fn get_login(userid: &Uuid) -> Result<GetLandingResponse, Status> {
-      let mut query = r#"   WITH device_data_2025 AS (
+    println!("🌀 Starting get_login for user: {}", userid);
+
+    let mut query = r#"   WITH device_data_2025 AS (
     SELECT 
         dev.dev_eui,
         json_build_object(
@@ -248,42 +249,14 @@ pub async fn get_login(userid: &Uuid) -> Result<GetLandingResponse, Status> {
             'device_created_at', dev.created_at,
             'device_updated_at', dev.updated_at,
             'device_profile_id', dev.device_profile_id,
-            'device_last_seen_at', dev.last_seen_at,
             'latitude', dev.latitude,
             'longitude', dev.longitude,
-            'device_application_id', dev.application_id,
-            'device_lat', dev.lat,
-            'device_lng', dev.lng,
-            'device_profile_name', COALESCE(array_agg(dp.list), ARRAY[]::json[]),
-            'alerts', COALESCE(array_agg(al.list), ARRAY[]::json[])
+            'device_application_id', dev.application_id
         ) AS device_json
     FROM public.device AS dev
-    LEFT JOIN (
-        SELECT dp.device_profile_id,
-               json_build_object('name', dp.name) AS list
-        FROM public.device_profile dp
-        GROUP BY dp.device_profile_id
-    ) dp ON dev.device_profile_id = dp.device_profile_id
-    LEFT JOIN (
-        SELECT al.id, al.dev_eui,
-               json_build_object(
-                   'id', al.id,
-                   'dev_eui', al.dev_eui,
-                   'min_treshold', al.min_treshold,
-                   'max_treshold', al.max_treshold,
-                   'temperature', al.temperature,
-                   'humadity', al.humadity,
-                   'ec', al.ec,
-                   'door', al.door,
-                   'w_leak', al.w_leak,
-                   'sms', al.sms,
-                   'email', al.email
-               ) AS list
-        FROM public.alarm_refactor2 al
-        WHERE al.is_active = true
-        GROUP BY al.id
-    ) al ON al.dev_eui = encode(dev.dev_eui, 'hex')
-    GROUP BY dev.dev_eui
+    GROUP BY dev.dev_eui, dev.name, dev.description, dev.tags, dev.variables, dev.data_time,
+             dev.created_at, dev.updated_at, dev.device_profile_id, dev.last_seen_at, 
+             dev.latitude, dev.longitude, dev.application_id
 ),
 zone_data AS (
     SELECT 
@@ -291,7 +264,7 @@ zone_data AS (
         json_build_object(
             'zone_id', z.zone_id,
             'zone_name', z.zone_name,
-            'org_id', z.org_id,
+            'org_id', z.tanent_id,
             'order', z.zone_order,
             'contentType', z.content_type,
             'devices', COALESCE(array_agg(dd.device_json), ARRAY[]::json[])
@@ -306,7 +279,6 @@ SELECT json_build_object(
     'email', u.email,
     'is_active', u.is_active,
     'web_key', u.web_key,
-    'ios_key', u.ios_key,
     'android_key', u.android_key,
     'phone_number', u.phone_number,
     'name', u.name,
@@ -314,8 +286,8 @@ SELECT json_build_object(
     'username', u.username,
     'training', u.training,
     'organization_id_list', (
-        SELECT array_agg(ou.organization_id)
-        FROM organization_user ou
+        SELECT array_agg(ou.tenant_id)
+        FROM tenant_user ou
         WHERE ou.user_id = u.id
     ),
     'organizationList', json_build_object(
@@ -323,12 +295,11 @@ SELECT json_build_object(
             SELECT array_agg(
                 json_build_object(
                     'organization_id', org.id,
-                    'organization_name', org.name,
-                    'organization_display_name', org.display_name
+                    'organization_name', org.name
                 )
             )
-            FROM organization_user ou
-            JOIN organization org ON org.id = ou.organization_id
+            FROM tenant_user ou
+            JOIN tenant org ON org.id = ou.tenant_id
             WHERE ou.user_id = u.id
         )
     ),
@@ -341,32 +312,31 @@ SELECT json_build_object(
     )
 ) AS login_response
 FROM public.user u
-WHERE u.id = $1;
-    "#.to_string();
+WHERE u.id = $1;"#
+        .to_string();
 
+    let conn = &mut get_async_db_conn()
+        .await
+        .map_err(|e| Status::internal(format!("DB connection failed: {e}")))?;
 
-   let conn = &mut get_async_db_conn().await.map_err(|e| {
-        Status::internal(format!("DB connection failed: {e}"))
-    })?;
-
-     #[derive(QueryableByName)]
+    #[derive(QueryableByName)]
     struct LoginRow {
         #[sql_type = "Text"]
         login_response: String,
     }
-
 
     let row: LoginRow = sql_query(query)
         .bind::<SqlUuid, _>(userid)
         .get_result(conn)
         .await
         .map_err(|e| Status::internal(format!("Query failed: {e}")))?;
+    println!("SQL Query success");
 
     let parsed: GetLandingResponseSerde = serde_json::from_str(&row.login_response)
         .map_err(|e| Status::internal(format!("Deserialization failed: {e}")))?;
+    println!("GetLandingResponseSerde Success");
 
     Ok(parsed.into())
-
 }
 
 pub async fn update(u: User) -> Result<User, Error> {
@@ -530,7 +500,6 @@ impl From<GetLandingResponseSerde> for GetLandingResponse {
             email: s.email,
             is_active: s.is_active,
             web_key: s.web_key,
-            ios_key: s.ios_key,
             android_key: s.android_key,
             phone_number: s.phone_number,
             name: s.name,
@@ -547,12 +516,12 @@ impl From<GetLandingResponseSerde> for GetLandingResponse {
 impl From<SerdeLandingOrganizationList> for LandingOrganizationList {
     fn from(serde_list: SerdeLandingOrganizationList) -> Self {
         LandingOrganizationList {
-            organizations: serde_list.organizations
+            organizations: serde_list
+                .organizations
                 .into_iter()
                 .map(|org| LandingOrganization {
                     organization_id: org.organization_id,
                     organization_name: org.organization_name,
-                    organization_display_name: org.organization_display_name,
                 })
                 .collect(),
         }
@@ -589,13 +558,17 @@ impl From<SerdeLandingDevice> for LandingDevice {
             device_profile_id: d.device_profile_id,
             device_name: d.device_name,
             device_description: d.device_description,
-            device_last_seen_at: d.device_last_seen_at,
+            // device_last_seen_at: d.device_last_seen_at,
             device_data_time: d.device_data_time,
-            device_lat: d.device_lat,
-            device_lng: d.device_lng,
+            // device_lat: d.device_lat,
+            // device_lng: d.device_lng,
             device_application_id: d.device_application_id,
-            alerts: d.alerts.into_iter().map(|a| a.into()).collect(),
-            device_profile_name: d.device_profile_name.into_iter().map(|p| p.into()).collect(),
+            // alerts: d.alerts.into_iter().map(|a| a.into()).collect(),
+            // device_profile_name: d
+            //     .device_profile_name
+            //     .into_iter()
+            //     .map(|p| p.into())
+            //     .collect(),
         }
     }
 }
