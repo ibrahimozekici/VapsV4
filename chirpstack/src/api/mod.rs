@@ -177,6 +177,10 @@ pub async fn setup() -> Result<()> {
         .add_service(RelayServiceServer::with_interceptor(
             relay::Relay::new(validator::RequestValidator::new()),
             auth::auth_interceptor,
+        ))
+        .add_service(ZoneServiceServer::with_interceptor(
+            zone::Zone::new(validator::RequestValidator::new()),
+            auth::auth_interceptor,
         ));
 
     let backend_handle = tokio::spawn(backend::setup());

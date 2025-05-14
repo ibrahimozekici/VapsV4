@@ -81,13 +81,14 @@ pub struct GetZonesItemSerde {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ZoneDeviceSerde {
     pub device_dev_eui: String,
-    pub device_profile_id: String,
     pub device_name: String,
     pub device_description: String,
     pub device_last_seen_at: String,
     pub data: Vec<ZoneDataSerde>,
     pub device_profile_name: Vec<ZoneDeviceProfileSerde>,
-    pub device_type: i64,
+    pub device_type: Option<i64>,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
     #[serde(rename = "temperatureCalibration")]
     pub temperature_calibration: f64,
     #[serde(rename = "humadityCalibration")]
@@ -247,7 +248,7 @@ pub async fn delete(zone_id: i32) -> Result<usize, Error> {
 
 pub async fn list(
     user_id: Option<Uuid>,
-    org_id: Option<Uuid>,
+    tanent_id: Option<Uuid>,
 ) -> Result<ListZoneResponseSerde, Status> {
     let mut query = r#"
         WITH device_data_2025 AS (
@@ -274,13 +275,13 @@ pub async fn list(
             SELECT 
                 z.zone_id,
                 z.zone_name,
-                z.org_id,
+                z.tanent_id,
                 z.zone_order,
                 z.content_type,
                 json_build_object(
                     'zone_id', z.zone_id,
                     'zone_name', z.zone_name,
-                    'org_id', z.org_id,
+                    'org_id', z.tanent_id,
                     'order', z.zone_order,
                     'contentType', z.content_type,
                     'devices', COALESCE(array_agg(dd.device_json) FILTER (WHERE dd.device_json IS NOT NULL), ARRAY[]::json[])
@@ -288,7 +289,7 @@ pub async fn list(
             FROM public.zone AS z
             LEFT JOIN public.device AS dev ON dev.dev_eui::text = ANY(z.devices)
             LEFT JOIN device_data_2025 dd ON dev.dev_eui = dd.dev_eui
-            GROUP BY z.zone_id, z.zone_name, z.org_id, z.zone_order, z.content_type
+            GROUP BY z.zone_id, z.zone_name, z.tanent_id, z.zone_order, z.content_type
         )
         SELECT json_build_object(
             'zones', COALESCE(array_agg(zl.list), ARRAY[]::json[])
@@ -298,8 +299,8 @@ pub async fn list(
         WHERE a.id = $1
     "#.to_string();
 
-    if org_id.is_some() {
-        query.push_str(" AND zl.org_id = $2 GROUP BY a.id");
+    if tanent_id.is_some() {
+        query.push_str(" AND zl.tanent_id = $2 GROUP BY a.id");
     } else {
         query.push_str(" GROUP BY a.id");
     }
@@ -309,10 +310,10 @@ pub async fn list(
         Status::internal(format!("DB connection failed: {e}"))
     })?;
 
-    let row: ZoneListRow = if let Some(org_id) = org_id {
+    let row: ZoneListRow = if let Some(tanent_id) = tanent_id {
         sql_query(&query)
             .bind::<Nullable<SqlUuid>, _>(user_id)
-            .bind::<diesel::sql_types::Uuid, _>(org_id)
+            .bind::<diesel::sql_types::Uuid, _>(tanent_id)
             .get_result(conn)
             .await
             .map_err(|e| Status::internal(format!("Query failed: {e}")))?

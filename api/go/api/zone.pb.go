@@ -28,8 +28,6 @@ type ZoneDevice struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Device EUI (HEX encoded).
 	DeviceDevEui string `protobuf:"bytes,1,opt,name=device_dev_eui,proto3" json:"device_dev_eui,omitempty"`
-	// Device-profile ID attached to the device.
-	DeviceProfileId string `protobuf:"bytes,4,opt,name=device_profile_id,proto3" json:"device_profile_id,omitempty"`
 	// Name of the device.
 	DeviceName string `protobuf:"bytes,5,opt,name=device_name,proto3" json:"device_name,omitempty"`
 	// Description of the device.
@@ -87,13 +85,6 @@ func (*ZoneDevice) Descriptor() ([]byte, []int) {
 func (x *ZoneDevice) GetDeviceDevEui() string {
 	if x != nil {
 		return x.DeviceDevEui
-	}
-	return ""
-}
-
-func (x *ZoneDevice) GetDeviceProfileId() string {
-	if x != nil {
-		return x.DeviceProfileId
 	}
 	return ""
 }
@@ -1439,11 +1430,10 @@ var File_api_zone_proto protoreflect.FileDescriptor
 
 const file_api_zone_proto_rawDesc = "" +
 	"\n" +
-	"\x0eapi/zone.proto\x12\x03api\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xc5\x05\n" +
+	"\x0eapi/zone.proto\x12\x03api\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x97\x05\n" +
 	"\n" +
 	"ZoneDevice\x12&\n" +
-	"\x0edevice_dev_eui\x18\x01 \x01(\tR\x0edevice_dev_eui\x12,\n" +
-	"\x11device_profile_id\x18\x04 \x01(\tR\x11device_profile_id\x12 \n" +
+	"\x0edevice_dev_eui\x18\x01 \x01(\tR\x0edevice_dev_eui\x12 \n" +
 	"\vdevice_name\x18\x05 \x01(\tR\vdevice_name\x12.\n" +
 	"\x12device_description\x18\x06 \x01(\tR\x12device_description\x120\n" +
 	"\x13device_last_seen_at\x18\a \x01(\tR\x13device_last_seen_at\x12!\n" +

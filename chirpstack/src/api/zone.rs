@@ -6,7 +6,10 @@ use uuid::Uuid;
 use crate::storage::zone::{self, ZoneDataSerde, ZoneDeviceProfileSerde, ZoneDeviceSerde};
 use crate::{api::error::ToStatus, storage::zone::GetZonesItemSerde};
 use chirpstack_api::api::zone_service_server::ZoneService;
-use chirpstack_api::api::{self, AddUserToZoneRequest, AddUserToZoneResponse, GetZonesItem, ZoneDevice, ZoneDeviceProfile, ZonesOrderRequest};
+use chirpstack_api::api::{
+    self, AddUserToZoneRequest, AddUserToZoneResponse, GetZonesItem, ZoneDevice, ZoneDeviceProfile,
+    ZonesOrderRequest,
+};
 
 use super::auth::{validator, AuthID};
 
@@ -95,10 +98,7 @@ impl ZoneService for Zone {
         request: Request<api::ListZoneRequest>,
     ) -> Result<Response<api::ListZoneResponse>, Status> {
         let req = request.get_ref();
-
-        let limit = req.limit;
-        let offset = req.offset;
-        // let org_id = &req.organization_id;
+        println!("🌀 Starting List Zone for org: {}", req.organization_id);
 
         let tenant_id = Uuid::from_str(&req.organization_id).map_err(|e| e.status())?;
 
@@ -115,6 +115,8 @@ impl ZoneService for Zone {
                 return Err(Status::unauthenticated("no user id"));
             }
         };
+        println!("🌀 For user: {}", user_id);
+
         let zones = zone::list(Some(user_id.clone()), Some(tenant_id.clone()))
             .await
             .map_err(|e| e)?;
@@ -159,7 +161,6 @@ impl ZoneService for Zone {
 
         Ok(resp)
     }
-
 }
 impl From<zone::Zone> for api::Zone {
     fn from(z: zone::Zone) -> Self {
@@ -203,13 +204,12 @@ impl From<ZoneDeviceSerde> for ZoneDevice {
     fn from(d: ZoneDeviceSerde) -> Self {
         Self {
             device_dev_eui: d.device_dev_eui,
-            device_profile_id: d.device_profile_id,
             device_name: d.device_name,
             device_description: d.device_description,
             device_last_seen_at: d.device_last_seen_at,
             data: d.data.into_iter().map(Into::into).collect(), // assuming Vec<ZoneDataSerde> == Vec<ZoneData>
             device_profile_name: d.device_profile_name.into_iter().map(Into::into).collect(),
-            device_type: d.device_type,
+            device_type: d.device_type.unwrap_or(0),
             temperature_calibration: d.temperature_calibration,
             humadity_calibration: d.humadity_calibration,
             variables: d.variables,

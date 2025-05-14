@@ -60,7 +60,6 @@ message ZoneDevice {
     
 
     // Device-profile ID attached to the device.
-    string device_profile_id = 4 [json_name = "device_profile_id"];
 
     // Name of the device.
     string device_name = 5 [json_name = "device_name"];
