@@ -83,7 +83,7 @@ pub struct ZoneDeviceSerde {
     pub device_dev_eui: String,
     pub device_name: String,
     pub device_description: String,
-    pub device_last_seen_at: String,
+    // pub device_last_seen_at: String,
     pub data: Vec<ZoneDataSerde>,
     pub device_profile_name: Vec<ZoneDeviceProfileSerde>,
     pub device_type: Option<i64>,

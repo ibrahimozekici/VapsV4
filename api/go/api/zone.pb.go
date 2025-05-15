@@ -32,8 +32,6 @@ type ZoneDevice struct {
 	DeviceName string `protobuf:"bytes,5,opt,name=device_name,proto3" json:"device_name,omitempty"`
 	// Description of the device.
 	DeviceDescription string `protobuf:"bytes,6,opt,name=device_description,proto3" json:"device_description,omitempty"`
-	// device_last_seen_at
-	DeviceLastSeenAt string `protobuf:"bytes,7,opt,name=device_last_seen_at,proto3" json:"device_last_seen_at,omitempty"`
 	// device landing alarms
 	Data                   []*ZoneData          `protobuf:"bytes,12,rep,name=data,proto3" json:"data,omitempty"`
 	DeviceProfileName      []*ZoneDeviceProfile `protobuf:"bytes,13,rep,name=device_profile_name,proto3" json:"device_profile_name,omitempty"`
@@ -99,13 +97,6 @@ func (x *ZoneDevice) GetDeviceName() string {
 func (x *ZoneDevice) GetDeviceDescription() string {
 	if x != nil {
 		return x.DeviceDescription
-	}
-	return ""
-}
-
-func (x *ZoneDevice) GetDeviceLastSeenAt() string {
-	if x != nil {
-		return x.DeviceLastSeenAt
 	}
 	return ""
 }
@@ -1430,13 +1421,12 @@ var File_api_zone_proto protoreflect.FileDescriptor
 
 const file_api_zone_proto_rawDesc = "" +
 	"\n" +
-	"\x0eapi/zone.proto\x12\x03api\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x97\x05\n" +
+	"\x0eapi/zone.proto\x12\x03api\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xe5\x04\n" +
 	"\n" +
 	"ZoneDevice\x12&\n" +
 	"\x0edevice_dev_eui\x18\x01 \x01(\tR\x0edevice_dev_eui\x12 \n" +
 	"\vdevice_name\x18\x05 \x01(\tR\vdevice_name\x12.\n" +
-	"\x12device_description\x18\x06 \x01(\tR\x12device_description\x120\n" +
-	"\x13device_last_seen_at\x18\a \x01(\tR\x13device_last_seen_at\x12!\n" +
+	"\x12device_description\x18\x06 \x01(\tR\x12device_description\x12!\n" +
 	"\x04data\x18\f \x03(\v2\r.api.ZoneDataR\x04data\x12H\n" +
 	"\x13device_profile_name\x18\r \x03(\v2\x16.api.ZoneDeviceProfileR\x13device_profile_name\x12 \n" +
 	"\vdevice_type\x18\x0e \x01(\x03R\vdevice_type\x127\n" +

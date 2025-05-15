@@ -68,7 +68,7 @@ message ZoneDevice {
     string device_description = 6 [json_name = "device_description"];
 
     // device_last_seen_at
-    string device_last_seen_at = 7 [json_name = "device_last_seen_at"];
+    // string device_last_seen_at = 7 [json_name = "device_last_seen_at"];
 
      // device landing alarms
      repeated ZoneData data = 12 [json_name = "data"];
