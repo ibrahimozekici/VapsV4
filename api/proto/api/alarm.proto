@@ -1,0 +1,476 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "github.com/chirpstack/chirpstack/api/go/v4/api";
+option java_package = "io.chirpstack.api";
+option java_multiple_files = true;
+option java_outer_classname = "ApplicationProto";
+option csharp_namespace = "Chirpstack.Api";
+option php_namespace = "Chirpstack\\Api";
+option php_metadata_namespace = "GPBMetadata\\Chirpstack\\Api";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service AlarmService {
+
+    // Create creates the alarm
+    rpc Create(CreateAlarmRequest) returns (google.protobuf.Empty) {
+        option(google.api.http) = {
+            post: "/api/alarm"
+            body: "*"
+        };
+    }
+  
+    // Get return the alarm
+    rpc Get(GetAlarmRequest) returns (GetAlarmResponse) {
+        option (google.api.http) = {
+            get: "/api/alarm/{alarm_id}"
+        };
+    }
+ 
+    // Update updates the alarm matching the given alarm_id.
+    rpc Update(UpdateAlarmRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/api/alarm/{alarm_id}"
+            body: "*"
+        };
+    }
+
+    // Delete deletes the alarm matching the given alarm_id.
+    rpc Delete(DeleteAlarmRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/api/alarm/delete"
+            body: "*"
+        };
+    }
+
+
+    rpc ListAllOrganizationAlarms(ListOrganizationAlarmRequest2) returns (ListOrganizationAlarmResponse2) {
+        option (google.api.http) = {
+            get: "/api/alarm/listOrganizationAlarms/{organization_id}"
+        }; 
+    }
+     // Create creates the alarm
+     rpc CreateMultiple(CreateMultipleAlarmRequest) returns (google.protobuf.Empty) {
+        option(google.api.http) = {
+            post: "/api/alarm/createMultiple"
+            body: "*"
+        };
+    }
+
+    // Delete deletes the alarm matching the given alarm_id.
+    rpc DeleteMultiple(DeleteMultipleAlarmRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/api/alarm/deleteMultiple"
+            body: "*"
+        };
+    }
+
+    // Delete deletes the alarm matching the given alarm_id.
+    rpc DeleteSensorAlarms(DeleteMultipleDevAlarmRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/api/alarm/deleteSensorAlarms"
+            body: "*"
+        };
+    }
+
+    // Delete deletes the alarm matching the given alarm_id.
+    rpc DeleteZoneAlarms(DeleteMultipleZoneAlarmRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/api/alarm/deleteZoneAlarms"
+            body: "*"
+        };
+    }
+
+    // CreateDoorTime CreateDoorTime
+    rpc CreateDoorTime(CreateDoorTimeRequest) returns (CreateDoorTimeResponse) {
+        option (google.api.http) = {
+            post: "/api/alarm/createDoorTime"
+            body: "*"
+        };
+    }
+    rpc ListDoorAlarm2(ListDoorAlarmRequest2) returns (ListDoorAlarmResponse) {
+        option (google.api.http) = {
+            get: "/api/alarm/listDoorAlarm2/{dev_eui}"
+        }; 
+    }
+    rpc DeleteDoorAlarm(DeleteDoorAlarmRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/api/alarm/deleteDoorAlarm"
+            body: "*"
+        };
+    }
+    rpc CreateMultipleDoorAlarm(CreateMultipleDoorAlarmRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/api/alarm/createMultipleDoorAlarm"
+            body: "*"
+        };
+    }
+    rpc CreateAlarmAutomation(CreateAlarmAutomationRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/api/alarm/alarmAutomation"
+            body: "*"
+        };
+    }
+    rpc GetAlarmAutomation(GetAlarmAutomationRequest) returns (GetAlarmAutomationResponse) {
+        option (google.api.http) = {
+            get: "/api/alarm/alarmAutomation/{alarm_id}"
+        };
+    }
+
+    rpc DeleteAlarmAutomation(DeleteAlarmAutomationRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/api/alarm/alarmAutomation/{id}"
+        };
+    }
+
+    rpc UpdateAlarmAutomation(UpdateAlarmAutomationRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/api/alarm/alarmAutomation/{id}",
+            body: "*"
+        };
+    }
+
+    rpc GetAuditLogs(GetAuditLogsRequest) returns (GetAuditLogsResponse) {
+        option (google.api.http) = {
+            get: "/api/alarm/auditLogs/{dev_eui}"
+        };
+    }
+}
+message AuditLog {
+    int64 log_id = 1;
+    int64 alarm_id = 2;
+    string dev_eui = 3;
+    string change_type = 4;
+    google.protobuf.Timestamp changed_at = 5;
+    int64 changed_by = 6;
+    string old_values = 7;
+    string new_values = 8;
+}
+message AlarmAutomation {
+    int64 id = 1 [json_name = "id"];
+    int64 alarm_id = 2 [json_name = "alarm_id"];
+    string receiver_sensor = 3 [json_name = "receiver_sensor"];
+    string action = 4 [json_name = "action"];
+    string created_at = 5 [json_name = "created_at"];
+    string updated_at = 6 [json_name = "updated_at"];
+    bool is_active = 7 [json_name = "is_active"];
+    int64 user_id = 8 [json_name = "user_id"];
+    int64 receiver_device_type = 9 [json_name = "receiver_device_type"];
+    string receiver_device_name = 10 [json_name = "receiver_device_name"];
+}
+message GetAlarmAutomationRequest {
+	// Gateway ID (HEX encoded).
+	int64 alarm_id = 1;
+}
+message DeleteAlarmAutomationRequest {
+	// Gateway ID (HEX encoded).
+	int64 id = 1;
+}
+message UpdateAlarmAutomationRequest {
+	// Gateway ID (HEX encoded).
+	int64 id = 1;
+    AlarmAutomation automation = 2;
+}
+message GetAlarmAutomationResponse {
+	// Gateway ID (HEX encoded).
+	repeated AlarmAutomation result = 1;
+}
+message ListAlarmAutomationRequest {
+	// Gateway ID (HEX encoded).
+	int64 alarm_id = 1 [json_name = "alarmId"];
+}
+message ListAlarmAutomationResponse {
+	// Gateway ID (HEX encoded).
+	repeated AlarmAutomation result = 1;
+}
+message CreateAlarmAutomationRequest {
+	// Gateway ID (HEX encoded).
+	AlarmAutomation alarm_automation = 1;
+}
+message Alarm {
+
+    // Alarm id.
+    int64 id = 1;
+     
+    // Device EUI (HEX encoded).
+    string dev_eui = 2 [json_name = "devEUI"]; 
+
+    // Condition of alarm
+    float min_treshold = 3 [json_name = "minTreshold"];
+
+    // Value of alarm
+    float max_treshold = 4 [json_name = "maxTreshold"];
+
+   bool sms = 5 [json_name = "sms"];
+
+   bool email = 6 [json_name = "email"];
+   
+   bool temperature = 7 [json_name = "temperature"];
+   bool humadity = 8 [json_name = "humadity"];
+   bool ec = 9 [json_name = "ec"];
+   bool door = 10 [json_name = "door"];
+   bool w_leak = 11 [json_name = "w_leak"];
+   google.protobuf.Timestamp submission_date = 12 [json_name = "submission_date"];
+   string ip_address = 13 [json_name = "ip_address"];
+   bool is_time_scheduled = 14 [json_name = "is_time_scheduled"];
+   float start_time = 15 [json_name = "start_time"];
+   float end_time = 16 [json_name = "end_time"];
+   int64 zone_category = 17 [json_name = "zone_category"];
+   int64 cold_room_time = 18  [json_name = "cold_room_time"];
+   int64 cold_room_frecuancy = 19  [json_name = "cold_room_frecuancy"];
+   bool notification = 20 [json_name = "notification"];
+   repeated AlarmDateTime alarm_date_time = 21  [json_name = "alarm_date_time"];
+    bool is_timer_active = 22 [json_name = "is_timer_active"];
+    int64 timer_value = 23 [json_name = "timer_value"];
+    bool pressure = 24 [json_name = "pressure"];
+	float current = 25;
+	float voltage = 26;
+	float factor = 27;
+	int64 status = 28;
+	float power_sum = 29;
+    float power = 30;
+    string notification_sound = 31;
+    repeated int64 user_ids = 32;
+    bool distance = 33;
+    int64 time = 34;
+    bool is_active = 35;
+    int64 defrost_time = 36;
+}
+
+message AlarmDateTime {
+    int64 id = 1 [json_name = "id"];
+
+    int64 alarm_id = 2 [json_name = "alarm_id"];
+
+    int64 alarm_day = 3 [json_name = "alarm_day"];
+
+    float alarm_start_time = 4[json_name = "alarm_start_time"];
+
+    float alarm_end_time = 5[json_name = "alarm_end_time"];
+}
+
+message CreateDoorTimeRequest {
+    // Alarm id.
+    int64 id = 1;
+     
+    // Device EUI (HEX encoded).
+    string dev_eui = 2 [json_name = "devEUI"]; 
+
+    bool sms = 3 [json_name = "sms"];
+
+    bool email = 4 [json_name = "email"];
+
+    bool notification = 5 [json_name = "notification"];
+
+    repeated int64 user_id = 6 [json_name = "user_id"];
+
+    google.protobuf.Timestamp submission_date = 7 [json_name = "submission_date"];
+
+    bool is_active = 8 [json_name = "is_active"];
+
+    int64 time = 9 [json_name = "time"];
+
+    int64 organization_id = 10[json_name = "organization_id"];
+
+    repeated AlarmDateTime alarm_date_time = 11  [json_name = "alarm_date_time"];
+    bool is_time_scheduled = 12 [json_name = "is_time_scheduled"];
+
+}
+
+message CreateDoorTimeResponse {
+    // Alarm id.
+    int64 id = 1;
+     
+    // Device EUI (HEX encoded).
+    string dev_eui = 2 [json_name = "devEUI"]; 
+
+    bool sms = 3 [json_name = "sms"];
+
+    bool email = 4 [json_name = "email"];
+
+    bool notification = 5 [json_name = "notification"];
+
+    repeated int64 user_id = 6 [json_name = "user_id"];
+
+    google.protobuf.Timestamp submission_date = 7 [json_name = "submission_date"];
+
+    bool is_active = 8 [json_name = "is_active"];
+
+    int64 time = 9 [json_name = "time"];
+
+}
+message CreateAlarmRequest {
+    repeated Alarm create_alarm = 1;
+}
+
+message CreateMultipleAlarmRequest {
+    repeated Alarm create_alarm = 1;
+}
+message CreateMultipleDoorAlarmRequest {
+    repeated CreateDoorTimeRequest create_alarm = 1;
+}
+message CreateAlarmMultipleResponse {
+    repeated Alarm alarm = 1;
+    repeated int64 userIds = 2;
+}
+message GetAlarmRequest {
+    // Device EUI (HEX encoded).
+    string alarm_id = 1 [json_name = "alarmID"];
+}
+
+
+message GetAlarmResponse {
+    // Alarm object
+    Alarm alarm = 1;
+}
+
+message DeleteAlarmRequest {
+    // Alarm Id (HEX encoded).
+    repeated string alarm_id = 1 [json_name = "alarmID"];
+    string ip_address = 2;
+}
+
+message DeleteDoorAlarmRequest {
+    // Alarm Id (HEX encoded).
+    repeated string alarm_id = 1 [json_name = "alarmID"];
+}
+message ListOrganizationAlarmRequest2 {
+	int64 organization_id = 1 [json_name = "organizationID"];
+}
+
+message DeleteMultipleAlarmRequest {
+    // Alarm Id (HEX encoded).
+    repeated int64 user_id = 1 [json_name = "userIDs"];
+}
+message DeleteMultipleZoneAlarmRequest {
+    // Alarm Id (HEX encoded).
+    repeated int64 zone_id = 1 [json_name = "zoneIds"];
+}
+
+message DeleteMultipleDevAlarmRequest {
+    // Alarm Id (HEX encoded).
+    repeated string dev_euis = 1 [json_name = "devEui"];
+}
+
+message ListOrganizationAlarmResponse {
+     // Alarm id.
+     int64 id = 1;
+     
+     // Device EUI (HEX encoded).
+     string dev_eui = 2 [json_name = "devEUI"]; 
+ 
+     // Device EUI (HEX encoded).
+     string device_name = 3 [json_name = "deviceName"]; 
+
+     // Device EUI (HEX encoded).
+     string zone_name = 4 [json_name = "zoneName"]; 
+
+     // Condition of alarm
+     float min_treshold = 5 [json_name = "minTreshold"];
+ 
+     // Value of alarm
+     float max_treshold = 6 [json_name = "maxTreshold"];
+ 
+    bool sms = 7 [json_name = "sms"];
+ 
+    bool email = 8 [json_name = "email"];
+    
+    bool temperature = 9 [json_name = "temperature"];
+    bool humadity = 10 [json_name = "humadity"];
+    bool ec = 11 [json_name = "ec"];
+    bool door = 12 [json_name = "door"];
+    bool w_leak = 13 [json_name = "w_leak"];
+    google.protobuf.Timestamp submission_date = 14 [json_name = "submission_date"];
+    bool is_time_scheduled = 15 [json_name = "is_time_scheduled"];
+ 
+    bool notification = 16 [json_name = "notification"];
+ 
+    repeated AlarmDateTime alarm_date_time = 17  [json_name = "alarm_date_time"];
+
+     // Device EUI (HEX encoded).
+     string username = 18 [json_name = "username"];
+
+     bool is_timer_active = 19 [json_name = "is_timer_active"];
+    int64 timer_value = 20 [json_name = "timer_value"];
+    bool pressure = 21 [json_name = "pressure"];
+    string notification_sound = 22[json_name = "notification_sound"];
+    repeated int64 user_ids = 23[json_name = "user_ids"];
+    bool distance = 24 [json_name = "distance"];
+    int64 time = 25 [json_name = "time"];
+    bool is_active = 26 [json_name = "is_active"];
+    int64 defrost_time = 27 [json_name = "defrost_time"];
+    int64 zone_category = 28 [json_name = "zone_category"];
+}
+
+message UpdateAlarmRequest {
+    // Alarm object to update.
+    Alarm alarm = 1;
+    string alarm_id = 2 [json_name = "alarmID"]; 
+}
+
+
+message ListDoorAlarmRequest2 {
+    string dev_eui = 1 [json_name = "devEUI"];
+
+}
+message ListDoorAlarmResponse {
+    // Total number of devices available within the result-set.
+    int64 total_count = 1;
+
+    // Devices within this result-set.
+    repeated CreateDoorTimeResponse result = 2;
+}
+
+message ListOrganizationAlarmRequest {
+    // Max number of devices to return in the result-set.
+    int64 organization_id = 1 [json_name = "organizationID"];
+}
+
+message ListOrganizationAlarmResponse2 {
+    // Total number of devices available within the result-set.
+    int64 total_count = 1;
+    repeated ListOrganizationAlarmResponse result = 2;
+
+}
+message ListORganizationAlarmResponse {
+    // Total number of devices available within the result-set.
+    int64 total_count = 1;
+
+    // // Devices within this result-set.
+    // repeated ListOrganizationAlarmResponse result = 2;
+}
+message AlarmLogs {
+    string dev_eui = 1 [json_name = "devEUI"];
+     // Condition of alarm
+     float min_treshold = 2 [json_name = "minTreshold"];
+
+     // Value of alarm
+     float max_treshold = 3 [json_name = "maxTreshold"];
+
+     int64 user_id = 4;
+
+    string ip_address = 5;
+
+    int64 is_deleted = 6;
+    bool temperature = 7 [json_name = "temperature"];
+    bool humadity = 8 [json_name = "humadity"];
+    bool ec = 9 [json_name = "ec"];
+    bool door = 10 [json_name = "door"];
+    bool w_leak = 11 [json_name = "w_leak"];
+    bool sms = 12 [json_name = "sms"];
+
+    google.protobuf.Timestamp submission_date = 13;
+}
+
+message GetAuditLogsRequest {
+    // Device ID
+    string dev_eui = 1 [json_name = "dev_eui"];
+}
+
+message GetAuditLogsResponse {
+    repeated AuditLog result = 1;
+}
