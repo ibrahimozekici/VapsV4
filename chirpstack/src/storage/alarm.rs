@@ -1,16 +1,13 @@
 use super::schema::{
-    alarm, alarm_audit_log, alarm_automation_rules, alarm_date_time, automation_rules,
-    door_time_alarm,
+    alarm, alarm_audit_log, alarm_date_time
 };
-use super::{db_transaction, error::Error, fields, get_async_db_conn};
+use super::{ error::Error, get_async_db_conn};
 use anyhow::Result;
-use chirpstack_api::{api, common, internal};
+use chirpstack_api::{api};
 use chrono::NaiveDateTime;
-use diesel::dsl::now;
 use diesel::prelude::*;
 use diesel::sql_query;
 use diesel::sql_types::*;
-use diesel::Connection;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

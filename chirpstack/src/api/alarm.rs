@@ -8,12 +8,8 @@ use super::error::ToStatus;
 use super::helpers::{self, FromProto, ToProto};
 use chirpstack_api::api::alarm_service_server::AlarmService;
 use chirpstack_api::api::{AlarmDateTime, CreateDoorTimeResponse}; // Import the correct AlarmDateTime type
-use chirpstack_api::{api, common, internal};
-use diesel_async::AsyncConnection;
-use diesel_async::RunQueryDsl;
-use lrwn::{AES128Key, DevAddr, EUI64};
-use sha2::digest::const_oid::db::rfc4519::O;
-use uuid::Uuid; // Make sure this is in scope
+use chirpstack_api::{api};
+use lrwn::{EUI64};
 
 use crate::storage::{
     alarm::{self},

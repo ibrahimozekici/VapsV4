@@ -17,7 +17,7 @@ import "google/protobuf/empty.proto";
 service AlarmService {
 
     // Create creates the alarm
-    rpc Create(CreateAlarmRequest) returns (CreateAlarmResponse) {
+    rpc Create(CreateAlarmRequest) returns (google.protobuf.Empty) {
         option(google.api.http) = {
             post: "/api/alarm"
             body: "*"
@@ -92,7 +92,6 @@ service AlarmService {
             body: "*"
         };
     }
-    
     rpc ListDoorAlarm2(ListDoorAlarmRequest2) returns (ListDoorAlarmResponse) {
         option (google.api.http) = {
             get: "/api/alarm/listDoorAlarm2/{dev_eui}"
@@ -221,15 +220,25 @@ message Alarm {
    float start_time = 15 [json_name = "start_time"];
    float end_time = 16 [json_name = "end_time"];
    int64 zone_category = 17 [json_name = "zone_category"];
-   bool notification = 18 [json_name = "notification"];
-    repeated AlarmDateTime alarm_date_time = 19  [json_name = "alarm_date_time"];
-    bool pressure = 20 [json_name = "pressure"];
-    string notification_sound = 21;
-    repeated int64 user_ids = 22;
-    bool distance = 23;
-    int64 time = 24;
-    bool is_active = 25;
-    int64 defrost_time = 26;
+   int64 cold_room_time = 18  [json_name = "cold_room_time"];
+   int64 cold_room_frecuancy = 19  [json_name = "cold_room_frecuancy"];
+   bool notification = 20 [json_name = "notification"];
+   repeated AlarmDateTime alarm_date_time = 21  [json_name = "alarm_date_time"];
+    bool is_timer_active = 22 [json_name = "is_timer_active"];
+    int64 timer_value = 23 [json_name = "timer_value"];
+    bool pressure = 24 [json_name = "pressure"];
+	float current = 25;
+	float voltage = 26;
+	float factor = 27;
+	int64 status = 28;
+	float power_sum = 29;
+    float power = 30;
+    string notification_sound = 31;
+    repeated int64 user_ids = 32;
+    bool distance = 33;
+    int64 time = 34;
+    bool is_active = 35;
+    int64 defrost_time = 36;
 }
 
 message AlarmDateTime {
@@ -244,9 +253,6 @@ message AlarmDateTime {
     float alarm_end_time = 5[json_name = "alarm_end_time"];
 }
 
-message CreateAlarmResponse {
-    repeated Alarm alarm = 1;
-}
 message CreateDoorTimeRequest {
     // Alarm id.
     int64 id = 1;
@@ -405,6 +411,7 @@ message UpdateAlarmRequest {
     Alarm alarm = 1;
     string alarm_id = 2 [json_name = "alarmID"]; 
 }
+
 
 message ListDoorAlarmRequest2 {
     string dev_eui = 1 [json_name = "devEUI"];
