@@ -18,6 +18,7 @@ gw:
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/gw/gw.proto
 
 api:
+	$(PROTOC_PATH) ${PROTOC_GRPC_ARGS} ../proto/api/alarm.proto
 	$(PROTOC_PATH) ${PROTOC_GRPC_ARGS} ../proto/api/internal.proto
 	$(PROTOC_PATH) ${PROTOC_GRPC_ARGS} ../proto/api/user.proto
 	$(PROTOC_PATH) ${PROTOC_GRPC_ARGS} ../proto/api/tenant.proto

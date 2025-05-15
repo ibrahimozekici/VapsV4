@@ -28,6 +28,7 @@ gw:
 
 
 api:
+	$(PROTOC) ${PROTOC_ARGS} chirpstack-api/api/alarm.proto
 	$(PROTOC) ${PROTOC_ARGS} chirpstack-api/api/internal.proto
 	$(PROTOC) ${PROTOC_ARGS} chirpstack-api/api/user.proto
 	$(PROTOC) ${PROTOC_ARGS} chirpstack-api/api/tenant.proto
