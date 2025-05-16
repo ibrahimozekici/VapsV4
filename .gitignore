@@ -68,7 +68,7 @@ Cargo.lock
 **/chirpstack*.sqlite
 
 # Optional: ignore local binary builds
-/chirpstack/migrations_postgres
+
 
 # Build artifacts
 /build/

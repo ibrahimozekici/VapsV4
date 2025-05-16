@@ -2779,14 +2779,14 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\x13GetAuditLogsRequest\x12\x18\n" +
 	"\adev_eui\x18\x01 \x01(\tR\adev_eui\"=\n" +
 	"\x14GetAuditLogsResponse\x12%\n" +
-	"\x06result\x18\x01 \x03(\v2\r.api.AuditLogR\x06result2\xaf\x10\n" +
+	"\x06result\x18\x01 \x03(\v2\r.api.AuditLogR\x06result2\xb2\x10\n" +
 	"\fAlarmService\x12P\n" +
 	"\x06Create\x12\x17.api.CreateAlarmRequest\x1a\x16.google.protobuf.Empty\"\x15\x82\xd3\xe4\x93\x02\x0f:\x01*\"\n" +
 	"/api/alarm\x12Q\n" +
 	"\x03Get\x12\x14.api.GetAlarmRequest\x1a\x15.api.GetAlarmResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/alarm/{alarm_id}\x12[\n" +
 	"\x06Update\x12\x17.api.UpdateAlarmRequest\x1a\x16.google.protobuf.Empty\" \x82\xd3\xe4\x93\x02\x1a:\x01*\x1a\x15/api/alarm/{alarm_id}\x12W\n" +
-	"\x06Delete\x12\x17.api.DeleteAlarmRequest\x1a\x16.google.protobuf.Empty\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/alarm/delete\x12\xa1\x01\n" +
-	"\x19ListAllOrganizationAlarms\x12\".api.ListOrganizationAlarmRequest2\x1a#.api.ListOrganizationAlarmResponse2\";\x82\xd3\xe4\x93\x025\x123/api/alarm/listOrganizationAlarms/{organization_id}\x12o\n" +
+	"\x06Delete\x12\x17.api.DeleteAlarmRequest\x1a\x16.google.protobuf.Empty\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/alarm/delete\x12\xa4\x01\n" +
+	"\x19ListAllOrganizationAlarms\x12\".api.ListOrganizationAlarmRequest2\x1a#.api.ListOrganizationAlarmResponse2\">\x82\xd3\xe4\x93\x028:\x01*\x123/api/alarm/listOrganizationAlarms/{organization_id}\x12o\n" +
 	"\x0eCreateMultiple\x12\x1f.api.CreateMultipleAlarmRequest\x1a\x16.google.protobuf.Empty\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/alarm/createMultiple\x12o\n" +
 	"\x0eDeleteMultiple\x12\x1f.api.DeleteMultipleAlarmRequest\x1a\x16.google.protobuf.Empty\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/alarm/deleteMultiple\x12z\n" +
 	"\x12DeleteSensorAlarms\x12\".api.DeleteMultipleDevAlarmRequest\x1a\x16.google.protobuf.Empty\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/alarm/deleteSensorAlarms\x12w\n" +
