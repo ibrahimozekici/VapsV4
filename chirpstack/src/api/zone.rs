@@ -208,7 +208,7 @@ impl From<ZoneDeviceSerde> for ZoneDevice {
             device_description: d.device_description,
             // device_last_seen_at: d.device_last_seen_at,
             data: d.data.into_iter().map(Into::into).collect(), // assuming Vec<ZoneDataSerde> == Vec<ZoneData>
-            device_profile_name: d.device_profile_name.into_iter().map(Into::into).collect(),
+            // device_profile_name: d.device_profile_name.into_iter().map(Into::into).collect(),
             device_type: d.device_type.unwrap_or(0),
             temperature_calibration: d.temperature_calibration,
             humadity_calibration: d.humadity_calibration,

@@ -33,11 +33,10 @@ type ZoneDevice struct {
 	// Description of the device.
 	DeviceDescription string `protobuf:"bytes,6,opt,name=device_description,proto3" json:"device_description,omitempty"`
 	// device landing alarms
-	Data                   []*ZoneData          `protobuf:"bytes,12,rep,name=data,proto3" json:"data,omitempty"`
-	DeviceProfileName      []*ZoneDeviceProfile `protobuf:"bytes,13,rep,name=device_profile_name,proto3" json:"device_profile_name,omitempty"`
-	DeviceType             int64                `protobuf:"varint,14,opt,name=device_type,proto3" json:"device_type,omitempty"`
-	TemperatureCalibration float64              `protobuf:"fixed64,15,opt,name=temperature_calibration,json=temperatureCalibration,proto3" json:"temperature_calibration,omitempty"`
-	HumadityCalibration    float64              `protobuf:"fixed64,16,opt,name=humadity_calibration,json=humadityCalibration,proto3" json:"humadity_calibration,omitempty"`
+	Data                   []*ZoneData `protobuf:"bytes,12,rep,name=data,proto3" json:"data,omitempty"`
+	DeviceType             int64       `protobuf:"varint,14,opt,name=device_type,proto3" json:"device_type,omitempty"`
+	TemperatureCalibration float64     `protobuf:"fixed64,15,opt,name=temperature_calibration,json=temperatureCalibration,proto3" json:"temperature_calibration,omitempty"`
+	HumadityCalibration    float64     `protobuf:"fixed64,16,opt,name=humadity_calibration,json=humadityCalibration,proto3" json:"humadity_calibration,omitempty"`
 	// New field for custom attributes
 	// Variables (user defined).
 	// These variables can be used together with integrations to store tokens /
@@ -104,13 +103,6 @@ func (x *ZoneDevice) GetDeviceDescription() string {
 func (x *ZoneDevice) GetData() []*ZoneData {
 	if x != nil {
 		return x.Data
-	}
-	return nil
-}
-
-func (x *ZoneDevice) GetDeviceProfileName() []*ZoneDeviceProfile {
-	if x != nil {
-		return x.DeviceProfileName
 	}
 	return nil
 }
@@ -1421,14 +1413,13 @@ var File_api_zone_proto protoreflect.FileDescriptor
 
 const file_api_zone_proto_rawDesc = "" +
 	"\n" +
-	"\x0eapi/zone.proto\x12\x03api\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xe5\x04\n" +
+	"\x0eapi/zone.proto\x12\x03api\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1cgoogle/protobuf/struct.proto\"\x9b\x04\n" +
 	"\n" +
 	"ZoneDevice\x12&\n" +
 	"\x0edevice_dev_eui\x18\x01 \x01(\tR\x0edevice_dev_eui\x12 \n" +
 	"\vdevice_name\x18\x05 \x01(\tR\vdevice_name\x12.\n" +
 	"\x12device_description\x18\x06 \x01(\tR\x12device_description\x12!\n" +
-	"\x04data\x18\f \x03(\v2\r.api.ZoneDataR\x04data\x12H\n" +
-	"\x13device_profile_name\x18\r \x03(\v2\x16.api.ZoneDeviceProfileR\x13device_profile_name\x12 \n" +
+	"\x04data\x18\f \x03(\v2\r.api.ZoneDataR\x04data\x12 \n" +
 	"\vdevice_type\x18\x0e \x01(\x03R\vdevice_type\x127\n" +
 	"\x17temperature_calibration\x18\x0f \x01(\x01R\x16temperatureCalibration\x121\n" +
 	"\x14humadity_calibration\x18\x10 \x01(\x01R\x13humadityCalibration\x12<\n" +
@@ -1598,31 +1589,30 @@ var file_api_zone_proto_goTypes = []any{
 }
 var file_api_zone_proto_depIdxs = []int32{
 	2,  // 0: api.ZoneDevice.data:type_name -> api.ZoneData
-	1,  // 1: api.ZoneDevice.device_profile_name:type_name -> api.ZoneDeviceProfile
-	17, // 2: api.ZoneDevice.variables:type_name -> api.ZoneDevice.VariablesEntry
-	18, // 3: api.ZoneDevice.tags:type_name -> api.ZoneDevice.TagsEntry
-	0,  // 4: api.GetZonesItem.devices:type_name -> api.ZoneDevice
-	3,  // 5: api.CreateZoneRequest.zone:type_name -> api.Zone
-	3,  // 6: api.GetZoneResponse.zone:type_name -> api.Zone
-	4,  // 7: api.ListZoneResponse.zones:type_name -> api.GetZonesItem
-	3,  // 8: api.UpdateZoneRequest.zone:type_name -> api.Zone
-	15, // 9: api.ZonesOrderRequest.zoneOrder:type_name -> api.ZoneOrder
-	15, // 10: api.ZonesOrderResponse.zoneOrder:type_name -> api.ZoneOrder
-	5,  // 11: api.ZoneService.Create:input_type -> api.CreateZoneRequest
-	7,  // 12: api.ZoneService.Get:input_type -> api.GetZoneRequest
-	8,  // 13: api.ZoneService.List:input_type -> api.ListZoneRequest
-	10, // 14: api.ZoneService.Delete:input_type -> api.DeleteZoneRequest
-	11, // 15: api.ZoneService.Update:input_type -> api.UpdateZoneRequest
-	6,  // 16: api.ZoneService.Create:output_type -> api.GetZoneResponse
-	6,  // 17: api.ZoneService.Get:output_type -> api.GetZoneResponse
-	9,  // 18: api.ZoneService.List:output_type -> api.ListZoneResponse
-	19, // 19: api.ZoneService.Delete:output_type -> google.protobuf.Empty
-	6,  // 20: api.ZoneService.Update:output_type -> api.GetZoneResponse
-	16, // [16:21] is the sub-list for method output_type
-	11, // [11:16] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	17, // 1: api.ZoneDevice.variables:type_name -> api.ZoneDevice.VariablesEntry
+	18, // 2: api.ZoneDevice.tags:type_name -> api.ZoneDevice.TagsEntry
+	0,  // 3: api.GetZonesItem.devices:type_name -> api.ZoneDevice
+	3,  // 4: api.CreateZoneRequest.zone:type_name -> api.Zone
+	3,  // 5: api.GetZoneResponse.zone:type_name -> api.Zone
+	4,  // 6: api.ListZoneResponse.zones:type_name -> api.GetZonesItem
+	3,  // 7: api.UpdateZoneRequest.zone:type_name -> api.Zone
+	15, // 8: api.ZonesOrderRequest.zoneOrder:type_name -> api.ZoneOrder
+	15, // 9: api.ZonesOrderResponse.zoneOrder:type_name -> api.ZoneOrder
+	5,  // 10: api.ZoneService.Create:input_type -> api.CreateZoneRequest
+	7,  // 11: api.ZoneService.Get:input_type -> api.GetZoneRequest
+	8,  // 12: api.ZoneService.List:input_type -> api.ListZoneRequest
+	10, // 13: api.ZoneService.Delete:input_type -> api.DeleteZoneRequest
+	11, // 14: api.ZoneService.Update:input_type -> api.UpdateZoneRequest
+	6,  // 15: api.ZoneService.Create:output_type -> api.GetZoneResponse
+	6,  // 16: api.ZoneService.Get:output_type -> api.GetZoneResponse
+	9,  // 17: api.ZoneService.List:output_type -> api.ListZoneResponse
+	19, // 18: api.ZoneService.Delete:output_type -> google.protobuf.Empty
+	6,  // 19: api.ZoneService.Update:output_type -> api.GetZoneResponse
+	15, // [15:20] is the sub-list for method output_type
+	10, // [10:15] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_api_zone_proto_init() }

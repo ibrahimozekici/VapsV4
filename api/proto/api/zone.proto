@@ -73,7 +73,7 @@ message ZoneDevice {
      // device landing alarms
      repeated ZoneData data = 12 [json_name = "data"];
 
-     repeated ZoneDeviceProfile device_profile_name = 13 [json_name= "device_profile_name"];
+    //  repeated ZoneDeviceProfile device_profile_name = 13 [json_name= "device_profile_name"];
 
      int64 device_type = 14 [json_name = "device_type"];
      double temperature_calibration = 15 [json_name = "temperatureCalibration"];
