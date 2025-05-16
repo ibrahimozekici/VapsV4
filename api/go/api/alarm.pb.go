@@ -2799,8 +2799,9 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\x12GetAlarmAutomation\x12\x1e.api.GetAlarmAutomationRequest\x1a\x1f.api.GetAlarmAutomationResponse\"-\x82\xd3\xe4\x93\x02'\x12%/api/alarm/alarmAutomation/{alarm_id}\x12{\n" +
 	"\x15DeleteAlarmAutomation\x12!.api.DeleteAlarmAutomationRequest\x1a\x16.google.protobuf.Empty\"'\x82\xd3\xe4\x93\x02!*\x1f/api/alarm/alarmAutomation/{id}\x12~\n" +
 	"\x15UpdateAlarmAutomation\x12!.api.UpdateAlarmAutomationRequest\x1a\x16.google.protobuf.Empty\"*\x82\xd3\xe4\x93\x02$:\x01*\x1a\x1f/api/alarm/alarmAutomation/{id}\x12k\n" +
-	"\fGetAuditLogs\x12\x18.api.GetAuditLogsRequest\x1a\x19.api.GetAuditLogsResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/alarm/auditLogs/{dev_eui}B\x96\x01\n" +
-	"\x11io.chirpstack.apiB\x10ApplicationProtoP\x01Z.github.com/chirpstack/chirpstack/api/go/v4/api\xaa\x02\x0eChirpstack.Api\xca\x02\x0eChirpstack\\Api\xe2\x02\x1aGPBMetadata\\Chirpstack\\Apib\x06proto3"
+	"\fGetAuditLogs\x12\x18.api.GetAuditLogsRequest\x1a\x19.api.GetAuditLogsResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/alarm/auditLogs/{dev_eui}B\x90\x01\n" +
+	"\x11io.chirpstack.apiB\n" +
+	"AlarmProtoP\x01Z.github.com/ibrahimozekici/VapsV4/api/go/v4/api\xaa\x02\x0eChirpstack.Api\xca\x02\x0eChirpstack\\Api\xe2\x02\x1aGPBMetadata\\Chirpstack\\Apib\x06proto3"
 
 var (
 	file_api_alarm_proto_rawDescOnce sync.Once

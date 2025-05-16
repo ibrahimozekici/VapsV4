@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package api;
 
-option go_package = "github.com/chirpstack/chirpstack/api/go/v4/api";
+option go_package = "github.com/ibrahimozekici/VapsV4/api/go/v4/api";
 option java_package = "io.chirpstack.api";
 option java_multiple_files = true;
-option java_outer_classname = "ApplicationProto";
+option java_outer_classname = "AlarmProto";
 option csharp_namespace = "Chirpstack.Api";
 option php_namespace = "Chirpstack\\Api";
 option php_metadata_namespace = "GPBMetadata\\Chirpstack\\Api";
