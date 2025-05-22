@@ -202,6 +202,7 @@ pub async fn create(gw: Gateway) -> Result<Gateway, Error> {
 
             diesel::insert_into(gateway::table)
                 .values(&gw)
+                .returning(Gateway::as_returning()) // 👈 THIS LINE FIXES IT
                 .get_result(c)
                 .await
                 .map_err(|e| Error::from_diesel(e, gw.gateway_id.to_string()))

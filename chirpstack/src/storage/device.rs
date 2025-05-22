@@ -135,7 +135,7 @@ pub struct Device {
     pub device_profile_name: Option<String>,
     pub device_type: Option<i32>,   
 }
-#[derive(Insertable, Debug)]
+#[derive(Insertable,QueryableByName, Debug)]
 #[diesel(table_name = device)]
 pub struct NewDevice {
     pub dev_eui: EUI64,
@@ -352,6 +352,7 @@ pub async fn create(d: Device) -> Result<Device, Error> {
 
             diesel::insert_into(device::table)
                 .values(&new_device)
+                .returning(Device::as_returning()) 
                 .get_result(c)
                 .await
                 .map_err(|e| Error::from_diesel(e, d.dev_eui.to_string()))

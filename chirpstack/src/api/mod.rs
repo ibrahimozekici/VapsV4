@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::Result;
 use axum::{response::IntoResponse, routing::get, Router};
+use chirpstack_api::api::notification_service_server::NotificationServiceServer;
 use http::{
     header::{self, HeaderMap, HeaderValue},
     Request, StatusCode, Uri,
@@ -67,6 +68,7 @@ pub mod relay;
 pub mod tenant;
 pub mod user;
 pub mod zone;
+pub mod notification;
 
 lazy_static! {
     static ref GRPC_COUNTER: Family<GrpcLabels, Counter> = {
@@ -181,6 +183,10 @@ pub async fn setup() -> Result<()> {
         ))
         .add_service(ZoneServiceServer::with_interceptor(
             zone::Zone::new(validator::RequestValidator::new()),
+            auth::auth_interceptor,
+        ))
+        .add_service(NotificationServiceServer::with_interceptor(
+            notification::Notification::new(validator::RequestValidator::new()),
             auth::auth_interceptor,
         ));
 
