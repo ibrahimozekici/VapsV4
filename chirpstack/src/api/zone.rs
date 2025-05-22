@@ -195,7 +195,7 @@ impl From<GetZonesItemSerde> for GetZonesItem {
             org_id: item.org_id,
             order: item.order,
             devices: item.devices.into_iter().map(Into::into).collect(),
-            content_type: item.content_type,
+            content_type: item.contentType,
         }
     }
 }
@@ -224,7 +224,7 @@ impl From<ZoneDataSerde> for chirpstack_api::api::ZoneData {
             id: data.id,
             dev_eui: data.dev_eui,
             device_type_id: data.device_type_id,
-            org_id: data.org_id,
+            org_id: data.org_id.to_string(),
             air_temperature: data.air_temperature,
             air_humidity: data.air_humidity,
             sol_temperature: data.sol_temperature,

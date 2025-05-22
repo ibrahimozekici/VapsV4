@@ -1,29 +1,32 @@
-use chirpstack_api::api::ListZoneResponse;
-use diesel::prelude::*;
-use diesel_async::RunQueryDsl;
-use uuid::Uuid;
+use super::error::Error;
+use super::get_async_db_conn;
 use crate::storage::schema_postgres::zone;
 use crate::storage::schema_postgres::zone::dsl;
+use chirpstack_api::api::ListZoneResponse;
+use serde::{Deserialize, Deserializer};
+
+use diesel::prelude::*;
 use diesel::sql_query;
-use tonic::Status;
-use serde::{Serialize, Deserialize};
-use std::collections::HashMap;
 use diesel::sql_types::Nullable;
 use diesel::sql_types::Uuid as SqlUuid;
-use super::{get_async_db_conn};
+use diesel_async::RunQueryDsl;
+use serde::{ Serialize};
+use std::collections::HashMap;
+use tonic::Status;
 use tracing::info;
-use super::error::Error;
+use uuid::Uuid;
 // use chirpstack_api::api::ListZoneResponse;
 use serde_json;
+use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq, Eq, Insertable, Queryable)]
 #[diesel(table_name = zone)]
 pub struct Zone {
     pub zone_id: i32,
     pub zone_name: Option<String>,
-    pub zone_order: Option<i64>,     // moved up
-    pub content_type: Option<i64>,   // moved up
-    pub tanent_id: Option<Uuid>,     // moved down
+    pub zone_order: Option<i64>,   // moved up
+    pub content_type: Option<i64>, // moved up
+    pub tanent_id: Option<Uuid>,   // moved down
     pub devices: Vec<Option<String>>,
 }
 
@@ -60,23 +63,13 @@ pub struct ListZoneResponseSerde {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GetZonesItemSerde {
-    #[serde(rename = "zoneId")]
     pub zone_id: i64,
-
-    #[serde(rename = "zoneName")]
     pub zone_name: String,
-
-    #[serde(rename = "orgID")]
+    #[serde(deserialize_with = "string_or_number")]
     pub org_id: String,
-
-    #[serde(rename = "order")]
     pub order: i64,
-
-    #[serde(rename = "devices")]
     pub devices: Vec<ZoneDeviceSerde>,
-
-    #[serde(rename = "contentType")]
-    pub content_type: i64,
+    pub contentType: i64,
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ZoneDeviceSerde {
@@ -89,9 +82,7 @@ pub struct ZoneDeviceSerde {
     pub device_type: Option<i64>,
     pub latitude: Option<f64>,
     pub longitude: Option<f64>,
-    #[serde(rename = "temperatureCalibration")]
     pub temperature_calibration: f64,
-    #[serde(rename = "humadityCalibration")]
     pub humadity_calibration: f64,
     pub variables: HashMap<String, String>,
     pub tags: HashMap<String, String>,
@@ -107,6 +98,8 @@ pub struct ZoneDataSerde {
     pub id: i64,
     pub dev_eui: String,
     pub device_type_id: i64,
+
+    #[serde(deserialize_with = "string_or_number")]
     pub org_id: String,
     pub air_temperature: f32,
     pub air_humidity: f32,
@@ -132,7 +125,6 @@ pub struct ZoneDataSerde {
     pub current: f32,
     pub voltage: f32,
     pub factor: f32,
-    #[serde(rename = "powerSum")]
     pub power_sum: f32,
     pub status: i64,
     pub power_consumption: i64,
@@ -200,7 +192,7 @@ pub async fn create(a: Zone) -> Result<Zone, Error> {
         zone_order: a.zone_order,
         content_type: a.content_type,
         tanent_id: a.tanent_id,
-        devices: a.devices
+        devices: a.devices,
     };
 
     let inserted: Zone = diesel::insert_into(zone::table)
@@ -251,51 +243,51 @@ pub async fn list(
     tanent_id: Option<Uuid>,
 ) -> Result<ListZoneResponseSerde, Status> {
     let mut query = r#"
-        WITH device_data_2025 AS (
-            SELECT 
-                dev.dev_eui,
-                json_build_object(
-                    'device_dev_eui', dev.dev_eui,
-                    'device_name', dev.name,
-                    'device_description', dev.description,
-                    'tags', dev.tags,
-                    'variables', dev.variables,
-                    'temperature_calibration', dev.temperature_calibration,
-                    'humadity_calibration', dev.humadity_calibration,
-                    'device_type', dl.device_type_id,
-                    'latitude', dev.latitude,
-                    'longitude', dev.longitude,
-                    'data', COALESCE(array_agg(dl) FILTER (WHERE dl.dev_eui IS NOT NULL), ARRAY[]::device_data_latest[])
-                ) AS device_json
-            FROM public.device AS dev
-            LEFT JOIN device_data_latest dl ON dev.dev_eui::text = '\\x' || dl.dev_eui
-            GROUP BY dev.dev_eui, dev.name, dev.tags, dev.variables, dev.temperature_calibration, dev.humadity_calibration, dl.device_type_id
-        ),
-        zone_data AS (
-            SELECT 
-                z.zone_id,
-                z.zone_name,
-                z.tanent_id,
-                z.zone_order,
-                z.content_type,
-                json_build_object(
-                    'zone_id', z.zone_id,
-                    'zone_name', z.zone_name,
-                    'org_id', z.tanent_id,
-                    'order', z.zone_order,
-                    'contentType', z.content_type,
-                    'devices', COALESCE(array_agg(dd.device_json) FILTER (WHERE dd.device_json IS NOT NULL), ARRAY[]::json[])
-                ) AS list
-            FROM public.zone AS z
-            LEFT JOIN public.device AS dev ON dev.dev_eui::text = ANY(z.devices)
-            LEFT JOIN device_data_2025 dd ON dev.dev_eui = dd.dev_eui
-            GROUP BY z.zone_id, z.zone_name, z.tanent_id, z.zone_order, z.content_type
-        )
-        SELECT json_build_object(
-            'zones', COALESCE(array_agg(zl.list), ARRAY[]::json[])
-        ) AS zones
-        FROM public.user AS a
-        INNER JOIN zone_data zl ON zl.zone_id = ANY(a.zone_id_list)
+       WITH device_data_2025 AS (
+    SELECT 
+        dev.dev_eui,
+        json_build_object(
+            'device_dev_eui', dev.dev_eui,
+            'device_name', dev.name,
+			'device_description', dev.description,
+            'tags', dev.tags,
+            'variables', dev.variables,
+            'temperature_calibration', dev.temperature_calibration,
+            'humadity_calibration', dev.humadity_calibration,
+            'device_type', dl.device_type_id,
+			'latitude', dev.latitude,
+			'longitude', dev.longitude,
+            'data', COALESCE(array_agg(dl) FILTER (WHERE dl.dev_eui IS NOT NULL), ARRAY[]::device_data_latest[])
+        ) AS device_json
+    FROM public.device AS dev
+    LEFT JOIN device_data_latest dl ON dev.dev_eui::text = '\x' || dl.dev_eui
+    GROUP BY dev.dev_eui, dev.name, dev.tags, dev.variables, dev.temperature_calibration, dev.humadity_calibration, dl.device_type_id
+),
+zone_data AS (
+    SELECT 
+        z.zone_id,
+        z.zone_name,
+        z.tanent_id,
+        z.zone_order,
+        z.content_type,
+        json_build_object(
+            'zone_id', z.zone_id,
+            'zone_name', z.zone_name,
+            'org_id', z.tanent_id,
+            'order', z.zone_order,
+            'contentType', z.content_type,
+            'devices', COALESCE(array_agg(dd.device_json) FILTER (WHERE dd.device_json IS NOT NULL), ARRAY[]::json[])
+        ) AS list
+    FROM public.zone AS z
+    LEFT JOIN public.device AS dev ON dev.dev_eui::text = ANY(z.devices)
+    LEFT JOIN device_data_2025 dd ON dev.dev_eui = dd.dev_eui
+    GROUP BY z.zone_id, z.zone_name, z.tanent_id, z.zone_order, z.content_type
+)
+SELECT json_build_object( 
+        'zones', COALESCE(array_agg(zl.list), ARRAY[]::json[])
+) AS zones
+FROM public.user AS a 
+INNER JOIN zone_data zl ON zl.zone_id = ANY(a.zone_id_list)
         WHERE a.id = $1
     "#.to_string();
 
@@ -306,9 +298,9 @@ pub async fn list(
     }
 
     // DB connection
-    let conn = &mut get_async_db_conn().await.map_err(|e| {
-        Status::internal(format!("DB connection failed: {e}"))
-    })?;
+    let conn = &mut get_async_db_conn()
+        .await
+        .map_err(|e| Status::internal(format!("DB connection failed: {e}")))?;
 
     let row: ZoneListRow = if let Some(tanent_id) = tanent_id {
         sql_query(&query)
@@ -327,11 +319,23 @@ pub async fn list(
 
     let parsed: ListZoneResponseSerde = serde_json::from_str(&row.zones)
         .map_err(|e| Status::internal(format!("Failed to deserialize: {e}")))?;
-
-
+    println!("🌀 JSON PARSED");
     // // Convert to protobuf
     // let zone_list: pb::ListZoneResponse = serde_json::from_value(row.zones)
     //     .map_err(|e| Status::internal(format!("Deserialization failed: {e}")))?;
 
     Ok(parsed)
+}
+
+
+fn string_or_number<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let val: Value = Deserialize::deserialize(deserializer)?;
+    match val {
+        Value::String(s) => Ok(s),
+        Value::Number(n) => Ok(n.to_string()),
+        _ => Err(serde::de::Error::custom("expected string or number")),
+    }
 }

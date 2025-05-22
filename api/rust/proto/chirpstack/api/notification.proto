@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "github.com/ibrahimozekici/VapsV4/api/go/v4/api";
+option java_package = "io.chirpstack.api";
+option java_multiple_files = true;
+option java_outer_classname = "NotificationProto";
+option csharp_namespace = "Chirpstack.Api";
+option php_namespace = "Chirpstack\\Api";
+option php_metadata_namespace = "GPBMetadata\\Chirpstack\\Api";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service NotificationService {
+
+    // rpc CreateNotification(CreateNotificationRequest) returns (CreateNotificationResponse){}
+
+    rpc List(ListNotificationsRequest) returns (ListNotificationsResponse) {
+        option (google.api.http) = {
+            get: "/api/notifications/{userId}"
+        }; 
+    }
+    // Update updates the alarm matching the given alarm_id.
+    rpc Update(UpdateNotficationRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            put: "/api/notifications"
+            body: "*"
+        };
+    }
+
+    // Delete deletes the alarm matching the given alarm_id.
+    rpc Delete(DeleteNotficationRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            post: "/api/notifications/delete/{id}"
+            body: "*"
+        };
+    }
+
+}
+
+message Notification {
+    // Notification Id
+    int64 id = 1;
+
+    // Notification Sender Id
+    int64 sender_id = 2;
+
+    // Notification Receiver Id
+    repeated int64 receiver_id = 3;
+
+    // Notification Message
+    string message = 4;
+
+    int64 category_id = 5;
+
+    bool is_read = 6;
+
+    google.protobuf.Timestamp send_time = 7;
+
+    google.protobuf.Timestamp read_time = 8;
+
+    string sender_ip = 9;
+
+    string reader_ip = 10;
+
+    bool is_deleted = 11;
+
+    google.protobuf.Timestamp delete_time = 12;
+
+    string dev_eui = 13;
+
+    string device_name = 14;
+
+}
+
+message ListNotificationsRequest {
+    // Gateway ID (HEX encoded).
+	int64 userId = 1;
+}
+
+message ListNotificationsResponse {
+    repeated Notification notifications = 1;
+}
+
+message UpdateNotficationRequest {
+    repeated int64 notifications = 1; 
+}
+
+message UpdateNotficationResponse {
+    Notification notification = 1;
+}
+
+message DeleteNotficationRequest {
+    int64 id =1;
+}
+
+// message CreateNotificationRequest{
+//     Notification notification = 1;
+// }
+
+// message CreateNotificationResponse{
+//     Notification Notification = 1;
+// }

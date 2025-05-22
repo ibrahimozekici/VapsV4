@@ -23,6 +23,7 @@ api:
 	protoc ${PROTOC_ARGS} api/multicast_group.proto
 	protoc ${PROTOC_ARGS} api/relay.proto
 	protoc ${PROTOC_ARGS} api/zone.proto
+	protoc ${PROTOC_ARGS} api/notification.proto
 
 integration:
 	protoc ${PROTOC_ARGS} integration/integration.proto

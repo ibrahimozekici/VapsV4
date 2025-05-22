@@ -650,6 +650,30 @@ diesel::table! {
 }
 
 diesel::table! {
+    notifications (id) {
+        id -> Int4,
+        sender_id -> Int4,
+        #[max_length = 255]
+        message -> Varchar,
+        category_id -> Int4,
+        is_read -> Nullable<Bool>,
+        send_time -> Nullable<Timestamp>,
+        read_time -> Nullable<Timestamp>,
+        #[max_length = 50]
+        sender_ip -> Nullable<Varchar>,
+        #[max_length = 50]
+        reader_ip -> Nullable<Varchar>,
+        is_deleted -> Nullable<Bool>,
+        deleted_time -> Nullable<Timestamp>,
+        #[max_length = 30]
+        dev_eui -> Nullable<Varchar>,
+        #[max_length = 80]
+        device_name -> Nullable<Varchar>,
+        receiver_id -> Array<Nullable<Int4>>,
+    }
+}
+
+diesel::table! {
     relay_device (relay_dev_eui, dev_eui) {
         relay_dev_eui -> Bytea,
         dev_eui -> Bytea,
@@ -885,6 +909,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     multicast_group_device,
     multicast_group_gateway,
     multicast_group_queue_item,
+    notifications,
     relay_device,
     relay_gateway,
     tenant,

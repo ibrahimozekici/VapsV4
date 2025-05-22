@@ -31,6 +31,7 @@ api:
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/multicast_group.proto
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/relay.proto
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/zone.proto
+	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/notification.proto
 
 integration:
 	mkdir -p integration

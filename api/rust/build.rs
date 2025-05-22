@@ -221,6 +221,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .unwrap(),
                 cs_dir.join("api").join("relay.proto").to_str().unwrap(),
                 cs_dir.join("api").join("zone.proto").to_str().unwrap(),
+                cs_dir.join("api").join("notification.proto").to_str().unwrap(),
                 // cs_dir.join("api").join("fuota.proto").to_str().unwrap(),
             ],
             &[
