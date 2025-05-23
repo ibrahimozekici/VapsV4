@@ -51,7 +51,6 @@ service AlarmService {
     rpc ListAllOrganizationAlarms(ListOrganizationAlarmRequest2) returns (ListOrganizationAlarmResponse2) {
         option (google.api.http) = {
             get: "/api/alarm/listOrganizationAlarms/{organization_id}"
-            body: "*"
         }; 
     }
      // Create creates the alarm

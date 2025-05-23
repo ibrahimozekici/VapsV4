@@ -1,14 +1,14 @@
-use diesel::{prelude::*, sql_query};
-use serde::{Serialize, Deserialize};
+use crate::storage::schema_postgres::notifications::dsl as notif_dsl;
 use chrono::NaiveDateTime;
-use crate::storage::schema_postgres::notifications;
+use diesel::{prelude::*, sql_query};
 use diesel_async::RunQueryDsl;
-use crate::storage::schema_postgres::notifications::dsl::*;
+use serde::{Deserialize, Serialize};
+use tracing::info;
 
 use super::{error::Error, get_async_db_conn};
 
 #[derive(Debug, Clone, PartialEq, Eq, Insertable, Queryable)]
-#[diesel(table_name = notifications)]
+#[diesel(table_name = crate::storage::schema_postgres::notifications)]
 pub struct Notification {
     pub id: i32,
     pub sender_id: i32,
@@ -26,9 +26,8 @@ pub struct Notification {
     pub receiver_id: Vec<Option<i32>>,
 }
 
-
 #[derive(Debug, Insertable)]
-#[diesel(table_name = notifications)]
+#[diesel(table_name = crate::storage::schema_postgres::notifications)]
 pub struct NewNotification {
     pub sender_id: i32,
     pub message: String,
@@ -44,6 +43,7 @@ pub struct NewNotification {
     pub device_name: Option<String>,
     pub receiver_id: Vec<Option<i32>>,
 }
+
 impl Notification {
     pub fn validate(&self) -> Result<(), Error> {
         if self.message.trim().is_empty() {
@@ -87,64 +87,73 @@ impl Default for NewNotification {
         }
     }
 }
+
 pub async fn create_notification(notification: Notification) -> Result<Notification, Error> {
     notification.validate()?;
 
     let new = NewNotification {
         sender_id: notification.sender_id,
-        message: notification.message,
+        message: notification.message.clone(),
         category_id: notification.category_id,
         is_read: notification.is_read,
         send_time: notification.send_time,
         read_time: notification.read_time,
-        sender_ip: notification.sender_ip,
-        reader_ip: notification.reader_ip,
+        sender_ip: notification.sender_ip.clone(),
+        reader_ip: notification.reader_ip.clone(),
         is_deleted: notification.is_deleted,
         deleted_time: notification.deleted_time,
-        dev_eui: notification.dev_eui,
-        device_name: notification.device_name,
-        receiver_id: notification.receiver_id,
+        dev_eui: notification.dev_eui.clone(),
+        device_name: notification.device_name.clone(),
+        receiver_id: notification.receiver_id.clone(),
     };
 
+    let conn = &mut get_async_db_conn().await?;
 
-   let conn = &mut get_async_db_conn().await?;
-
-    // ✅ .await on the async version
-    let generated_id: i32 = diesel::insert_into(notifications::table)
+    let generated_id: i32 = diesel::insert_into(notif_dsl::notifications)
         .values(&new)
-        .returning(notifications::id)
-        .get_result(conn) // this works with diesel_async::RunQueryDsl
+        .returning(notif_dsl::id)
+        .get_result(conn)
         .await
         .map_err(|e| Error::from_diesel(e, "insert notification".into()))?;
 
-    let mut inserted = notification;
-    inserted.id = generated_id;
-
-    Ok(inserted)
+    Ok(Notification {
+        id: generated_id,
+        ..notification
+    })
 }
 
 pub async fn get_notification(notification_id: i32) -> Result<Notification, Error> {
-    
-    let result = notifications::dsl::notifications
-         .find(notification_id)
+    let result = notif_dsl::notifications
+        .find(notification_id)
         .first(&mut get_async_db_conn().await?)
-       .await
+        .await
         .map_err(|e| Error::from_diesel(e, "get notification".into()))?;
 
     Ok(result)
 }
 
-pub async fn list_notifications(user_id: i32) -> Result<Vec<Notification>, Error> {
+pub async fn list(user_id: i32) -> Result<Vec<Notification>, Error> {
     let mut conn = get_async_db_conn().await?;
 
-    let result = notifications
-        .filter(diesel::dsl::any(receiver_id).eq(user_id)) // OR: receiver_id.any(user_id)
-        .filter(is_deleted.eq(false))
-        .order(id.desc())
+    let result = notif_dsl::notifications
+        .filter(diesel::dsl::any(notif_dsl::receiver_id).eq(user_id))
+        .filter(notif_dsl::is_deleted.eq(false))
+        .order(notif_dsl::id.desc())
         .limit(500)
         .load::<Notification>(&mut conn)
         .await
         .map_err(|e| Error::from_diesel(e, "list notifications".into()))?;
 
     Ok(result)
+}
+
+pub async fn delete(notification_id: i32) -> Result<usize, Error> {
+    let deleted_rows = diesel::delete(notif_dsl::notifications.filter(notif_dsl::id.eq(notification_id)))
+        .execute(&mut get_async_db_conn().await?)
+        .await
+        .map_err(|e| Error::from_diesel(e, format!("delete notification {notification_id}")))?;
+
+    info!(id = %notification_id, rows = %deleted_rows, "Notification deleted");
+
+    Ok(deleted_rows)
 }

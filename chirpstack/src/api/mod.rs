@@ -186,9 +186,10 @@ pub async fn setup() -> Result<()> {
             auth::auth_interceptor,
         ))
         .add_service(NotificationServiceServer::with_interceptor(
-            notification::Notification::new(validator::RequestValidator::new()),
+            notification::NotificationServiceImpl::new(validator::RequestValidator::new()),
             auth::auth_interceptor,
-        ));
+        ))
+      ;
 
     let backend_handle = tokio::spawn(backend::setup());
     let monitoring_handle = tokio::spawn(monitoring::setup());

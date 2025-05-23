@@ -33,6 +33,7 @@
   diesel_migrations = { version = "2.2" }
   diesel-async = { version = "0.5", features = [
     "bb8",
+    "deadpool", 
     "async-connection-wrapper",
   ] }
   tokio-postgres = { version = "0.7", optional = true }

@@ -14,8 +14,9 @@ use super::{db_transaction, error::Error, fields, get_async_db_conn};
 
 pub type RelayId = DevAddr;
 
-#[derive(Queryable, Insertable, PartialEq, Debug)]
+#[derive(Queryable,Selectable, Insertable, PartialEq, Debug)]
 #[diesel(table_name = gateway)]
+#[diesel(check_for_backend(diesel::pg::Pg))]  // Required for `.as_returning()` with Postgres
 pub struct Gateway {
     pub gateway_id: EUI64,
     pub tenant_id: fields::Uuid,
