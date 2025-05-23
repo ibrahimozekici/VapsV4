@@ -14,14 +14,24 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/empty.proto";
 import "common/common.proto";
 import "api/user.proto";
+import "google/api/annotations.proto";
 
 // InternalService is the service providing API endpoints for internal usage.
 service InternalService {
   // Log in a user
-  rpc Login(LoginRequest) returns (LoginResponse) {}
+rpc Login(LoginRequest) returns (LoginResponse) {
+     option (google.api.http) = {
+          post: "/api/internal/login"
+          body: "*"
+     };
+}
 
-  // Get the current user's profile
-  rpc Profile(google.protobuf.Empty) returns (ProfileResponse) {}
+rpc Profile(google.protobuf.Empty) returns (ProfileResponse) {
+     option (google.api.http) = {
+          post: "/api/internal/profile"
+          body: "*"
+     };
+}
 
   // Perform a global search.
   rpc GlobalSearch(GlobalSearchRequest) returns (GlobalSearchResponse) {}
