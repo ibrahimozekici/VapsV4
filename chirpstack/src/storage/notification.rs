@@ -1,10 +1,9 @@
 use crate::storage::schema_postgres::notifications::dsl as notif_dsl;
 use chrono::NaiveDateTime;
-use diesel::{prelude::*, sql_query};
+use diesel::{prelude::*};
 use diesel_async::RunQueryDsl;
-use serde::{Deserialize, Serialize};
 use tracing::info;
-
+use uuid::Uuid;
 use super::{error::Error, get_async_db_conn};
 
 #[derive(Debug, Clone, PartialEq, Eq, Insertable, Queryable)]
@@ -23,7 +22,7 @@ pub struct Notification {
     pub deleted_time: Option<NaiveDateTime>,
     pub dev_eui: Option<String>,
     pub device_name: Option<String>,
-    pub receiver_id: Vec<Option<i32>>,
+    pub receiver_id: Vec<Option<Uuid>>,
 }
 
 #[derive(Debug, Insertable)]
@@ -41,7 +40,7 @@ pub struct NewNotification {
     pub deleted_time: Option<NaiveDateTime>,
     pub dev_eui: Option<String>,
     pub device_name: Option<String>,
-    pub receiver_id: Vec<Option<i32>>,
+    pub receiver_id: Vec<Option<Uuid>>,
 }
 
 impl Notification {
@@ -132,7 +131,7 @@ pub async fn get_notification(notification_id: i32) -> Result<Notification, Erro
     Ok(result)
 }
 
-pub async fn list(user_id: i32) -> Result<Vec<Notification>, Error> {
+pub async fn list(user_id: Uuid) -> Result<Vec<Notification>, Error> {
     let mut conn = get_async_db_conn().await?;
 
     let result = notif_dsl::notifications

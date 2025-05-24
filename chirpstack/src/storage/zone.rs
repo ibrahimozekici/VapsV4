@@ -2,7 +2,6 @@ use super::error::Error;
 use super::get_async_db_conn;
 use crate::storage::schema_postgres::zone;
 use crate::storage::schema_postgres::zone::dsl;
-use chirpstack_api::api::ListZoneResponse;
 use serde::{Deserialize, Deserializer};
 
 use diesel::prelude::*;

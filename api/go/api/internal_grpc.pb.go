@@ -25,7 +25,6 @@ const _ = grpc.SupportPackageIsVersion7
 type InternalServiceClient interface {
 	// Log in a user
 	Login(ctx context.Context, in *LoginRequest, opts ...grpc.CallOption) (*LoginResponse, error)
-	// Get the current user's profile
 	Profile(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*ProfileResponse, error)
 	// Perform a global search.
 	GlobalSearch(ctx context.Context, in *GlobalSearchRequest, opts ...grpc.CallOption) (*GlobalSearchResponse, error)
@@ -295,7 +294,6 @@ func (c *internalServiceClient) GetVersion(ctx context.Context, in *emptypb.Empt
 type InternalServiceServer interface {
 	// Log in a user
 	Login(context.Context, *LoginRequest) (*LoginResponse, error)
-	// Get the current user's profile
 	Profile(context.Context, *emptypb.Empty) (*ProfileResponse, error)
 	// Perform a global search.
 	GlobalSearch(context.Context, *GlobalSearchRequest) (*GlobalSearchResponse, error)

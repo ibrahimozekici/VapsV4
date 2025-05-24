@@ -49,7 +49,7 @@ message Notification {
     int64 sender_id = 2;
 
     // Notification Receiver Id
-    repeated int64 receiver_id = 3;
+    repeated string receiver_id = 3;
 
     // Notification Message
     string message = 4;
@@ -78,7 +78,7 @@ message Notification {
 
 message ListNotificationsRequest {
     // Gateway ID (HEX encoded).
-	int64 userId = 1;
+	string userId = 1;
 }
 
 message ListNotificationsResponse {

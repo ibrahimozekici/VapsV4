@@ -669,7 +669,7 @@ diesel::table! {
         dev_eui -> Nullable<Varchar>,
         #[max_length = 80]
         device_name -> Nullable<Varchar>,
-        receiver_id -> Array<Nullable<Int4>>,
+        receiver_id -> Array<Nullable<Uuid>>,
     }
 }
 

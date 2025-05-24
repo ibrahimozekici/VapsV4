@@ -8,6 +8,7 @@ package api
 
 import (
 	common "github.com/ibrahimozekici/VapsV4/api/go/common"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -2779,7 +2780,7 @@ var File_api_internal_proto protoreflect.FileDescriptor
 
 const file_api_internal_proto_rawDesc = "" +
 	"\n" +
-	"\x12api/internal.proto\x12\x03api\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x13common/common.proto\x1a\x0eapi/user.proto\"d\n" +
+	"\x12api/internal.proto\x12\x03api\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x13common/common.proto\x1a\x0eapi/user.proto\x1a\x1cgoogle/api/annotations.proto\"d\n" +
 	"\x06ApiKey\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x19\n" +
@@ -2984,10 +2985,10 @@ const file_api_internal_proto_rawDesc = "" +
 	"\x06dr_min\x18\x02 \x01(\rR\x05drMin\x12\x15\n" +
 	"\x06dr_max\x18\x03 \x01(\rR\x05drMax\".\n" +
 	"\x12GetVersionResponse\x12\x18\n" +
-	"\aversion\x18\x01 \x01(\tR\aversion2\xb9\t\n" +
-	"\x0fInternalService\x120\n" +
-	"\x05Login\x12\x11.api.LoginRequest\x1a\x12.api.LoginResponse\"\x00\x129\n" +
-	"\aProfile\x12\x16.google.protobuf.Empty\x1a\x14.api.ProfileResponse\"\x00\x12E\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion2\xf7\t\n" +
+	"\x0fInternalService\x12N\n" +
+	"\x05Login\x12\x11.api.LoginRequest\x1a\x12.api.LoginResponse\"\x1e\x82\xd3\xe4\x93\x02\x18:\x01*\"\x13/api/internal/login\x12Y\n" +
+	"\aProfile\x12\x16.google.protobuf.Empty\x1a\x14.api.ProfileResponse\" \x82\xd3\xe4\x93\x02\x1a:\x01*\"\x15/api/internal/profile\x12E\n" +
 	"\fGlobalSearch\x12\x18.api.GlobalSearchRequest\x1a\x19.api.GlobalSearchResponse\"\x00\x12E\n" +
 	"\fCreateApiKey\x12\x18.api.CreateApiKeyRequest\x1a\x19.api.CreateApiKeyResponse\"\x00\x12B\n" +
 	"\fDeleteApiKey\x12\x18.api.DeleteApiKeyRequest\x1a\x16.google.protobuf.Empty\"\x00\x12B\n" +

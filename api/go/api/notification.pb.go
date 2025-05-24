@@ -31,7 +31,7 @@ type Notification struct {
 	// Notification Sender Id
 	SenderId int64 `protobuf:"varint,2,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"`
 	// Notification Receiver Id
-	ReceiverId []int64 `protobuf:"varint,3,rep,packed,name=receiver_id,json=receiverId,proto3" json:"receiver_id,omitempty"`
+	ReceiverId []string `protobuf:"bytes,3,rep,name=receiver_id,json=receiverId,proto3" json:"receiver_id,omitempty"`
 	// Notification Message
 	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
 	CategoryId    int64                  `protobuf:"varint,5,opt,name=category_id,json=categoryId,proto3" json:"category_id,omitempty"`
@@ -92,7 +92,7 @@ func (x *Notification) GetSenderId() int64 {
 	return 0
 }
 
-func (x *Notification) GetReceiverId() []int64 {
+func (x *Notification) GetReceiverId() []string {
 	if x != nil {
 		return x.ReceiverId
 	}
@@ -179,7 +179,7 @@ func (x *Notification) GetDeviceName() string {
 type ListNotificationsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Gateway ID (HEX encoded).
-	UserId        int64 `protobuf:"varint,1,opt,name=userId,proto3" json:"userId,omitempty"`
+	UserId        string `protobuf:"bytes,1,opt,name=userId,proto3" json:"userId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -214,11 +214,11 @@ func (*ListNotificationsRequest) Descriptor() ([]byte, []int) {
 	return file_api_notification_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ListNotificationsRequest) GetUserId() int64 {
+func (x *ListNotificationsRequest) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
-	return 0
+	return ""
 }
 
 type ListNotificationsResponse struct {
@@ -405,7 +405,7 @@ const file_api_notification_proto_rawDesc = "" +
 	"\fNotification\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1b\n" +
 	"\tsender_id\x18\x02 \x01(\x03R\bsenderId\x12\x1f\n" +
-	"\vreceiver_id\x18\x03 \x03(\x03R\n" +
+	"\vreceiver_id\x18\x03 \x03(\tR\n" +
 	"receiverId\x12\x18\n" +
 	"\amessage\x18\x04 \x01(\tR\amessage\x12\x1f\n" +
 	"\vcategory_id\x18\x05 \x01(\x03R\n" +
@@ -424,7 +424,7 @@ const file_api_notification_proto_rawDesc = "" +
 	"\vdevice_name\x18\x0e \x01(\tR\n" +
 	"deviceName\"2\n" +
 	"\x18ListNotificationsRequest\x12\x16\n" +
-	"\x06userId\x18\x01 \x01(\x03R\x06userId\"T\n" +
+	"\x06userId\x18\x01 \x01(\tR\x06userId\"T\n" +
 	"\x19ListNotificationsResponse\x127\n" +
 	"\rnotifications\x18\x01 \x03(\v2\x11.api.NotificationR\rnotifications\"@\n" +
 	"\x18UpdateNotficationRequest\x12$\n" +

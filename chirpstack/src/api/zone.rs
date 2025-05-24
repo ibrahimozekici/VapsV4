@@ -6,10 +6,7 @@ use uuid::Uuid;
 use crate::storage::zone::{self, ZoneDataSerde, ZoneDeviceProfileSerde, ZoneDeviceSerde};
 use crate::{api::error::ToStatus, storage::zone::GetZonesItemSerde};
 use chirpstack_api::api::zone_service_server::ZoneService;
-use chirpstack_api::api::{
-    self, AddUserToZoneRequest, AddUserToZoneResponse, GetZonesItem, ZoneDevice, ZoneDeviceProfile,
-    ZonesOrderRequest,
-};
+use chirpstack_api::api::{self, GetZonesItem, ZoneDevice, ZoneDeviceProfile};
 
 use super::auth::{validator, AuthID};
 
