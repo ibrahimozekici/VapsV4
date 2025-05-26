@@ -33,8 +33,7 @@ Cargo.lock
 *.old
 *.orig
 *.DS_Store
-*.env
-.env.*
+
 
 # IDEs and editors
 .vscode/
