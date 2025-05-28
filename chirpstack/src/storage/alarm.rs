@@ -1,8 +1,10 @@
 use super::application::Application;
 use super::device::Device;
+use super::notification;
 use super::{error::Error, get_async_db_conn};
 use crate::storage::schema_postgres::alarm;
 use crate::storage::schema_postgres::alarm_audit_log;
+use crate::storage::schema_postgres::alarm_automation_rules;
 use crate::storage::schema_postgres::alarm_date_time;
 use anyhow::{Context, Result};
 use bigdecimal::ToPrimitive;
@@ -387,6 +389,42 @@ pub struct AlarmFilters {
     pub limit: i32,
     pub dev_eui: String,
     pub user_id: Uuid,
+}
+
+#[derive(
+    Queryable, QueryableByName, Insertable, AsChangeset, Debug, Clone, Serialize, Deserialize,
+)]
+#[diesel(table_name = alarm_automation_rules)]
+pub struct AlarmAutomation {
+    #[diesel(sql_type = Int4)]
+    pub alarm_id: i32,
+
+    #[diesel(sql_type = Text)]
+    pub receiver_sensor: String,
+
+    #[diesel(sql_type = Nullable<Text>)]
+    pub action: Option<String>,
+
+    #[diesel(sql_type = Nullable<Timestamp>)]
+    pub created_at: Option<NaiveDateTime>,
+
+    #[diesel(sql_type = Nullable<Timestamp>)]
+    pub updated_at: Option<NaiveDateTime>,
+
+    #[diesel(sql_type = Nullable<Bool>)]
+    pub is_active: Option<bool>,
+
+    #[diesel(sql_type = Nullable<Int4>)]
+    pub receiver_device_type: Option<i32>,
+
+    #[diesel(sql_type = Nullable<Text>)]
+    pub receiver_device_name: Option<String>,
+
+    #[diesel(sql_type = Int4)]
+    pub id: i32,
+
+    #[diesel(sql_type = Nullable<DieselUuid>)]
+    pub user_id: Option<Uuid>,
 }
 
 pub async fn create(
@@ -1271,12 +1309,26 @@ pub async fn check_threshold(
     if value < alarm.min_treshold || value > alarm.max_treshold {
         match alarm.zone_category_id {
             1 => {
-                if ege_method(value, alarm, conn).await? {
-                    execute_alarm(alarm, value, device, alarm_type, date, conn).await?;
+                let ege = ege_method(value, alarm, conn).await;
+                match ege {
+                    Ok(true) => {
+                        execute_alarm2(alarm, value, device, alarm_type, date, conn).await?;
+                        return Ok(());
+                    }
+                    Ok(false) => {}
+                    Err(e) => {
+                        tracing::error!("ege_method error: {:?}", e);
+                        return Err(anyhow::anyhow!("ege method error: {}", e));
+                    }
                 }
             }
-            0 | 2 | _ => {
+            0 | 2 => {
                 execute_alarm(alarm, value, device, alarm_type, date, conn).await?;
+                return Ok(());
+            }
+            _ => {
+                execute_alarm(alarm, value, device, alarm_type, date, conn).await?;
+                return Ok(());
             }
         }
     }
@@ -1300,7 +1352,7 @@ pub async fn execute_alarm(
         "ısı" | "nem" | "basinc" | "co2" => {
             write!(
                 &mut message,
-                "{} tarihinde {} ortamındaki {} isimli sensör {} kritik alarm seviyerini gecti. şu an ki değeri: {:.2}",
+                "{} tarihinde {} ortamındaki {} isimli sensör {} kritik alarm seviyesini gecti. Şu anki değeri: {:.2}",
                 date,
                 zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
                 device.name,
@@ -1354,12 +1406,135 @@ pub async fn execute_alarm(
         _ => {}
     }
 
-    // insert_notification(alarm, device, &message, conn).await?;
+    let notification = notification::Notification {
+        sender_id: alarm.id as i32,
+        receiver_id: alarm.user_id.clone(),
+        message: message.clone(),
+        category_id: 1,
+        is_read: Some(false),
+        send_time: Some(Local::now().naive_local()),
+        sender_ip: Some("System".to_string()),
+        reader_ip: Some("".to_string()),
+        is_deleted: Some(false),
+        device_name: Some(device.name.clone()),
+        dev_eui: Some(device.dev_eui.to_string()),
+        deleted_time: None,
+        id: 0,
+        read_time: None,
+    };
+
+    notification::create_notification(notification).await?;
     Ok(())
 }
+
+pub async fn execute_alarm2(
+    alarm: &AlarmWithDates,
+    value: f32,
+    device: &Device,
+    alarm_type: &str,
+    date: &str,
+    conn: &mut AsyncPgConnection,
+) -> anyhow::Result<()> {
+    // Get zone name
+    let zone_name = get_zone_name_by_dev_eui(conn, &device.dev_eui.to_string())
+        .await
+        .unwrap_or(Some("Bilinmeyen Alan".to_string()));
+
+    // Get organization name
+    #[derive(QueryableByName)]
+    struct OrganizationRow {
+        #[diesel(sql_type = Text)]
+        name: String,
+    }
+    let organization_name: String = if let Some(org_id) = device.organization_id {
+        let hex = format!("{:032x}", org_id as i64); // pad to 32-char hex
+        let fake_uuid = Uuid::parse_str(&hex).expect("Invalid UUID hex");
+
+        let org_query = r#"SELECT name FROM public.tenant WHERE id = $1"#;
+        let org_rows: Vec<OrganizationRow> = sql_query(org_query)
+            .bind::<diesel::sql_types::Nullable<diesel::sql_types::Uuid>, _>(Some(fake_uuid))
+            .load(conn)
+            .await
+            .unwrap_or_default();
+
+        org_rows
+            .get(0)
+            .map(|o| o.name.clone())
+            .unwrap_or_else(|| "Bilinmeyen Organizasyon".to_string())
+    } else {
+        "Bilinmeyen Organizasyon".to_string()
+    };
+    // Compose message
+    let message = match alarm_type {
+        "ısı" | "nem" | "basinc" | "co2" => format!(
+            "{} - {} tarihinde {} ortamındaki {} isimli sensör {} kritik alarm seviyesini gecti. şu an ki değeri: {:.2}",
+            organization_name,
+            date,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name,
+            alarm_type,
+            value
+        ),
+        "acil durum" => format!(
+            "{} - {} deki {} sensöründe acil durum var",
+            organization_name,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name
+        ),
+        "kacak" => format!(
+            "{} - {} deki {} sensöründe su baskını alarmı var",
+            organization_name,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name
+        ),
+        "button" => format!(
+            "{} - {} deki {} sensöründen çağrı var",
+            organization_name,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name
+        ),
+        "door" => format!(
+            "{} - {} tarihinde {} ortamındaki {} isimli sensör açıldı",
+            organization_name,
+            date,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name
+        ),
+        "mesafe" => format!(
+            "{} - {} tarihinde {} ortamındaki {} isimli sensör mesafe limitini aştı: {:.2}",
+            organization_name,
+            date,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name,
+            value
+        ),
+        _ => String::new(),
+    };
+
+    let notification = notification::Notification {
+        sender_id: alarm.id as i32,
+        receiver_id: alarm.user_id.clone(),
+        message,
+        category_id: 1,
+        is_read: Some(false),
+        send_time: Some(Local::now().naive_local()),
+        sender_ip: Some("system".to_string()),
+        reader_ip: Some("".to_string()),
+        is_deleted: Some(false),
+        device_name: Some(device.name.clone()),
+        dev_eui: Some(device.dev_eui.to_string()),
+        deleted_time: None,
+        id: 0,
+        read_time: None,
+    };
+
+    notification::create_notification(notification).await?;
+    Ok(())
+}
+
 #[derive(QueryableByName)]
 struct TemperatureRow {
-    #[sql_type = "Float4"]
+    #[diesel(sql_type = Float4)]
     air_temperature: f32,
 }
 
@@ -1421,4 +1596,75 @@ pub async fn ege_method(
     }
 
     Ok(true)
+}
+
+pub async fn create_alarm_automation(alarm_automation: AlarmAutomation) -> Result<(), Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let new_alarm_automation: AlarmAutomation = diesel::insert_into(alarm_automation_rules::table)
+        .values(&alarm_automation)
+        .get_result(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, "Creating alarm automation".to_string()))?;
+
+    info!(id = %new_alarm_automation.id, "Alarm automation created");
+
+    Ok(())
+}
+
+pub async fn get_alarm_automation(id: i32) -> Result<AlarmAutomation, Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let alarm_automation: AlarmAutomation = alarm_automation_rules::table
+        .find(id)
+        .first(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, id.to_string()))?;
+
+    Ok(alarm_automation)
+}
+
+pub async fn list_alarm_automation(alarm_id: i32) -> Result<Vec<AlarmAutomation>, Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let alarm_automations: Vec<AlarmAutomation> = alarm_automation_rules::table
+        .filter(alarm_automation_rules::alarm_id.eq(alarm_id))
+        .filter(alarm_automation_rules::is_active.eq(Some(true)))
+        .load(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, alarm_id.to_string()))?;
+
+    Ok(alarm_automations)
+}
+
+pub async fn delete_alarm_automation(id: i32) -> Result<(), Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let affected = diesel::delete(alarm_automation_rules::table.find(id))
+        .execute(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, id.to_string()))?;
+
+    if affected == 0 {
+        return Err(Error::NotFound("Alarm automation not found".into()));
+    }
+
+    info!(id, affected_rows = affected, "Alarm automation deleted");
+    Ok(())
+}
+
+pub async fn update_alarm_automation(
+    updated_alarm_automation: AlarmAutomation,
+) -> Result<AlarmAutomation, Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let updated_alarm_automation: AlarmAutomation =
+        diesel::update(alarm_automation_rules::table.find(updated_alarm_automation.id))
+            .set(&updated_alarm_automation)
+            .get_result(&mut conn)
+            .await
+            .map_err(|e| Error::from_diesel(e, updated_alarm_automation.id.to_string()))?;
+
+    info!(updated_alarm_automation.id, "Alarm automation updated");
+    Ok(updated_alarm_automation)
 }

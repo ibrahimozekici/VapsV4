@@ -54,10 +54,10 @@ diesel::table! {
         created_at -> Nullable<Timestamp>,
         updated_at -> Nullable<Timestamp>,
         is_active -> Nullable<Bool>,
-        user_id -> Int4,
         receiver_device_type -> Nullable<Int4>,
         receiver_device_name -> Nullable<Text>,
         id -> Int4,
+        user_id -> Nullable<Uuid>,
     }
 }
 
