@@ -3,6 +3,7 @@ use crate::storage::schema_postgres::automation_rules;
 use base64::engine::general_purpose::STANDARD as base64_engine;
 use base64::Engine;
 use base64::{engine::general_purpose as base64_engine, Engine as _};
+use chirpstack_api::api::*;
 use chrono::NaiveDateTime;
 use chrono::Utc;
 use diesel::deserialize::QueryableByName;
@@ -18,10 +19,15 @@ use diesel_async::RunQueryDsl;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::str::FromStr;
 use std::time::Duration;
 use tokio::time::sleep;
 use uuid::Uuid;
-
+use super::application::{self, get as get_application};
+use super::device::{self, get as get_device};
+use super::device_profile::{self, get as get_device_profile};
+use super::device_queue::{self, enqueue_item};
+use lrwn::EUI64;
 #[derive(Debug, Queryable, Insertable, AsChangeset, QueryableByName)]
 #[diesel(table_name = automation_rules)]
 pub struct Automation {
@@ -502,135 +508,151 @@ pub async fn check_state(rule: &Automation) -> Result<bool, Error> {
     }
 }
 
-// pub async fn execute_automation_action(rule: &Automation) -> Result<(), Error> {
-//     let receiver_sensor = rule
-//         .receiver_sensor
-//         .as_ref()
-//         .ok_or_else(|| Error::from("Missing receiver_sensor"))?;
+pub async fn execute_automation_action(rule: &Automation) -> Result<(), Error> {
+    let receiver_sensor = rule
+        .receiver_sensor
+        .as_ref()
+        .ok_or_else(|| Error::Validation("Missing receiver_sensor".to_string()))?;
 
-//     let port = match rule.receiver_device_type {
-//         Some(6) => 8,
-//         Some(27) | Some(28) => 85,
-//         Some(t) => {
-//             log::warn!("Unknown ReceiverDeviceType: {}", t);
-//             return Ok(());
-//         }
-//         None => return Err(Error::from("Missing receiver_device_type")),
-//     };
+    let port = match rule.receiver_device_type {
+        Some(6) => 8,
+        Some(27) | Some(28) => 85,
+        Some(t) => {
+            return Ok(());
+        }
+        None => return Err(Error::Validation("Missing receiver_device_type".to_string())),
+    };
 
-//     let action = rule
-//         .action
-//         .as_ref()
-//         .ok_or_else(|| Error::from("Missing action"))?;
+    let action = rule
+        .action
+        .as_ref()
+        .ok_or_else(|| Error::Validation("Missing action".to_string()))?;
 
-//     if rule.receiver_device_type == Some(28) {
-//         let commands: Vec<&str> = action.split(';').collect();
-//         if commands.len() != 2 {
-//             log::warn!("Expected two commands for device type 28");
-//             return Ok(());
-//         }
+    if rule.receiver_device_type == Some(28) {
+        let commands: Vec<&str> = action.split(';').collect();
+        if commands.len() != 2 {
+            return Ok(());
+        }
 
-//         for (i, cmd) in commands.iter().enumerate() {
-//             let decoded = match base64_engine::STANDARD.decode(cmd) {
-//                 Ok(d) => d,
-//                 Err(e) => {
-//                     log::warn!("Error decoding command {}: {}", i + 1, e);
-//                     return Ok(());
-//                 }
-//             };
+        for (i, cmd) in commands.iter().enumerate() {
+            let decoded = match base64_engine::STANDARD.decode(cmd) {
+                Ok(d) => d,
+                Err(e) => {
+                    return Ok(());
+                }
+            };
 
-//             enqueue_device_queue_item(receiver_sensor, port, &decoded).await?;
+            enqueue_device_queue_item(receiver_sensor, port, &decoded).await?;
 
-//             if i == 0 {
-//                 sleep(Duration::from_secs(10)).await;
-//             }
-//         }
-//     } else {
-//         let url = format!(
-//             "https://cloud.vaps.com.tr:8443/api/devices/{}/queue",
-//             receiver_sensor
-//         );
+            if i == 0 {
+                sleep(Duration::from_secs(10)).await;
+            }
+        }
+    } else {
+        let url = format!(
+            "https://cloud.vaps.com.tr:8443/api/devices/{}/queue",
+            receiver_sensor
+        );
 
-//         let payload = RequestPayload1 {
-//             device_queue_item: DeviceQueueItem1 {
-//                 f_port: port as i32,
-//                 confirmed: true,
-//                 data: action.clone(),
-//                 dev_eui: receiver_sensor.clone(),
-//             },
-//         };
+        let payload = RequestPayload1 {
+            device_queue_item: DeviceQueueItem1 {
+                f_port: port as i32,
+                confirmed: true,
+                data: action.clone(),
+                dev_eui: receiver_sensor.clone(),
+            },
+        };
 
-//         let client = Client::new();
-//         let token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // shortened for brevity
+        let client = Client::new();
+        let token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // shortened for brevity
 
-//         let res = client
-//             .post(url)
-//             .header("Content-Type", "application/json")
-//             .header("grpc-metadata-authorization", token)
-//             .json(&payload)
-//             .send()
-//             .await
-//             .map_err(|e| Error::from(format!("HTTP error: {}", e)))?;
+        let res = client
+            .post(url)
+            .header("Content-Type", "application/json")
+            .header("grpc-metadata-authorization", token)
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|e| Error::Validation(format!("HTTP error: {}", e)))?;
 
-//         log::info!("Response Status: {}", res.status());
-//     }
+    }
 
-//     Ok(())
-// }
+    Ok(())
+}
 
-// pub async fn enqueue_device_queue_item(
-//     dev_eui: &str,
-//     port: u32,
-//     data: &[u8],
-// ) -> Result<(), Error> {
-//     let url = format!("https://cloud.vaps.com.tr:8443/api/devices/{}/queue", dev_eui);
-//     let payload = RequestPayload1 {
-//         device_queue_item: DeviceQueueItem1 {
-//             f_port: port as i32,
-//             confirmed: true,
-//             data: base64_engine::STANDARD.encode(data),
-//             dev_eui: dev_eui.to_string(),
-//         },
-//     };
+pub async fn enqueue_device_queue_item(
+    dev_eui: &str,
+    port: u32,
+    data: &[u8],
+) -> Result<(), Error> {
+    let device_queue_item = DeviceQueueItem {
+        dev_eui: dev_eui.to_string(),
+        confirmed: true,
+        f_port: port as u32,
+        data: data.to_vec(),
+        ..Default::default()
+    };
 
-//     let client = Client::new();
-//     let token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // same token
+    let enqueue_request = EnqueueDeviceQueueItemRequest {
+        queue_item: Some(device_queue_item),
+    };
 
-//     let res = client
-//         .post(url)
-//         .header("Content-Type", "application/json")
-//         .header("grpc-metadata-authorization", token)
-//         .json(&payload)
-//         .send()
-//         .await
-//         .map_err(|e| Error::from(format!("HTTP error: {}", e)))?;
+    enqueue(&enqueue_request).await?;
+    Ok(())
+}
 
-//     log::info!("Enqueue Response Status: {}", res.status());
-//     Ok(())
-// }
+pub async fn enqueue(
+    request: &EnqueueDeviceQueueItemRequest,
+) -> Result<(), Error> {
+    let queue_item = match &request.queue_item {
+        Some(q) => q,
+        None => {
+            return Err(Error::Validation("queue_item must not be nil".to_string()));
+        }
+    };
 
-// pub async fn enqueue_device_queue_item_internal(
-//     dev_eui: &str,
-//     port: u32,
-//     data: &[u8],
-//     json_object: Option<&str>,
-// ) -> Result<(), Error> {
-//     // 1. Lock device row (future implementation)
-//     // 2. If JSON object is set, convert using codec
-//     // 3. Insert into DB via Diesel
+    if queue_item.f_port == 0 {
+        return Err(Error::Validation("f_port must be > 0".to_string()));
+    }
 
-//     log::info!(
-//         "EnqueueDeviceQueueItemInternal → dev_eui={}, port={}, data={:?}, json={:?}",
-//         dev_eui,
-//         port,
-//         data,
-//         json_object
-//     );
+    let dev_eui = &queue_item.dev_eui;
+    if dev_eui.len() != 16 {
+        return Err(Error::Validation("dev_eui must be 16 hex chars".to_string()));
+    }
 
-//     // Placeholder for Diesel insert:
-//     // diesel::insert_into(device_queue::table)
-//     //     .values(...)
-//     //     .execute(&mut conn).await?;
+    // Fetch device and metadata
+    let dev_eui_parsed = EUI64::from_str(dev_eui)
+        .map_err(|_| Error::Validation("Invalid dev_eui format".to_string()))?;
+    let device_item = get_device(&dev_eui_parsed)
+        .await
+        .map_err(|e| Error::Validation(format!("Device not found: {}", e)))?;
 
-//     Ok(())
-// }
+    let application_item = get_application(&device_item.application_id)
+        .await
+        .map_err(|e| Error::Validation(format!("Application not found: {}", e)))?;
+
+    let device_profile = get_device_profile(&device_item.device_profile_id)
+        .await
+        .map_err(|e| Error::Validation(format!("Device profile not found: {}", e)))?;
+
+    // Decode base64 data
+    let data = base64_engine
+        .decode(&queue_item.data)
+        .map_err(|e| Error::Validation(format!("Invalid base64 data: {}", e)))?;
+
+    // Prepare queue item
+    let item = device_queue::DeviceQueueItem {
+        dev_eui: EUI64::from_str(dev_eui)
+            .map_err(|_| Error::Validation("Invalid dev_eui format".to_string()))?,
+        confirmed: queue_item.confirmed,
+        f_port: queue_item.f_port as i16,
+        data,
+        // Optionally set these based on your gRPC message or leave as default
+        ..Default::default()
+    };
+
+    // Enqueue payload
+    device_queue::enqueue_item(item).await?;
+
+    Ok(())
+}

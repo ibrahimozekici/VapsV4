@@ -1,5 +1,6 @@
 use super::application::Application;
 use super::device::Device;
+use super::notification;
 use super::{error::Error, get_async_db_conn};
 use crate::storage::schema_postgres::alarm;
 use crate::storage::schema_postgres::alarm_audit_log;
@@ -1271,12 +1272,26 @@ pub async fn check_threshold(
     if value < alarm.min_treshold || value > alarm.max_treshold {
         match alarm.zone_category_id {
             1 => {
-                if ege_method(value, alarm, conn).await? {
-                    execute_alarm(alarm, value, device, alarm_type, date, conn).await?;
+                let ege = ege_method(value, alarm, conn).await;
+                match ege {
+                    Ok(true) => {
+                        execute_alarm2(alarm, value, device, alarm_type, date, conn).await?;
+                        return Ok(());
+                    }
+                    Ok(false) => {}
+                    Err(e) => {
+                        tracing::error!("ege_method error: {:?}", e);
+                        return Err(anyhow::anyhow!("ege method error: {}", e));
+                    }
                 }
             }
-            0 | 2 | _ => {
+            0 | 2 => {
                 execute_alarm(alarm, value, device, alarm_type, date, conn).await?;
+                return Ok(());
+            }
+            _ => {
+                execute_alarm(alarm, value, device, alarm_type, date, conn).await?;
+                return Ok(());
             }
         }
     }
@@ -1300,7 +1315,7 @@ pub async fn execute_alarm(
         "ısı" | "nem" | "basinc" | "co2" => {
             write!(
                 &mut message,
-                "{} tarihinde {} ortamındaki {} isimli sensör {} kritik alarm seviyerini gecti. şu an ki değeri: {:.2}",
+                "{} tarihinde {} ortamındaki {} isimli sensör {} kritik alarm seviyesini gecti. Şu anki değeri: {:.2}",
                 date,
                 zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
                 device.name,
@@ -1354,9 +1369,132 @@ pub async fn execute_alarm(
         _ => {}
     }
 
-    // insert_notification(alarm, device, &message, conn).await?;
+    let notification = notification::Notification {
+        sender_id: alarm.id as i32,
+        receiver_id: alarm.user_id.clone(),
+        message: message.clone(),
+        category_id: 1,
+        is_read: Some(false),
+        send_time: Some(Local::now().naive_local()),
+        sender_ip: Some("System".to_string()),
+        reader_ip: Some("".to_string()),
+        is_deleted: Some(false),
+        device_name: Some(device.name.clone()),
+        dev_eui: Some(device.dev_eui.to_string()),
+        deleted_time: None,
+        id: 0,
+        read_time: None,
+    };
+
+    notification::create_notification(notification).await?;
     Ok(())
 }
+
+pub async fn execute_alarm2(
+    alarm: &AlarmWithDates,
+    value: f32,
+    device: &Device,
+    alarm_type: &str,
+    date: &str,
+    conn: &mut AsyncPgConnection,
+) -> anyhow::Result<()> {
+    // Get zone name
+    let zone_name = get_zone_name_by_dev_eui(conn, &device.dev_eui.to_string())
+        .await
+        .unwrap_or(Some("Bilinmeyen Alan".to_string()));
+
+    // Get organization name
+    #[derive(QueryableByName)]
+    struct OrganizationRow {
+        #[diesel(sql_type = Text)]
+        name: String,
+    }
+    let organization_name: String = if let Some(org_id) = device.organization_id {
+        let hex = format!("{:032x}", org_id as i64); // pad to 32-char hex
+        let fake_uuid = Uuid::parse_str(&hex).expect("Invalid UUID hex");
+
+        let org_query = r#"SELECT name FROM public.tenant WHERE id = $1"#;
+        let org_rows: Vec<OrganizationRow> = sql_query(org_query)
+            .bind::<diesel::sql_types::Nullable<diesel::sql_types::Uuid>, _>(Some(fake_uuid))
+            .load(conn)
+            .await
+            .unwrap_or_default();
+
+        org_rows
+            .get(0)
+            .map(|o| o.name.clone())
+            .unwrap_or_else(|| "Bilinmeyen Organizasyon".to_string())
+    } else {
+        "Bilinmeyen Organizasyon".to_string()
+    };
+    // Compose message
+    let message = match alarm_type {
+        "ısı" | "nem" | "basinc" | "co2" => format!(
+            "{} - {} tarihinde {} ortamındaki {} isimli sensör {} kritik alarm seviyesini gecti. şu an ki değeri: {:.2}",
+            organization_name,
+            date,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name,
+            alarm_type,
+            value
+        ),
+        "acil durum" => format!(
+            "{} - {} deki {} sensöründe acil durum var",
+            organization_name,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name
+        ),
+        "kacak" => format!(
+            "{} - {} deki {} sensöründe su baskını alarmı var",
+            organization_name,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name
+        ),
+        "button" => format!(
+            "{} - {} deki {} sensöründen çağrı var",
+            organization_name,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name
+        ),
+        "door" => format!(
+            "{} - {} tarihinde {} ortamındaki {} isimli sensör açıldı",
+            organization_name,
+            date,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name
+        ),
+        "mesafe" => format!(
+            "{} - {} tarihinde {} ortamındaki {} isimli sensör mesafe limitini aştı: {:.2}",
+            organization_name,
+            date,
+            zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+            device.name,
+            value
+        ),
+        _ => String::new(),
+    };
+
+    let notification = notification::Notification {
+        sender_id: alarm.id as i32,
+        receiver_id: alarm.user_id.clone(),
+        message,
+        category_id: 1,
+        is_read: Some(false),
+        send_time: Some(Local::now().naive_local()),
+        sender_ip: Some("system".to_string()),
+        reader_ip: Some("".to_string()),
+        is_deleted: Some(false),
+        device_name: Some(device.name.clone()),
+        dev_eui: Some(device.dev_eui.to_string()),
+        deleted_time: None,
+        id: 0,
+        read_time: None,
+    };
+
+    notification::create_notification(notification).await?;
+    Ok(())
+}
+
 #[derive(QueryableByName)]
 struct TemperatureRow {
     #[sql_type = "Float4"]
