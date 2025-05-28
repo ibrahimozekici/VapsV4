@@ -1,17 +1,28 @@
-use super::schema::{
-    alarm, alarm_audit_log, alarm_date_time
-};
-use super::{ error::Error, get_async_db_conn};
-use anyhow::Result;
-use chirpstack_api::{api};
+use super::application::Application;
+use super::device::Device;
+use super::{error::Error, get_async_db_conn};
+use crate::storage::schema_postgres::alarm;
+use crate::storage::schema_postgres::alarm_audit_log;
+use crate::storage::schema_postgres::alarm_date_time;
+use anyhow::{Context, Result};
+use bigdecimal::ToPrimitive;
+use chirpstack_api::api;
 use chrono::NaiveDateTime;
+use chrono::NaiveTime;
+use chrono::{Datelike, Local, Timelike};
+use diesel::deserialize::QueryableByName;
+use diesel::pg::Pg;
 use diesel::prelude::*;
 use diesel::sql_query;
+use diesel::sql_types::Uuid as DieselUuid;
 use diesel::sql_types::*;
+use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::fmt::Write;
 use tracing::info;
+use uuid::Uuid;
 
 #[derive(
     Queryable,
@@ -45,9 +56,9 @@ pub struct Alarm {
     pub is_active: Option<bool>,
     pub pressure: Option<bool>,
     pub notification_sound: Option<String>,
-    pub user_id: Option<Vec<Option<i64>>>,
     pub distance: Option<bool>,
     pub defrost_time: Option<i32>,
+    pub user_id: Option<Vec<Option<Uuid>>>,
 }
 
 impl Default for Alarm {
@@ -78,7 +89,8 @@ impl Default for Alarm {
         }
     }
 }
-#[derive(Debug, QueryableByName, Serialize, Deserialize)]
+#[derive(Debug, Queryable, QueryableByName, Serialize, Deserialize)]
+#[diesel(check_for_backend(Pg))]
 pub struct OrganizationAlarm {
     #[diesel(sql_type = Int8)]
     pub id: i64,
@@ -116,8 +128,8 @@ pub struct OrganizationAlarm {
     #[diesel(sql_type = Nullable<Bool>)]
     pub w_leak: Option<bool>,
 
-    #[diesel(sql_type = Nullable<Array<Nullable<Int8>>>)]
-    pub user_id: Option<Vec<Option<i64>>>,
+    #[diesel(sql_type = Nullable<Array<Nullable<DieselUuid>>>)]
+    pub user_id: Option<Vec<Option<Uuid>>>,
 
     #[diesel(sql_type = Nullable<Text>)]
     pub ip_address: Option<String>,
@@ -180,6 +192,128 @@ pub struct OrganizationAlarm {
     pub defrost_time: Option<i64>,
 }
 
+#[derive(Queryable, QueryableByName, Debug, Clone, Serialize, Deserialize)]
+#[diesel(check_for_backend(Pg))]
+
+pub struct AlarmWithDates {
+    #[diesel(sql_type = Int8)]
+    pub id: i64,
+
+    #[diesel(sql_type = Text)]
+    pub dev_eui: String,
+
+    #[diesel(sql_type = Float4)]
+    pub min_treshold: f32,
+
+    #[diesel(sql_type = Float4)]
+    pub max_treshold: f32,
+
+    #[diesel(sql_type = Bool)]
+    pub sms: bool,
+
+    #[diesel(sql_type = Bool)]
+    pub notification: bool,
+
+    #[diesel(sql_type = Bool)]
+    pub email: bool,
+
+    #[diesel(sql_type = Bool)]
+    pub temperature: bool,
+
+    #[diesel(sql_type = Bool)]
+    pub humadity: bool,
+
+    #[diesel(sql_type = Bool)]
+    pub ec: bool,
+
+    #[diesel(sql_type = Bool)]
+    pub door: bool,
+
+    #[diesel(sql_type = Bool)]
+    pub w_leak: bool,
+
+    #[diesel(sql_type = Array<Nullable<DieselUuid>>)]
+    pub user_id: Vec<Option<Uuid>>,
+
+    #[diesel(sql_type = Nullable<Text>)]
+    pub ip_address: Option<String>,
+
+    #[diesel(sql_type = Bool)]
+    pub is_time_limit_active: bool,
+
+    #[diesel(sql_type = BigInt)]
+    pub zone_category_id: i64,
+
+    #[diesel(sql_type = BigInt)]
+    pub alarm_day: i64,
+
+    #[diesel(sql_type = Float4)]
+    pub alarm_start_time2: f32,
+
+    #[diesel(sql_type = Float4)]
+    pub alarm_stop_time2: f32,
+
+    #[diesel(sql_type = Float4)]
+    pub start_time: f32,
+
+    #[diesel(sql_type = Float4)]
+    pub end_time: f32,
+
+    #[diesel(sql_type = Bool)]
+    pub is_active: bool,
+
+    #[diesel(sql_type = Bool)]
+    pub pressure: bool,
+
+    #[diesel(sql_type = Float4)]
+    pub current: f32,
+
+    #[diesel(sql_type = Float4)]
+    pub factor: f32,
+
+    #[diesel(sql_type = Float4)]
+    pub power: f32,
+
+    #[diesel(sql_type = Float4)]
+    pub voltage: f32,
+
+    #[diesel(sql_type = BigInt)]
+    pub status: i64,
+
+    #[diesel(sql_type = Float4)]
+    pub power_sum: f32,
+
+    #[diesel(sql_type = Bool)]
+    pub distance: bool,
+
+    #[diesel(sql_type = Bool)]
+    pub co2: bool,
+
+    #[diesel(sql_type = Nullable<Text>)]
+    pub notification_sound: Option<String>,
+
+    #[diesel(sql_type = BigInt)]
+    pub defrost_time: i64,
+}
+
+impl AlarmWithDates {
+    pub fn is_within_schedule(&self, current_time: NaiveTime) -> bool {
+        if !self.is_time_limit_active {
+            return true;
+        }
+
+        let time = current_time.hour() as f32 + current_time.minute() as f32 / 60.0 + 3.0;
+        let adjusted_time = if time >= 24.0 { time - 24.0 } else { time };
+
+        if self.end_time > self.start_time {
+            self.start_time < adjusted_time && adjusted_time < self.end_time
+        } else {
+            (self.start_time < adjusted_time && adjusted_time < 24.0)
+                || (0.0 < adjusted_time && adjusted_time < self.end_time)
+        }
+    }
+}
+
 #[derive(Queryable, QueryableByName, Insertable, Debug, Serialize, Deserialize, Clone)]
 #[diesel(table_name = alarm_audit_log)]
 pub struct AlarmAuditLog {
@@ -188,7 +322,7 @@ pub struct AlarmAuditLog {
     pub dev_eui: Option<String>,
     pub change_type: Option<String>,
     pub changed_at: Option<NaiveDateTime>,
-    pub changed_by: Option<i32>,
+    pub changed_by: Option<Uuid>,
     pub old_values: Option<serde_json::Value>,
     pub new_values: Option<serde_json::Value>,
 }
@@ -220,7 +354,7 @@ pub struct DoorTimeAlarm {
     #[diesel(sql_type = Integer)]
     pub id: i32,
 
-    #[diesel(sql_type = Nullable<Text>)]
+    #[diesel(sql_type = Nullable<Varchar>)]
     pub dev_eui: Option<String>,
 
     #[diesel(sql_type = Nullable<Bool>)]
@@ -238,30 +372,27 @@ pub struct DoorTimeAlarm {
     #[diesel(sql_type = Nullable<Bool>)]
     pub is_active: Option<bool>,
 
-    #[diesel(sql_type = Nullable<BigInt>)]
+    #[diesel(sql_type = Nullable<Int8>)]
     pub time: Option<i64>,
 
-    #[diesel(sql_type = Nullable<Array<Nullable<BigInt>>>) ]
-    pub user_id: Option<Vec<Option<i64>>>,
+    #[diesel(sql_type = Nullable<Array<Nullable<DieselUuid>>>)]
+    pub user_id: Option<Vec<Option<Uuid>>>,
 
-    #[diesel(sql_type = Nullable<Integer>)]
-    pub organization_id: Option<i32>,
-
-    #[diesel(sql_type = Nullable<Bool>)]
-    pub is_time_limit_active: Option<bool>,
+    #[diesel(sql_type = Nullable<DieselUuid>)]
+    pub tenant_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct AlarmFilters {
     pub limit: i32,
     pub dev_eui: String,
-    pub user_id: i64,
+    pub user_id: Uuid,
 }
 
 pub async fn create(
     alarm: Alarm,
     date_filters: Vec<AlarmDateTime>,
-    sent_user_id: i64,
+    sent_user_id: Uuid,
 ) -> Result<Alarm, Error> {
     let mut conn = get_async_db_conn().await?;
 
@@ -326,32 +457,64 @@ pub async fn get_alarm_dates(alarm_id: i32) -> Result<Vec<AlarmDateTime>, Error>
     Ok(dates)
 }
 
-pub async fn get_organization_alarm_list(
-    organization_id: i32,
-) -> Result<Vec<OrganizationAlarm>, Error> {
+pub async fn get_organization_alarm_list(tenant_id: Uuid) -> Result<Vec<OrganizationAlarm>, Error> {
     let mut conn = get_async_db_conn().await?;
 
     let alarms = diesel::sql_query(
         r#"
-        SELECT z.zone_name, d.name AS device_name, 0 AS time, a.*
+        SELECT 
+            a.id,
+            a.dev_eui,
+            a.min_treshold,
+            a.max_treshold,
+            a.sms,
+            a.email,
+            a.notification,
+            a.temperature,
+            a.humadity,
+            a.ec,
+            a.door,
+            a.w_leak,
+            a.user_id,
+            d.ip_address,
+            a.is_time_limit_active,
+            a.alarm_start_time,
+            a.alarm_stop_time,
+            a.zone_category,
+            a.is_active,
+            z.zone_name,
+            d.name AS device_name,
+            '' AS username,
+            a.pressure,
+            d.current,
+            d.factor,
+            d.power,
+            d.voltage,
+            d.status,
+            d.power_sum,
+            a.notification_sound,
+            a.distance,
+            0 AS time,
+            a.defrost_time
         FROM alarm AS a
         INNER JOIN device AS d ON d.dev_eui::text = '\x' || a.dev_eui
         INNER JOIN zone AS z ON d.dev_eui::text = ANY(z.devices)
-        WHERE d.organization_id = $1
+        WHERE d.tenant_id = $1
         "#,
     )
-    .bind::<Int4, _>(organization_id)
+    .bind::<DieselUuid, _>(tenant_id)
     .load::<OrganizationAlarm>(&mut conn)
     .await
-    .map_err(|e| Error::from_diesel(e, organization_id.to_string()))?;
+    .map_err(|e| Error::from_diesel(e, tenant_id.to_string()))?;
 
-    info!(organization_id = organization_id, "Alarms fetched");
+    info!(tenant_id = %tenant_id, "Alarms fetched");
     Ok(alarms)
 }
+
 pub async fn update_alarm(
     updated_alarm: Alarm,
     date_filters: Vec<AlarmDateTime>,
-    sent_user_id: i64,
+    sent_user_id: Uuid,
 ) -> Result<(), Error> {
     let mut conn = get_async_db_conn().await?;
 
@@ -405,7 +568,7 @@ pub async fn update_alarm(
     Ok(())
 }
 
-pub async fn delete_alarm(alarm_id: i32, sent_user_id: i64) -> Result<(), Error> {
+pub async fn delete_alarm(alarm_id: i32, sent_user_id: Uuid) -> Result<(), Error> {
     let mut conn = get_async_db_conn().await?;
 
     let alarm: Alarm = alarm::table
@@ -433,13 +596,13 @@ pub async fn delete_alarm(alarm_id: i32, sent_user_id: i64) -> Result<(), Error>
     Ok(())
 }
 
-pub async fn delete_user_alarm(user_id: i64, sent_user_id: i64) -> Result<(), Error> {
+pub async fn delete_user_alarm(user_id: Uuid, sent_user_id: Uuid) -> Result<(), Error> {
     let mut conn = get_async_db_conn().await?;
 
     let query = r#"
     WITH updated_rows AS (
         UPDATE alarm
-        SET user_id = array_remove(user_id, $1::bigint)
+        SET user_id = array_remove(user_id, $1::uuid)
         WHERE $1 = ANY(user_id)
         RETURNING *
     )
@@ -447,7 +610,7 @@ pub async fn delete_user_alarm(user_id: i64, sent_user_id: i64) -> Result<(), Er
     "#;
 
     let alarms: Vec<Alarm> = sql_query(query)
-        .bind::<BigInt, _>(user_id)
+        .bind::<DieselUuid, _>(user_id)
         .load(&mut conn)
         .await
         .map_err(|e| Error::from_diesel(e, user_id.to_string()))?;
@@ -476,11 +639,11 @@ pub async fn delete_user_alarm(user_id: i64, sent_user_id: i64) -> Result<(), Er
         }
     }
 
-    info!(user_id = user_id, "User alarm deleted");
+    info!(user_id = %user_id, "User alarm deleted");
     Ok(())
 }
 
-pub async fn delete_sensor_alarm(dev_eui: &str, sent_user_id: i64) -> Result<(), Error> {
+pub async fn delete_sensor_alarm(dev_eui: &str, sent_user_id: Uuid) -> Result<(), Error> {
     let mut conn = get_async_db_conn().await?;
 
     let alarm: Alarm = alarm::table
@@ -508,7 +671,7 @@ pub async fn delete_sensor_alarm(dev_eui: &str, sent_user_id: i64) -> Result<(),
     Ok(())
 }
 
-pub async fn delete_zone_alarm(zone_id: i32, sent_user_id: i64) -> Result<(), Error> {
+pub async fn delete_zone_alarm(zone_id: i32, sent_user_id: Uuid) -> Result<(), Error> {
     let mut conn = get_async_db_conn().await?;
 
     let alarms: Vec<Alarm> = alarm::table
@@ -548,7 +711,7 @@ pub async fn delete_zone_alarm(zone_id: i32, sent_user_id: i64) -> Result<(), Er
 pub async fn log_audit(
     alarm_id: i64,
     dev_eui: &str,
-    user_id: i64,
+    user_id: Uuid,
     change_type: &str,
     previous_value: Option<Value>,
     new_value: Option<Value>,
@@ -560,7 +723,7 @@ pub async fn log_audit(
             alarm_audit_log::alarm_id.eq(alarm_id as i32),
             alarm_audit_log::dev_eui.eq(dev_eui),
             alarm_audit_log::change_type.eq(change_type),
-            alarm_audit_log::changed_by.eq(Some(user_id as i32)),
+            alarm_audit_log::changed_by.eq(Some(user_id as Uuid)),
             alarm_audit_log::old_values.eq(previous_value),
             alarm_audit_log::new_values.eq(new_value),
         ))
@@ -572,63 +735,21 @@ pub async fn log_audit(
     Ok(())
 }
 
-pub async fn get_alarm_audit_logs(alarm_id: i64, limit: i64) -> Result<Vec<api::AuditLog>, Error> {
-    let mut conn = get_async_db_conn().await?;
-
-    let logs = diesel::sql_query(
-        r#"
-        SELECT * FROM alarm_audit_log
-        WHERE alarm_id = $1
-        ORDER BY created_at DESC
-        LIMIT $2
-        "#,
-    )
-    .bind::<Int8, _>(alarm_id)
-    .bind::<Int8, _>(limit)
-    .load::<AlarmAuditLog>(&mut conn)
-    .await
-    .map_err(|e| Error::from_diesel(e, alarm_id.to_string()))?
-    .into_iter()
-    .map(|log| api::AuditLog {
-        log_id: log.id as i64,
-        alarm_id: log.alarm_id as i64,
-        dev_eui: log.dev_eui.unwrap_or_default(),
-        change_type: log.change_type.unwrap_or_default(),
-        changed_at: log.changed_at.map(|dt| ::prost_types::Timestamp {
-            seconds: dt.timestamp(),
-            nanos: dt.timestamp_subsec_nanos() as i32,
-        }),
-        changed_by: log.changed_by.map(|v| v as i64).unwrap_or_default(),
-        old_values: log
-            .old_values
-            .map(|v| v.to_string())
-            .unwrap_or_else(|| "".to_string()),
-        new_values: log
-            .new_values
-            .map(|v| v.to_string())
-            .unwrap_or_else(|| "".to_string()),
-    })
-    .collect();
-
-    info!(alarm_id, "Alarm audit logs fetched");
-    Ok(logs)
-}
-
 pub async fn create_door_time_alarm(
     door_time_alarm: DoorTimeAlarm,
     time_schedule: Vec<AlarmDateTime>,
-    sent_user_id: i64,
+    sent_user_id: Uuid,
 ) -> Result<DoorTimeAlarm, Error> {
     let mut conn = get_async_db_conn().await?;
 
     // Insert into door_time_alarm table and get the created alarm with id
     let insert_query = r#"
         INSERT INTO door_time_alarm (
-            dev_eui, time, is_active, sms, notification, email, user_id, submission_time, organization_id, is_time_limit_active
+            dev_eui, time, is_active, sms, notification, email, user_id, submission_time, tenant_id
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, NOW(), $8, $9
+            $1, $2, $3, $4, $5, $6, $7, NOW(), $8
         )
-        RETURNING id, dev_eui, time, is_active, sms, notification, email, user_id, submission_time, organization_id, is_time_limit_active
+        RETURNING id, dev_eui, time, is_active, sms, notification, email, user_id, submission_time, tenant_id
     "#;
 
     let created_alarm: DoorTimeAlarm = sql_query(insert_query)
@@ -638,9 +759,8 @@ pub async fn create_door_time_alarm(
         .bind::<Nullable<Bool>, _>(door_time_alarm.sms)
         .bind::<Nullable<Bool>, _>(door_time_alarm.notification)
         .bind::<Nullable<Bool>, _>(door_time_alarm.email)
-        .bind::<Nullable<Array<Nullable<Int8>>>, _>(&door_time_alarm.user_id)
-        .bind::<Nullable<Int4>, _>(door_time_alarm.organization_id)
-        .bind::<Nullable<Bool>, _>(door_time_alarm.is_time_limit_active)
+        .bind::<Nullable<Array<Nullable<DieselUuid>>>, _>(&door_time_alarm.user_id)
+        .bind::<Nullable<DieselUuid>, _>(door_time_alarm.tenant_id)
         .get_result(&mut conn)
         .await
         .map_err(|e| {
@@ -691,11 +811,11 @@ pub async fn delete_door_time_alarm(door_alarm_id: i32) -> Result<(), Error> {
 
     let select_sql = r#"
         SELECT id, dev_eui, time, is_active, sms, notification, email,
-               user_id, submission_time, organization_id, is_time_limit_active
+                submission_time, user_id, tenant_id
         FROM door_time_alarm WHERE id = $1
     "#;
 
-    let door_alarm: DoorTimeAlarm = sql_query(select_sql)
+    let _door_alarm: DoorTimeAlarm = sql_query(select_sql)
         .bind::<Int4, _>(door_alarm_id)
         .get_result(&mut conn)
         .await
@@ -723,14 +843,26 @@ pub async fn delete_door_time_alarm(door_alarm_id: i32) -> Result<(), Error> {
     Ok(())
 }
 
-pub async fn list_door_time_alarms(dev_eui: String) -> Result<Vec<api::CreateDoorTimeResponse>, Error> {
+pub async fn list_door_time_alarms(
+    dev_eui: String,
+) -> Result<Vec<api::CreateDoorTimeResponse>, Error> {
     let mut conn = get_async_db_conn().await?;
 
     let query = r#"
-        SELECT id, dev_eui, time, is_active, sms, notification, email, user_id
-        FROM door_time_alarm
-        WHERE $1 = '' OR dev_eui = $1
-    "#;
+    SELECT 
+        id, 
+        dev_eui, 
+        sms, 
+        email, 
+        notification, 
+        submission_time, 
+        is_active, 
+        time, 
+        user_id, 
+        tenant_id
+    FROM door_time_alarm
+    WHERE dev_eui = $1
+"#;
 
     let rows: Vec<DoorTimeAlarm> = sql_query(query)
         .bind::<Text, _>(&dev_eui)
@@ -751,7 +883,7 @@ pub async fn list_door_time_alarms(dev_eui: String) -> Result<Vec<api::CreateDoo
                 .user_id
                 .unwrap_or_default()
                 .into_iter()
-                .flatten()
+                .filter_map(|id| id.map(|uuid| uuid.to_string()))
                 .collect(),
             ..Default::default()
         })
@@ -760,20 +892,533 @@ pub async fn list_door_time_alarms(dev_eui: String) -> Result<Vec<api::CreateDoo
     Ok(result)
 }
 
-pub async fn get_audit_logs(dev_eui: &str) -> Result<Vec<AlarmAuditLog>, Error> {
+pub async fn get_alarm_audit_logs(dev_eui: &str) -> Result<Vec<AlarmAuditLog>, Error> {
     let mut conn = get_async_db_conn().await?;
 
     let logs = diesel::sql_query(
         r#"
-        SELECT * FROM alarm_audit_log
+        SELECT * 
+        FROM alarm_audit_log
         WHERE dev_eui = $1
         "#,
     )
-    .bind::<Text, _>(dev_eui)
+    .bind::<diesel::sql_types::Text, _>(dev_eui)
     .load::<AlarmAuditLog>(&mut conn)
     .await
-    .map_err(|e| Error::from_diesel(e, dev_eui.to_string()))?;
+    .map_err(|e| Error::from_diesel(e, "get audit logs error".to_string()))?;
 
-    info!(dev_eui, "Alarm audit logs fetched by dev_eui");
     Ok(logs)
+}
+
+pub async fn check_alarm(
+    db: &mut AsyncPgConnection,
+    app: &Application,
+    device: &Device,
+    object_json: &Value,
+) -> Result<()> {
+    // Skip inactive devices
+    if let Some(status) = device.tags.get("status") {
+        if status != "active" {
+            tracing::info!(dev_eui = %device.dev_eui, "Device status is not active, skipping alarm check");
+            return Ok(());
+        }
+    }
+
+    let current_time = Local::now().naive_local();
+    let weekday = current_time.weekday().number_from_monday();
+
+    let alarms: Vec<AlarmWithDates> =
+        get_active_alarms_with_schedule(db, &device.dev_eui.to_string(), weekday as i32)
+            .await
+            .context("Fetching alarms")?;
+
+    let _zone_name = get_zone_name_by_dev_eui(db, &device.dev_eui.to_string())
+        .await
+        .unwrap_or_else(|_| None)
+        .unwrap_or_else(|| "Bilinmeyen Alan".to_string());
+
+    for alarm in alarms {
+        if !alarm.is_active || !alarm.is_within_schedule(current_time.time()) {
+            continue;
+        }
+
+        match device.device_type {
+            Some(1) => {
+                if alarm.temperature {
+                    if let Some(Value::String(temp)) = object_json.get("temperature") {
+                        if let Ok(t) = temp.parse::<f32>() {
+                            let calibration = device
+                                .temperature_calibration
+                                .as_ref()
+                                .and_then(|v| v.to_f32())
+                                .unwrap_or(0.0);
+                            let value = t + calibration;
+                            check_threshold(
+                                &alarm,
+                                value,
+                                device,
+                                "temperature",
+                                &current_time.to_string(),
+                                db,
+                            )
+                            .await?;
+                        }
+                    }
+                } else if alarm.humadity {
+                    if let Some(Value::String(hum)) = object_json.get("humidity") {
+                        if let Ok(h) = hum.parse::<f32>() {
+                            let calibration = device
+                                .humadity_calibration
+                                .as_ref()
+                                .and_then(|v| v.to_f32())
+                                .unwrap_or(0.0);
+                            let value = h + calibration;
+                            check_threshold(
+                                &alarm,
+                                value,
+                                device,
+                                "humidity",
+                                &current_time.to_string(),
+                                db,
+                            )
+                            .await?;
+                        }
+                    }
+                }
+            }
+            Some(2) => {
+                if let (Some(Value::String(temp)), Some(Value::String(water))) = (
+                    object_json.get("temperature_soil"),
+                    object_json.get("water_soil"),
+                ) {
+                    if temp != "0.00" && water != "0.00" {
+                        if alarm.temperature {
+                            if let Ok(v) = temp.parse::<f32>() {
+                                check_threshold(
+                                    &alarm,
+                                    v,
+                                    device,
+                                    "temperature",
+                                    &current_time.to_string(),
+                                    db,
+                                )
+                                .await?;
+                            }
+                        } else if alarm.humadity {
+                            if let Ok(v) = water.parse::<f32>() {
+                                check_threshold(
+                                    &alarm,
+                                    v,
+                                    device,
+                                    "humidity",
+                                    &current_time.to_string(),
+                                    db,
+                                )
+                                .await?;
+                            }
+                        } else if alarm.ec {
+                            if let Some(Value::Number(ec)) = object_json.get("conduct_soil") {
+                                check_threshold(
+                                    &alarm,
+                                    ec.as_f64().unwrap_or(0.0) as f32,
+                                    device,
+                                    "ec",
+                                    &current_time.to_string(),
+                                    db,
+                                )
+                                .await?;
+                            }
+                        }
+                    }
+                }
+            }
+            Some(3) | Some(16) => {
+                if alarm.door {
+                    if let Some(Value::Number(status)) = object_json.get("door_status") {
+                        if status.as_i64() == Some(1) {
+                            execute_alarm(
+                                &alarm,
+                                0.0,
+                                device,
+                                "door",
+                                &current_time.to_string(),
+                                db,
+                            )
+                            .await?;
+                        }
+                    }
+                }
+            }
+            Some(4) | Some(10) | Some(14) | Some(18) | Some(19) => {
+                if alarm.w_leak {
+                    if let Some(Value::Number(leak)) = object_json
+                        .get("water_status")
+                        .or_else(|| object_json.get("water_leek"))
+                    {
+                        if leak.as_i64() == Some(1) {
+                            execute_alarm(
+                                &alarm,
+                                0.0,
+                                device,
+                                "water_leak",
+                                &current_time.to_string(),
+                                db,
+                            )
+                            .await?;
+                        }
+                    }
+                }
+            }
+            Some(12) | Some(35) => {
+                if alarm.temperature {
+                    if let Some(Value::Number(temp)) = object_json.get("temperature") {
+                        let calibration = device
+                            .temperature_calibration
+                            .as_ref()
+                            .and_then(|v| v.to_f32())
+                            .unwrap_or(0.0);
+                        let value = temp.as_f64().unwrap_or(0.0) as f32 + calibration;
+                        check_threshold(
+                            &alarm,
+                            value,
+                            device,
+                            "temperature",
+                            &current_time.to_string(),
+                            db,
+                        )
+                        .await?;
+                    }
+                }
+                if alarm.humadity {
+                    if let Some(Value::Number(hum)) = object_json.get("humidity") {
+                        let base_value = hum.as_f64().unwrap_or(0.0) as f32;
+                        let calibration = device
+                            .humadity_calibration
+                            .as_ref()
+                            .and_then(|v| v.to_f32())
+                            .unwrap_or(0.0);
+                        let value = base_value + calibration;
+
+                        check_threshold(
+                            &alarm,
+                            value,
+                            device,
+                            "humidity",
+                            &current_time.to_string(),
+                            db,
+                        )
+                        .await?;
+                    }
+                }
+
+                if alarm.co2 {
+                    if let Some(Value::Number(co2)) = object_json.get("co2") {
+                        check_threshold(
+                            &alarm,
+                            co2.as_f64().unwrap_or(0.0) as f32,
+                            device,
+                            "co2",
+                            &current_time.to_string(),
+                            db,
+                        )
+                        .await?;
+                    }
+                }
+            }
+            Some(20) => {
+                if alarm.temperature {
+                    if let Some(Value::Number(temp)) = object_json.get("temperature") {
+                        check_threshold(
+                            &alarm,
+                            temp.as_f64().unwrap_or(0.0) as f32,
+                            device,
+                            "temperature",
+                            &current_time.to_string(),
+                            db,
+                        )
+                        .await?;
+                    }
+                }
+            }
+            Some(21) => {
+                if alarm.pressure {
+                    if let Some(Value::Number(p)) = object_json.get("pressure") {
+                        check_threshold(
+                            &alarm,
+                            (p.as_f64().unwrap_or(0.0) / 100.0) as f32,
+                            device,
+                            "pressure",
+                            &current_time.to_string(),
+                            db,
+                        )
+                        .await?;
+                    }
+                }
+            }
+            Some(33) => {
+                if alarm.distance {
+                    if let Some(Value::Number(d)) = object_json.get("distance") {
+                        check_threshold(
+                            &alarm,
+                            (d.as_f64().unwrap_or(0.0) / 1000.0) as f32,
+                            device,
+                            "distance",
+                            &current_time.to_string(),
+                            db,
+                        )
+                        .await?;
+                    }
+                }
+            }
+            Some(36) => {
+                if alarm.temperature {
+                    let t = match object_json.get("temperature1") {
+                        Some(Value::Number(t1)) if t1.as_f64().unwrap_or(-999.0) > -200.0 => {
+                            t1.as_f64().unwrap_or(0.0)
+                        }
+                        _ => object_json
+                            .get("temperature2")
+                            .and_then(|v| v.as_f64())
+                            .unwrap_or(0.0),
+                    } as f32;
+                    check_threshold(
+                        &alarm,
+                        t,
+                        device,
+                        "temperature",
+                        &current_time.to_string(),
+                        db,
+                    )
+                    .await?;
+                }
+            }
+            Some(40) => {
+                if alarm.temperature {
+                    if let Some(Value::Number(t)) = object_json.get("temperature") {
+                        check_threshold(
+                            &alarm,
+                            t.as_f64().unwrap_or(0.0) as f32,
+                            device,
+                            "temperature",
+                            &current_time.to_string(),
+                            db,
+                        )
+                        .await?;
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn get_active_alarms_with_schedule(
+    conn: &mut AsyncPgConnection,
+    dev_eui: &str,
+    weekday: i32,
+) -> anyhow::Result<Vec<AlarmWithDates>> {
+    let query = r#"
+        SELECT 
+            alrm.*, 
+            alrmDate.alarm_day AS alarm_day,
+            alrmDate.start_time AS alarm_start_time,
+            alrmDate.end_time AS alarm_end_time
+        FROM alarm AS alrm 
+        INNER JOIN alarm_date_time alrmDate ON alrm.id = alrmDate.alarm_id 
+        WHERE dev_eui = $1 
+          AND (alrmDate.alarm_day = 0 OR alrmDate.alarm_day = $2) 
+          AND is_active = true
+    "#;
+
+    let results = diesel::sql_query(query)
+        .bind::<Text, _>(dev_eui)
+        .bind::<Int4, _>(weekday)
+        .load::<AlarmWithDates>(conn)
+        .await?;
+
+    Ok(results)
+}
+
+pub async fn get_zone_name_by_dev_eui(
+    conn: &mut AsyncPgConnection,
+    dev_eui: &str,
+) -> anyhow::Result<Option<String>> {
+    let query = r#"
+        SELECT zone_name 
+        FROM zone 
+        WHERE '\\x' || $1 = ANY(zone.devices)
+    "#;
+    #[derive(QueryableByName)]
+    struct ZoneName {
+        #[diesel(sql_type = Text)]
+        zone_name: String,
+    }
+    let rows: Vec<ZoneName> = sql_query(query).bind::<Text, _>(dev_eui).load(conn).await?;
+
+    Ok(rows.into_iter().map(|row| row.zone_name).next())
+}
+
+pub async fn check_threshold(
+    alarm: &AlarmWithDates,
+    value: f32,
+    device: &Device,
+    alarm_type: &str,
+    date: &str,
+    conn: &mut AsyncPgConnection,
+) -> anyhow::Result<()> {
+    if value < alarm.min_treshold || value > alarm.max_treshold {
+        match alarm.zone_category_id {
+            1 => {
+                if ege_method(value, alarm, conn).await? {
+                    execute_alarm(alarm, value, device, alarm_type, date, conn).await?;
+                }
+            }
+            0 | 2 | _ => {
+                execute_alarm(alarm, value, device, alarm_type, date, conn).await?;
+            }
+        }
+    }
+    Ok(())
+}
+
+pub async fn execute_alarm(
+    alarm: &AlarmWithDates,
+    value: f32,
+    device: &Device,
+    alarm_type: &str,
+    date: &str,
+    conn: &mut AsyncPgConnection,
+) -> anyhow::Result<()> {
+    let zone_name = get_zone_name_by_dev_eui(conn, &device.dev_eui.to_string())
+        .await
+        .unwrap_or(Some("Bilinmeyen Alan".to_string()));
+
+    let mut message = String::new();
+    match alarm_type {
+        "ısı" | "nem" | "basinc" | "co2" => {
+            write!(
+                &mut message,
+                "{} tarihinde {} ortamındaki {} isimli sensör {} kritik alarm seviyerini gecti. şu an ki değeri: {:.2}",
+                date,
+                zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+                device.name,
+                alarm_type,
+                value
+            )?;
+        }
+        "acil durum" => {
+            write!(
+                &mut message,
+                "{} deki {} sensöründe acil durum var",
+                zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+                device.name
+            )?;
+        }
+        "kacak" => {
+            write!(
+                &mut message,
+                "{} deki {} sensöründe su baskını alarmı var",
+                zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+                device.name
+            )?;
+        }
+        "button" => {
+            write!(
+                &mut message,
+                "{} deki {} sensöründen çağrı var",
+                zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+                device.name
+            )?;
+        }
+        "door" => {
+            write!(
+                &mut message,
+                "{} tarihinde {} ortamındaki {} isimli sensör açıldı",
+                date,
+                zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+                device.name
+            )?;
+        }
+        "mesafe" => {
+            write!(
+                &mut message,
+                "{} tarihinde {} ortamındaki {} isimli sensör mesafe limitini aştı: {:.2}",
+                date,
+                zone_name.as_deref().unwrap_or("Bilinmeyen Alan"),
+                device.name,
+                value
+            )?;
+        }
+        _ => {}
+    }
+
+    // insert_notification(alarm, device, &message, conn).await?;
+    Ok(())
+}
+#[derive(QueryableByName)]
+struct TemperatureRow {
+    #[sql_type = "Float4"]
+    air_temperature: f32,
+}
+
+pub async fn ege_method(
+    value: f32,
+    alarm: &AlarmWithDates,
+    conn: &mut AsyncPgConnection,
+) -> anyhow::Result<bool> {
+    let interval = alarm.defrost_time;
+
+    // First: get values from the last `interval` minutes
+    let query = format!(
+        "SELECT air_temperature FROM device_data_2025 \
+         WHERE dev_eui = $1 AND submission_date > now() - interval '{} minute' \
+         ORDER BY submission_date ASC",
+        interval
+    );
+
+    let mut res_45_min: Vec<f32> = sql_query(&query)
+        .bind::<diesel::sql_types::Text, _>(&alarm.dev_eui)
+        .load::<TemperatureRow>(conn)
+        .await?
+        .into_iter()
+        .map(|row| row.air_temperature)
+        .collect();
+
+    // If empty, fallback to most recent value
+    if res_45_min.is_empty() {
+        res_45_min = sql_query(
+            "SELECT air_temperature FROM device_data_2025 \
+             WHERE dev_eui = $1 ORDER BY submission_date DESC LIMIT 1",
+        )
+        .bind::<diesel::sql_types::Text, _>(&alarm.dev_eui)
+        .load::<TemperatureRow>(conn)
+        .await?
+        .into_iter()
+        .map(|row| row.air_temperature)
+        .collect();
+    }
+
+    // No data found at all
+    if res_45_min.is_empty() {
+        tracing::warn!(dev_eui = %alarm.dev_eui, "No temperature data found for ege_method");
+        return Ok(false);
+    }
+
+    // Threshold check
+    if res_45_min.iter().any(|&t| t < alarm.max_treshold) {
+        return Ok(false);
+    }
+
+    // Trend analysis
+    if res_45_min.len() > 1 {
+        let last = res_45_min[res_45_min.len() - 1];
+        let previous = res_45_min[res_45_min.len() - 2];
+        if last <= previous {
+            return Ok(false);
+        }
+    }
+
+    Ok(true)
 }

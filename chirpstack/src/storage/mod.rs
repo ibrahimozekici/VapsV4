@@ -16,6 +16,7 @@ pub mod notification;
 pub mod alarm;
 pub mod api_key;
 pub mod application;
+pub mod automation;
 pub mod device;
 pub mod device_gateway;
 pub mod device_keys;

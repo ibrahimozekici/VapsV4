@@ -194,6 +194,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .compile_protos(
             &[
                 cs_dir.join("api").join("alarm.proto").to_str().unwrap(),
+                cs_dir.join("api").join("automation.proto").to_str().unwrap(),
                 cs_dir.join("api").join("internal.proto").to_str().unwrap(),
                 cs_dir.join("api").join("user.proto").to_str().unwrap(),
                 cs_dir.join("api").join("tenant.proto").to_str().unwrap(),

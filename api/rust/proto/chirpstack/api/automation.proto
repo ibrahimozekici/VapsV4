@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package api;
+
+option go_package = "github.com/ibrahimozekici/VapsV4/api/go/v4/api";
+option java_package = "io.chirpstack.api";
+option java_multiple_files = true;
+option java_outer_classname = "AlarmProto";
+option csharp_namespace = "Chirpstack.Api";
+option php_namespace = "Chirpstack\\Api";
+option php_metadata_namespace = "GPBMetadata\\Chirpstack\\Api";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service AutomationService {
+
+    rpc Create(CreateAutomationRequest) returns (CreateAutomationResponse) {
+        option(google.api.http) = {
+            post: "/api/automation"
+            body: "*"
+        };
+    }
+
+    // Get return the automation
+    rpc Get(GetAutomationRequest) returns (GetAutomationResponse) {
+        option (google.api.http) = {
+            get: "/api/automation/{id}"
+        };
+    }
+
+    rpc List(ListAutomationRequest) returns (ListAutomationResponse) {
+        option (google.api.http) = {
+            get: "/api/automation"
+        }; 
+    }
+
+    // Update updates the automation matching the given automation_id.
+    rpc Update(UpdateAutomationRequest) returns (GetAutomationResponse) {
+        option (google.api.http) = {
+            put: "/api/automation/{automation.id}"
+            body: "*"
+        };
+    }
+
+    // Delete deletes the automation matching the given automation_id.
+    rpc Delete(DeleteAutomationRequest) returns (google.protobuf.Empty) {
+        option (google.api.http) = {
+            delete: "/api/automation/{id}"
+        };
+    }
+}
+
+message Automation {
+
+    int64 id = 1;
+
+    string sender_sensor = 2;
+
+    string receiver_sensor = 3;
+
+    string condition = 4;
+
+    string action = 5;
+
+    google.protobuf.Timestamp created_at = 6;
+
+    google.protobuf.Timestamp updated_at = 7;
+
+    string user_id = 8;
+
+    string tenant_id = 9;
+
+    int64 sender_device_type = 10;
+    int64 receiver_device_type = 11;
+    string sender_device_name = 12;
+    string receiver_device_name = 13;
+    string trigger_type = 14;
+    google.protobuf.Timestamp trigger_time = 15;
+}
+
+message CreateAutomationRequest {
+    Automation automation = 1;
+}
+
+message CreateAutomationResponse {
+    Automation automation = 1;
+}
+
+message GetAutomationRequest {
+    int64 id = 1;
+}
+
+message GetAutomationResponse {
+    Automation automation = 1;
+}
+
+message ListAutomationRequest {
+    string user_id = 1;
+    string dev_eui = 2;
+    string tenant_id = 3;
+}
+
+message ListAutomationResponse {
+    repeated Automation automations = 1;
+}
+
+message UpdateAutomationRequest {
+    Automation automation = 1;
+}
+
+message DeleteAutomationRequest {
+    int64 id = 1;
+}
