@@ -1,10 +1,15 @@
 use crate::storage::schema_postgres::notifications::dsl as notif_dsl;
+use crate::storage::schema_postgres::notifications;
 use chrono::NaiveDateTime;
 use diesel::{prelude::*};
+use diesel::dsl::sql;
+use diesel::sql_types::{Uuid as SqlUuid, Bool};
+
 use diesel_async::RunQueryDsl;
 use tracing::info;
 use uuid::Uuid;
 use super::{error::Error, get_async_db_conn};
+
 
 #[derive(Debug, Clone, PartialEq, Eq, Insertable, Queryable)]
 #[diesel(table_name = crate::storage::schema_postgres::notifications)]
@@ -134,16 +139,16 @@ pub async fn get_notification(notification_id: i32) -> Result<Notification, Erro
 pub async fn list(user_id: Uuid) -> Result<Vec<Notification>, Error> {
     let mut conn = get_async_db_conn().await?;
 
-    let result = notif_dsl::notifications
-        .filter(diesel::dsl::any(notif_dsl::receiver_id).eq(user_id))
-        .filter(notif_dsl::is_deleted.eq(false))
+    let results = notif_dsl::notifications
+        .filter(notif_dsl::receiver_id.contains(vec![Some(user_id)]))
+        .filter(notif_dsl::is_deleted.eq(Some(false)))
         .order(notif_dsl::id.desc())
         .limit(500)
         .load::<Notification>(&mut conn)
         .await
         .map_err(|e| Error::from_diesel(e, "list notifications".into()))?;
 
-    Ok(result)
+    Ok(results)
 }
 
 pub async fn delete(notification_id: i32) -> Result<usize, Error> {
