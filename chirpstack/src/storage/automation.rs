@@ -411,9 +411,9 @@ pub async fn check_state(rule: &Automation) -> Result<bool, Error> {
         Some(6) => {
             #[derive(QueryableByName, Debug)]
             struct CurrentState {
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 gpio_out_1: Option<String>,
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 gpio_out_2: Option<String>,
             }
 
@@ -451,23 +451,23 @@ pub async fn check_state(rule: &Automation) -> Result<bool, Error> {
         Some(28) => {
             #[derive(QueryableByName, Debug)]
             struct LastRow {
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 adc_1: Option<String>,
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 adc_2: Option<String>,
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 adv_1: Option<String>,
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 gpio_in_1: Option<String>,
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 gpio_in_2: Option<String>,
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 gpio_in_3: Option<String>,
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 gpio_in_4: Option<String>,
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 gpio_out_1: Option<String>,
-                #[sql_type = "Nullable<Text>"]
+                #[diesel(sql_type = Nullable<Text>)]
                 gpio_out_2: Option<String>,
             }
 

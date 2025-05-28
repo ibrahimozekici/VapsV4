@@ -4,6 +4,7 @@ use super::notification;
 use super::{error::Error, get_async_db_conn};
 use crate::storage::schema_postgres::alarm;
 use crate::storage::schema_postgres::alarm_audit_log;
+use crate::storage::schema_postgres::alarm_automation_rules;
 use crate::storage::schema_postgres::alarm_date_time;
 use anyhow::{Context, Result};
 use bigdecimal::ToPrimitive;
@@ -388,6 +389,42 @@ pub struct AlarmFilters {
     pub limit: i32,
     pub dev_eui: String,
     pub user_id: Uuid,
+}
+
+#[derive(
+    Queryable, QueryableByName, Insertable, AsChangeset, Debug, Clone, Serialize, Deserialize,
+)]
+#[diesel(table_name = alarm_automation_rules)]
+pub struct AlarmAutomation {
+    #[diesel(sql_type = Int4)]
+    pub alarm_id: i32,
+
+    #[diesel(sql_type = Text)]
+    pub receiver_sensor: String,
+
+    #[diesel(sql_type = Nullable<Text>)]
+    pub action: Option<String>,
+
+    #[diesel(sql_type = Nullable<Timestamp>)]
+    pub created_at: Option<NaiveDateTime>,
+
+    #[diesel(sql_type = Nullable<Timestamp>)]
+    pub updated_at: Option<NaiveDateTime>,
+
+    #[diesel(sql_type = Nullable<Bool>)]
+    pub is_active: Option<bool>,
+
+    #[diesel(sql_type = Nullable<Int4>)]
+    pub receiver_device_type: Option<i32>,
+
+    #[diesel(sql_type = Nullable<Text>)]
+    pub receiver_device_name: Option<String>,
+
+    #[diesel(sql_type = Int4)]
+    pub id: i32,
+
+    #[diesel(sql_type = Nullable<DieselUuid>)]
+    pub user_id: Option<Uuid>,
 }
 
 pub async fn create(
@@ -1497,7 +1534,7 @@ pub async fn execute_alarm2(
 
 #[derive(QueryableByName)]
 struct TemperatureRow {
-    #[sql_type = "Float4"]
+    #[diesel(sql_type = Float4)]
     air_temperature: f32,
 }
 
@@ -1559,4 +1596,75 @@ pub async fn ege_method(
     }
 
     Ok(true)
+}
+
+pub async fn create_alarm_automation(alarm_automation: AlarmAutomation) -> Result<(), Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let new_alarm_automation: AlarmAutomation = diesel::insert_into(alarm_automation_rules::table)
+        .values(&alarm_automation)
+        .get_result(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, "Creating alarm automation".to_string()))?;
+
+    info!(id = %new_alarm_automation.id, "Alarm automation created");
+
+    Ok(())
+}
+
+pub async fn get_alarm_automation(id: i32) -> Result<AlarmAutomation, Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let alarm_automation: AlarmAutomation = alarm_automation_rules::table
+        .find(id)
+        .first(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, id.to_string()))?;
+
+    Ok(alarm_automation)
+}
+
+pub async fn list_alarm_automation(alarm_id: i32) -> Result<Vec<AlarmAutomation>, Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let alarm_automations: Vec<AlarmAutomation> = alarm_automation_rules::table
+        .filter(alarm_automation_rules::alarm_id.eq(alarm_id))
+        .filter(alarm_automation_rules::is_active.eq(Some(true)))
+        .load(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, alarm_id.to_string()))?;
+
+    Ok(alarm_automations)
+}
+
+pub async fn delete_alarm_automation(id: i32) -> Result<(), Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let affected = diesel::delete(alarm_automation_rules::table.find(id))
+        .execute(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, id.to_string()))?;
+
+    if affected == 0 {
+        return Err(Error::NotFound("Alarm automation not found".into()));
+    }
+
+    info!(id, affected_rows = affected, "Alarm automation deleted");
+    Ok(())
+}
+
+pub async fn update_alarm_automation(
+    updated_alarm_automation: AlarmAutomation,
+) -> Result<AlarmAutomation, Error> {
+    let mut conn = get_async_db_conn().await?;
+
+    let updated_alarm_automation: AlarmAutomation =
+        diesel::update(alarm_automation_rules::table.find(updated_alarm_automation.id))
+            .set(&updated_alarm_automation)
+            .get_result(&mut conn)
+            .await
+            .map_err(|e| Error::from_diesel(e, updated_alarm_automation.id.to_string()))?;
+
+    info!(updated_alarm_automation.id, "Alarm automation updated");
+    Ok(updated_alarm_automation)
 }

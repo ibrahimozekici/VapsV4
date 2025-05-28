@@ -8,6 +8,7 @@ use chirpstack_api::api;
 use chirpstack_api::api::alarm_service_server::AlarmService;
 use chirpstack_api::api::CreateDoorTimeResponse; // Import the correct AlarmDateTime type
 use lrwn::EUI64;
+use prost_types::Timestamp;
 
 use crate::storage::alarm::{self};
 use tonic::{Request, Response, Status};
@@ -227,8 +228,9 @@ impl AlarmService for Alarm {
         if tenant_id.is_empty() {
             return Err(Status::invalid_argument("Organization ID is required"));
         }
-        let tenant_uuid = uuid::Uuid::parse_str(tenant_id)
-            .map_err(|_| Status::invalid_argument("Invalid Organization ID, must be a valid UUID string"))?;
+        let tenant_uuid = uuid::Uuid::parse_str(tenant_id).map_err(|_| {
+            Status::invalid_argument("Invalid Organization ID, must be a valid UUID string")
+        })?;
 
         let alarms = alarm::get_organization_alarm_list(tenant_uuid)
             .await
@@ -666,13 +668,10 @@ impl AlarmService for Alarm {
             submission_time: None,
         };
 
-        let stored_alarm = alarm::create_door_time_alarm(
-            create_alarm_req,
-            alarm_dates.clone(),
-            *user_id,
-        )
-        .await
-        .map_err(|e| Status::internal(format!("Failed to create alarm: {}", e)))?;
+        let stored_alarm =
+            alarm::create_door_time_alarm(create_alarm_req, alarm_dates.clone(), *user_id)
+                .await
+                .map_err(|e| Status::internal(format!("Failed to create alarm: {}", e)))?;
 
         let api_alarm = api::CreateDoorTimeResponse {
             id: stored_alarm.id as i64,
@@ -789,7 +788,9 @@ impl AlarmService for Alarm {
                         .map(|id| uuid::Uuid::parse_str(id).ok())
                         .collect(),
                 ),
-                tenant_id: Some(uuid::Uuid::parse_str(&create_req.tenant_id).map_err(|_| Status::invalid_argument("Invalid tenant_id, must be a valid UUID string"))?),
+                tenant_id: Some(uuid::Uuid::parse_str(&create_req.tenant_id).map_err(|_| {
+                    Status::invalid_argument("Invalid tenant_id, must be a valid UUID string")
+                })?),
                 submission_time: None,
                 id: 0,
             };
@@ -806,30 +807,151 @@ impl AlarmService for Alarm {
 
     async fn create_alarm_automation(
         &self,
-        _request: Request<api::CreateAlarmAutomationRequest>,
+        request: Request<api::CreateAlarmAutomationRequest>,
     ) -> Result<Response<()>, Status> {
-        todo!()
+        let req = request.get_ref();
+        if req.alarm_automation.is_none() {
+            return Err(Status::invalid_argument("alarm automation must not be nil"));
+        }
+        let alarm_automation = req.alarm_automation.as_ref().unwrap();
+
+        if alarm_automation.alarm_id == 0 {
+            return Err(Status::invalid_argument("AlarmId must not be nil"));
+        }
+
+        let aa = crate::storage::alarm::AlarmAutomation {
+            alarm_id: alarm_automation.alarm_id as i32,
+            receiver_sensor: alarm_automation.receiver_sensor.clone(),
+            action: Some(alarm_automation.action.clone()),
+            is_active: Some(true),
+            user_id: Some(
+                uuid::Uuid::parse_str(&alarm_automation.user_id).map_err(|_| {
+                    Status::invalid_argument("Invalid user_id, must be a valid UUID string")
+                })?,
+            ),
+            receiver_device_type: Some(alarm_automation.receiver_device_type as i32),
+            receiver_device_name: Some(alarm_automation.receiver_device_name.clone()),
+            created_at: Some(chrono::Utc::now().naive_utc()),
+            id: 0, // Default value, will be set by the database
+            updated_at: Some(chrono::Utc::now().naive_utc()),
+        };
+
+        crate::storage::alarm::create_alarm_automation(aa)
+            .await
+            .map_err(|e| Status::internal(format!("Failed to create alarm automation: {}", e)))?;
+
+        Ok(Response::new(()))
     }
 
     async fn get_alarm_automation(
         &self,
         _request: Request<api::GetAlarmAutomationRequest>,
     ) -> Result<Response<api::GetAlarmAutomationResponse>, Status> {
-        todo!()
+        let alarm_id = _request.get_ref().alarm_id;
+        if alarm_id == 0 {
+            return Err(Status::invalid_argument("alarm automation must not be nil"));
+        }
+
+        // Fetch alarm automations from storage
+        let aas = crate::storage::alarm::list_alarm_automation(alarm_id as i32)
+            .await
+            .map_err(|e| Status::internal(format!("Failed to list alarm automation: {}", e)))?;
+
+        let result = aas
+            .into_iter()
+            .map(|aa| api::AlarmAutomation {
+                id: aa.id as i64,
+                alarm_id: aa.alarm_id as i64,
+                action: aa.action.unwrap_or_default(),
+                created_at: aa
+                    .created_at
+                    .map(|dt| {
+                        let datetime_utc =
+                            chrono::DateTime::<chrono::Utc>::from_utc(dt, chrono::Utc);
+                        datetime_utc.to_rfc3339()
+                    })
+                    .unwrap_or_default(),
+                updated_at: aa
+                    .updated_at
+                    .map(|dt| {
+                        let datetime_utc =
+                            chrono::DateTime::<chrono::Utc>::from_utc(dt, chrono::Utc);
+                        datetime_utc.to_rfc3339()
+                    })
+                    .unwrap_or_default(),
+                receiver_sensor: aa.receiver_sensor.clone(),
+                user_id: aa.user_id.map(|v| v.to_string()).unwrap_or_default(),
+                receiver_device_type: aa.receiver_device_type.unwrap_or_default() as i64,
+                receiver_device_name: aa.receiver_device_name.unwrap_or_default(),
+                is_active: aa.is_active.unwrap_or(false),
+            })
+            .collect();
+
+        Ok(Response::new(api::GetAlarmAutomationResponse { result }))
     }
 
     async fn delete_alarm_automation(
         &self,
         _request: Request<api::DeleteAlarmAutomationRequest>,
     ) -> Result<Response<()>, Status> {
-        todo!()
+        let req = _request.get_ref();
+        if req.id == 0 {
+            return Err(Status::invalid_argument(
+                "alarm automation id must not be nil",
+            ));
+        }
+
+        crate::storage::alarm::delete_alarm_automation(req.id as i32)
+            .await
+            .map_err(|e| Status::internal(format!("Failed to delete alarm automation: {}", e)))?;
+
+        Ok(Response::new(()))
     }
 
     async fn update_alarm_automation(
         &self,
-        _request: Request<api::UpdateAlarmAutomationRequest>,
+        request: Request<api::UpdateAlarmAutomationRequest>,
     ) -> Result<Response<()>, Status> {
-        todo!()
+        let req = request.get_ref();
+        if req.id == 0 {
+            return Err(Status::invalid_argument(
+                "alarm automation id must not be nil",
+            ));
+        }
+        if req.automation.is_none() {
+            return Err(Status::invalid_argument("alarm automation must not be nil"));
+        }
+        let automation = req.automation.as_ref().unwrap();
+        if automation.alarm_id == 0 {
+            return Err(Status::invalid_argument(
+                "alarm automation alarm id must not be nil",
+            ));
+        }
+        let created_at: Option<chrono::NaiveDateTime> = if !automation.created_at.is_empty() {
+            chrono::NaiveDateTime::parse_from_str(&automation.created_at, "%+").ok()
+        } else {
+            None
+        };
+        let auto = crate::storage::alarm::AlarmAutomation {
+            id: automation.id as i32,
+            alarm_id: automation.alarm_id as i32,
+            receiver_sensor: automation.receiver_sensor.clone(),
+            action: Some(automation.action.clone()),
+            created_at,
+            user_id: Some(uuid::Uuid::parse_str(&automation.user_id).map_err(|_| {
+                Status::invalid_argument("Invalid user_id, must be a valid UUID string")
+            })?),
+            receiver_device_type: Some(automation.receiver_device_type as i32),
+            receiver_device_name: Some(automation.receiver_device_name.clone()),
+            is_active: Some(automation.is_active),
+            updated_at: Some(chrono::Utc::now().naive_utc()),
+        };
+
+        crate::storage::alarm::update_alarm_automation(auto)
+            .await
+            .map_err(|e| Status::internal(format!("Failed to update alarm automation: {}", e)))?;
+
+        Ok(Response::new(()))
     }
 
     async fn get_audit_logs(
