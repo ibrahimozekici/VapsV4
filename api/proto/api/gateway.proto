@@ -119,7 +119,7 @@ enum GatewayState {
 
 message Gateway {
     // Gateway ID (EUI64).
-    string gateway_id = 1;
+    string id = 1;
 
     // Name.
     string name = 2;
@@ -131,7 +131,7 @@ message Gateway {
     common.Location location = 4;
 
     // Tenant ID (UUID).
-    string tenant_id = 5;
+    string organizationID = 5;
 
     // Tags.
     map<string, string> tags = 6;
@@ -147,10 +147,10 @@ message Gateway {
 
 message GatewayListItem {
     // Tenant ID.
-    string tenant_id = 1;
+    string organizationID = 1;
 
     // Gateway ID (EUI64).
-    string gateway_id = 2;
+    string id = 2;
 
     // Name.
     string name = 3;
@@ -225,7 +225,7 @@ message ListGatewaysRequest {
 
     // Tenant ID (UUID) to filter gateways on.
     // To list all gateways as a global admin user, this field can be left blank.
-    string tenant_id = 4;
+    string organizationID = 4;
 
     // Multicast-group ID (UUID) to filter gateways on.
     string multicast_group_id = 5;

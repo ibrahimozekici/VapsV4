@@ -1,25 +1,16 @@
 use super::{error::Error, get_async_db_conn};
 use crate::storage::schema_postgres::automation_rules;
-use base64::engine::general_purpose::STANDARD as base64_engine;
-use base64::Engine;
-use base64::{engine::general_purpose as base64_engine, Engine as _};
 use chrono::NaiveDateTime;
-use chrono::Utc;
 use diesel::deserialize::QueryableByName;
-use diesel::dsl::sql;
 use diesel::prelude::*;
 use diesel::sql_query;
 use diesel::sql_types::Nullable;
 use diesel::sql_types::*;
 use diesel::sql_types::Uuid as DieselUuid;
 use diesel::sql_types::{Bool, Integer, Text};
-use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::time::Duration;
-use tokio::time::sleep;
 use uuid::Uuid;
 
 #[derive(Debug, Queryable, Insertable, AsChangeset, QueryableByName)]

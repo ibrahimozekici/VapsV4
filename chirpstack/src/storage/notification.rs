@@ -1,8 +1,6 @@
 use crate::storage::schema_postgres::notifications::dsl as notif_dsl;
-use crate::storage::schema_postgres::notifications;
 use chrono::NaiveDateTime;
 use diesel::{prelude::*};
-use diesel::dsl::sql;
 use diesel::sql_types::{Uuid as SqlUuid, Bool};
 
 use diesel_async::RunQueryDsl;

@@ -31,7 +31,7 @@ type AuditLog struct {
 	DevEui        string                 `protobuf:"bytes,3,opt,name=dev_eui,json=devEui,proto3" json:"dev_eui,omitempty"`
 	ChangeType    string                 `protobuf:"bytes,4,opt,name=change_type,json=changeType,proto3" json:"change_type,omitempty"`
 	ChangedAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=changed_at,json=changedAt,proto3" json:"changed_at,omitempty"`
-	ChangedBy     int64                  `protobuf:"varint,6,opt,name=changed_by,json=changedBy,proto3" json:"changed_by,omitempty"`
+	ChangedBy     string                 `protobuf:"bytes,6,opt,name=changed_by,json=changedBy,proto3" json:"changed_by,omitempty"`
 	OldValues     string                 `protobuf:"bytes,7,opt,name=old_values,json=oldValues,proto3" json:"old_values,omitempty"`
 	NewValues     string                 `protobuf:"bytes,8,opt,name=new_values,json=newValues,proto3" json:"new_values,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -103,11 +103,11 @@ func (x *AuditLog) GetChangedAt() *timestamppb.Timestamp {
 	return nil
 }
 
-func (x *AuditLog) GetChangedBy() int64 {
+func (x *AuditLog) GetChangedBy() string {
 	if x != nil {
 		return x.ChangedBy
 	}
-	return 0
+	return ""
 }
 
 func (x *AuditLog) GetOldValues() string {
@@ -133,7 +133,7 @@ type AlarmAutomation struct {
 	CreatedAt          string                 `protobuf:"bytes,5,opt,name=created_at,proto3" json:"created_at,omitempty"`
 	UpdatedAt          string                 `protobuf:"bytes,6,opt,name=updated_at,proto3" json:"updated_at,omitempty"`
 	IsActive           bool                   `protobuf:"varint,7,opt,name=is_active,proto3" json:"is_active,omitempty"`
-	UserId             int64                  `protobuf:"varint,8,opt,name=user_id,proto3" json:"user_id,omitempty"`
+	UserId             string                 `protobuf:"bytes,8,opt,name=user_id,proto3" json:"user_id,omitempty"`
 	ReceiverDeviceType int64                  `protobuf:"varint,9,opt,name=receiver_device_type,proto3" json:"receiver_device_type,omitempty"`
 	ReceiverDeviceName string                 `protobuf:"bytes,10,opt,name=receiver_device_name,proto3" json:"receiver_device_name,omitempty"`
 	unknownFields      protoimpl.UnknownFields
@@ -219,11 +219,11 @@ func (x *AlarmAutomation) GetIsActive() bool {
 	return false
 }
 
-func (x *AlarmAutomation) GetUserId() int64 {
+func (x *AlarmAutomation) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
-	return 0
+	return ""
 }
 
 func (x *AlarmAutomation) GetReceiverDeviceType() int64 {
@@ -586,25 +586,15 @@ type Alarm struct {
 	StartTime         float32                `protobuf:"fixed32,15,opt,name=start_time,proto3" json:"start_time,omitempty"`
 	EndTime           float32                `protobuf:"fixed32,16,opt,name=end_time,proto3" json:"end_time,omitempty"`
 	ZoneCategory      int64                  `protobuf:"varint,17,opt,name=zone_category,proto3" json:"zone_category,omitempty"`
-	ColdRoomTime      int64                  `protobuf:"varint,18,opt,name=cold_room_time,proto3" json:"cold_room_time,omitempty"`
-	ColdRoomFrecuancy int64                  `protobuf:"varint,19,opt,name=cold_room_frecuancy,proto3" json:"cold_room_frecuancy,omitempty"`
-	Notification      bool                   `protobuf:"varint,20,opt,name=notification,proto3" json:"notification,omitempty"`
-	AlarmDateTime     []*AlarmDateTime       `protobuf:"bytes,21,rep,name=alarm_date_time,proto3" json:"alarm_date_time,omitempty"`
-	IsTimerActive     bool                   `protobuf:"varint,22,opt,name=is_timer_active,proto3" json:"is_timer_active,omitempty"`
-	TimerValue        int64                  `protobuf:"varint,23,opt,name=timer_value,proto3" json:"timer_value,omitempty"`
-	Pressure          bool                   `protobuf:"varint,24,opt,name=pressure,proto3" json:"pressure,omitempty"`
-	Current           float32                `protobuf:"fixed32,25,opt,name=current,proto3" json:"current,omitempty"`
-	Voltage           float32                `protobuf:"fixed32,26,opt,name=voltage,proto3" json:"voltage,omitempty"`
-	Factor            float32                `protobuf:"fixed32,27,opt,name=factor,proto3" json:"factor,omitempty"`
-	Status            int64                  `protobuf:"varint,28,opt,name=status,proto3" json:"status,omitempty"`
-	PowerSum          float32                `protobuf:"fixed32,29,opt,name=power_sum,json=powerSum,proto3" json:"power_sum,omitempty"`
-	Power             float32                `protobuf:"fixed32,30,opt,name=power,proto3" json:"power,omitempty"`
-	NotificationSound string                 `protobuf:"bytes,31,opt,name=notification_sound,json=notificationSound,proto3" json:"notification_sound,omitempty"`
-	UserIds           []int64                `protobuf:"varint,32,rep,packed,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
-	Distance          bool                   `protobuf:"varint,33,opt,name=distance,proto3" json:"distance,omitempty"`
-	Time              int64                  `protobuf:"varint,34,opt,name=time,proto3" json:"time,omitempty"`
-	IsActive          bool                   `protobuf:"varint,35,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
-	DefrostTime       int64                  `protobuf:"varint,36,opt,name=defrost_time,json=defrostTime,proto3" json:"defrost_time,omitempty"`
+	Notification      bool                   `protobuf:"varint,18,opt,name=notification,proto3" json:"notification,omitempty"`
+	AlarmDateTime     []*AlarmDateTime       `protobuf:"bytes,19,rep,name=alarm_date_time,proto3" json:"alarm_date_time,omitempty"`
+	Pressure          bool                   `protobuf:"varint,20,opt,name=pressure,proto3" json:"pressure,omitempty"`
+	NotificationSound string                 `protobuf:"bytes,21,opt,name=notification_sound,json=notificationSound,proto3" json:"notification_sound,omitempty"`
+	UserIds           []string               `protobuf:"bytes,22,rep,name=user_ids,json=userIds,proto3" json:"user_ids,omitempty"`
+	Distance          bool                   `protobuf:"varint,23,opt,name=distance,proto3" json:"distance,omitempty"`
+	Time              int64                  `protobuf:"varint,24,opt,name=time,proto3" json:"time,omitempty"`
+	IsActive          bool                   `protobuf:"varint,25,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	DefrostTime       int64                  `protobuf:"varint,26,opt,name=defrost_time,json=defrostTime,proto3" json:"defrost_time,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -758,20 +748,6 @@ func (x *Alarm) GetZoneCategory() int64 {
 	return 0
 }
 
-func (x *Alarm) GetColdRoomTime() int64 {
-	if x != nil {
-		return x.ColdRoomTime
-	}
-	return 0
-}
-
-func (x *Alarm) GetColdRoomFrecuancy() int64 {
-	if x != nil {
-		return x.ColdRoomFrecuancy
-	}
-	return 0
-}
-
 func (x *Alarm) GetNotification() bool {
 	if x != nil {
 		return x.Notification
@@ -786,67 +762,11 @@ func (x *Alarm) GetAlarmDateTime() []*AlarmDateTime {
 	return nil
 }
 
-func (x *Alarm) GetIsTimerActive() bool {
-	if x != nil {
-		return x.IsTimerActive
-	}
-	return false
-}
-
-func (x *Alarm) GetTimerValue() int64 {
-	if x != nil {
-		return x.TimerValue
-	}
-	return 0
-}
-
 func (x *Alarm) GetPressure() bool {
 	if x != nil {
 		return x.Pressure
 	}
 	return false
-}
-
-func (x *Alarm) GetCurrent() float32 {
-	if x != nil {
-		return x.Current
-	}
-	return 0
-}
-
-func (x *Alarm) GetVoltage() float32 {
-	if x != nil {
-		return x.Voltage
-	}
-	return 0
-}
-
-func (x *Alarm) GetFactor() float32 {
-	if x != nil {
-		return x.Factor
-	}
-	return 0
-}
-
-func (x *Alarm) GetStatus() int64 {
-	if x != nil {
-		return x.Status
-	}
-	return 0
-}
-
-func (x *Alarm) GetPowerSum() float32 {
-	if x != nil {
-		return x.PowerSum
-	}
-	return 0
-}
-
-func (x *Alarm) GetPower() float32 {
-	if x != nil {
-		return x.Power
-	}
-	return 0
 }
 
 func (x *Alarm) GetNotificationSound() string {
@@ -856,7 +776,7 @@ func (x *Alarm) GetNotificationSound() string {
 	return ""
 }
 
-func (x *Alarm) GetUserIds() []int64 {
+func (x *Alarm) GetUserIds() []string {
 	if x != nil {
 		return x.UserIds
 	}
@@ -976,11 +896,11 @@ type CreateDoorTimeRequest struct {
 	Sms             bool                   `protobuf:"varint,3,opt,name=sms,proto3" json:"sms,omitempty"`
 	Email           bool                   `protobuf:"varint,4,opt,name=email,proto3" json:"email,omitempty"`
 	Notification    bool                   `protobuf:"varint,5,opt,name=notification,proto3" json:"notification,omitempty"`
-	UserId          []int64                `protobuf:"varint,6,rep,packed,name=user_id,proto3" json:"user_id,omitempty"`
+	UserId          []string               `protobuf:"bytes,6,rep,name=user_id,proto3" json:"user_id,omitempty"`
 	SubmissionDate  *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=submission_date,proto3" json:"submission_date,omitempty"`
 	IsActive        bool                   `protobuf:"varint,8,opt,name=is_active,proto3" json:"is_active,omitempty"`
 	Time            int64                  `protobuf:"varint,9,opt,name=time,proto3" json:"time,omitempty"`
-	OrganizationId  int64                  `protobuf:"varint,10,opt,name=organization_id,proto3" json:"organization_id,omitempty"`
+	TenantId        string                 `protobuf:"bytes,10,opt,name=tenant_id,proto3" json:"tenant_id,omitempty"`
 	AlarmDateTime   []*AlarmDateTime       `protobuf:"bytes,11,rep,name=alarm_date_time,proto3" json:"alarm_date_time,omitempty"`
 	IsTimeScheduled bool                   `protobuf:"varint,12,opt,name=is_time_scheduled,proto3" json:"is_time_scheduled,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -1052,7 +972,7 @@ func (x *CreateDoorTimeRequest) GetNotification() bool {
 	return false
 }
 
-func (x *CreateDoorTimeRequest) GetUserId() []int64 {
+func (x *CreateDoorTimeRequest) GetUserId() []string {
 	if x != nil {
 		return x.UserId
 	}
@@ -1080,11 +1000,11 @@ func (x *CreateDoorTimeRequest) GetTime() int64 {
 	return 0
 }
 
-func (x *CreateDoorTimeRequest) GetOrganizationId() int64 {
+func (x *CreateDoorTimeRequest) GetTenantId() string {
 	if x != nil {
-		return x.OrganizationId
+		return x.TenantId
 	}
-	return 0
+	return ""
 }
 
 func (x *CreateDoorTimeRequest) GetAlarmDateTime() []*AlarmDateTime {
@@ -1110,7 +1030,7 @@ type CreateDoorTimeResponse struct {
 	Sms            bool                   `protobuf:"varint,3,opt,name=sms,proto3" json:"sms,omitempty"`
 	Email          bool                   `protobuf:"varint,4,opt,name=email,proto3" json:"email,omitempty"`
 	Notification   bool                   `protobuf:"varint,5,opt,name=notification,proto3" json:"notification,omitempty"`
-	UserId         []int64                `protobuf:"varint,6,rep,packed,name=user_id,proto3" json:"user_id,omitempty"`
+	UserId         []string               `protobuf:"bytes,6,rep,name=user_id,proto3" json:"user_id,omitempty"`
 	SubmissionDate *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=submission_date,proto3" json:"submission_date,omitempty"`
 	IsActive       bool                   `protobuf:"varint,8,opt,name=is_active,proto3" json:"is_active,omitempty"`
 	Time           int64                  `protobuf:"varint,9,opt,name=time,proto3" json:"time,omitempty"`
@@ -1183,7 +1103,7 @@ func (x *CreateDoorTimeResponse) GetNotification() bool {
 	return false
 }
 
-func (x *CreateDoorTimeResponse) GetUserId() []int64 {
+func (x *CreateDoorTimeResponse) GetUserId() []string {
 	if x != nil {
 		return x.UserId
 	}
@@ -1346,7 +1266,7 @@ func (x *CreateMultipleDoorAlarmRequest) GetCreateAlarm() []*CreateDoorTimeReque
 type CreateAlarmMultipleResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Alarm         []*Alarm               `protobuf:"bytes,1,rep,name=alarm,proto3" json:"alarm,omitempty"`
-	UserIds       []int64                `protobuf:"varint,2,rep,packed,name=userIds,proto3" json:"userIds,omitempty"`
+	UserIds       []string               `protobuf:"bytes,2,rep,name=userIds,proto3" json:"userIds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1388,7 +1308,7 @@ func (x *CreateAlarmMultipleResponse) GetAlarm() []*Alarm {
 	return nil
 }
 
-func (x *CreateAlarmMultipleResponse) GetUserIds() []int64 {
+func (x *CreateAlarmMultipleResponse) GetUserIds() []string {
 	if x != nil {
 		return x.UserIds
 	}
@@ -1584,10 +1504,10 @@ func (x *DeleteDoorAlarmRequest) GetAlarmId() []string {
 }
 
 type ListOrganizationAlarmRequest2 struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	OrganizationId int64                  `protobuf:"varint,1,opt,name=organization_id,json=organizationID,proto3" json:"organization_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,proto3" json:"tenant_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListOrganizationAlarmRequest2) Reset() {
@@ -1620,17 +1540,17 @@ func (*ListOrganizationAlarmRequest2) Descriptor() ([]byte, []int) {
 	return file_api_alarm_proto_rawDescGZIP(), []int{21}
 }
 
-func (x *ListOrganizationAlarmRequest2) GetOrganizationId() int64 {
+func (x *ListOrganizationAlarmRequest2) GetTenantId() string {
 	if x != nil {
-		return x.OrganizationId
+		return x.TenantId
 	}
-	return 0
+	return ""
 }
 
 type DeleteMultipleAlarmRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Alarm Id (HEX encoded).
-	UserId        []int64 `protobuf:"varint,1,rep,packed,name=user_id,json=userIDs,proto3" json:"user_id,omitempty"`
+	UserId        []string `protobuf:"bytes,1,rep,name=user_id,json=userIDs,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1665,7 +1585,7 @@ func (*DeleteMultipleAlarmRequest) Descriptor() ([]byte, []int) {
 	return file_api_alarm_proto_rawDescGZIP(), []int{22}
 }
 
-func (x *DeleteMultipleAlarmRequest) GetUserId() []int64 {
+func (x *DeleteMultipleAlarmRequest) GetUserId() []string {
 	if x != nil {
 		return x.UserId
 	}
@@ -1788,17 +1708,17 @@ type ListOrganizationAlarmResponse struct {
 	Notification    bool                   `protobuf:"varint,16,opt,name=notification,proto3" json:"notification,omitempty"`
 	AlarmDateTime   []*AlarmDateTime       `protobuf:"bytes,17,rep,name=alarm_date_time,proto3" json:"alarm_date_time,omitempty"`
 	// Device EUI (HEX encoded).
-	Username          string  `protobuf:"bytes,18,opt,name=username,proto3" json:"username,omitempty"`
-	IsTimerActive     bool    `protobuf:"varint,19,opt,name=is_timer_active,proto3" json:"is_timer_active,omitempty"`
-	TimerValue        int64   `protobuf:"varint,20,opt,name=timer_value,proto3" json:"timer_value,omitempty"`
-	Pressure          bool    `protobuf:"varint,21,opt,name=pressure,proto3" json:"pressure,omitempty"`
-	NotificationSound string  `protobuf:"bytes,22,opt,name=notification_sound,proto3" json:"notification_sound,omitempty"`
-	UserIds           []int64 `protobuf:"varint,23,rep,packed,name=user_ids,proto3" json:"user_ids,omitempty"`
-	Distance          bool    `protobuf:"varint,24,opt,name=distance,proto3" json:"distance,omitempty"`
-	Time              int64   `protobuf:"varint,25,opt,name=time,proto3" json:"time,omitempty"`
-	IsActive          bool    `protobuf:"varint,26,opt,name=is_active,proto3" json:"is_active,omitempty"`
-	DefrostTime       int64   `protobuf:"varint,27,opt,name=defrost_time,proto3" json:"defrost_time,omitempty"`
-	ZoneCategory      int64   `protobuf:"varint,28,opt,name=zone_category,proto3" json:"zone_category,omitempty"`
+	Username          string   `protobuf:"bytes,18,opt,name=username,proto3" json:"username,omitempty"`
+	IsTimerActive     bool     `protobuf:"varint,19,opt,name=is_timer_active,proto3" json:"is_timer_active,omitempty"`
+	TimerValue        int64    `protobuf:"varint,20,opt,name=timer_value,proto3" json:"timer_value,omitempty"`
+	Pressure          bool     `protobuf:"varint,21,opt,name=pressure,proto3" json:"pressure,omitempty"`
+	NotificationSound string   `protobuf:"bytes,22,opt,name=notification_sound,proto3" json:"notification_sound,omitempty"`
+	UserIds           []string `protobuf:"bytes,23,rep,name=user_ids,proto3" json:"user_ids,omitempty"`
+	Distance          bool     `protobuf:"varint,24,opt,name=distance,proto3" json:"distance,omitempty"`
+	Time              int64    `protobuf:"varint,25,opt,name=time,proto3" json:"time,omitempty"`
+	IsActive          bool     `protobuf:"varint,26,opt,name=is_active,proto3" json:"is_active,omitempty"`
+	DefrostTime       int64    `protobuf:"varint,27,opt,name=defrost_time,proto3" json:"defrost_time,omitempty"`
+	ZoneCategory      int64    `protobuf:"varint,28,opt,name=zone_category,proto3" json:"zone_category,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1987,7 +1907,7 @@ func (x *ListOrganizationAlarmResponse) GetNotificationSound() string {
 	return ""
 }
 
-func (x *ListOrganizationAlarmResponse) GetUserIds() []int64 {
+func (x *ListOrganizationAlarmResponse) GetUserIds() []string {
 	if x != nil {
 		return x.UserIds
 	}
@@ -2183,9 +2103,9 @@ func (x *ListDoorAlarmResponse) GetResult() []*CreateDoorTimeResponse {
 type ListOrganizationAlarmRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Max number of devices to return in the result-set.
-	OrganizationId int64 `protobuf:"varint,1,opt,name=organization_id,json=organizationID,proto3" json:"organization_id,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	TenantId      string `protobuf:"bytes,1,opt,name=tenant_id,proto3" json:"tenant_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListOrganizationAlarmRequest) Reset() {
@@ -2218,11 +2138,11 @@ func (*ListOrganizationAlarmRequest) Descriptor() ([]byte, []int) {
 	return file_api_alarm_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *ListOrganizationAlarmRequest) GetOrganizationId() int64 {
+func (x *ListOrganizationAlarmRequest) GetTenantId() string {
 	if x != nil {
-		return x.OrganizationId
+		return x.TenantId
 	}
-	return 0
+	return ""
 }
 
 type ListOrganizationAlarmResponse2 struct {
@@ -2330,7 +2250,7 @@ type AlarmLogs struct {
 	MinTreshold float32 `protobuf:"fixed32,2,opt,name=min_treshold,json=minTreshold,proto3" json:"min_treshold,omitempty"`
 	// Value of alarm
 	MaxTreshold    float32                `protobuf:"fixed32,3,opt,name=max_treshold,json=maxTreshold,proto3" json:"max_treshold,omitempty"`
-	UserId         int64                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId         string                 `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	IpAddress      string                 `protobuf:"bytes,5,opt,name=ip_address,json=ipAddress,proto3" json:"ip_address,omitempty"`
 	IsDeleted      int64                  `protobuf:"varint,6,opt,name=is_deleted,json=isDeleted,proto3" json:"is_deleted,omitempty"`
 	Temperature    bool                   `protobuf:"varint,7,opt,name=temperature,proto3" json:"temperature,omitempty"`
@@ -2395,11 +2315,11 @@ func (x *AlarmLogs) GetMaxTreshold() float32 {
 	return 0
 }
 
-func (x *AlarmLogs) GetUserId() int64 {
+func (x *AlarmLogs) GetUserId() string {
 	if x != nil {
 		return x.UserId
 	}
-	return 0
+	return ""
 }
 
 func (x *AlarmLogs) GetIpAddress() string {
@@ -2568,7 +2488,7 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\n" +
 	"changed_at\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\tchangedAt\x12\x1d\n" +
 	"\n" +
-	"changed_by\x18\x06 \x01(\x03R\tchangedBy\x12\x1d\n" +
+	"changed_by\x18\x06 \x01(\tR\tchangedBy\x12\x1d\n" +
 	"\n" +
 	"old_values\x18\a \x01(\tR\toldValues\x12\x1d\n" +
 	"\n" +
@@ -2585,7 +2505,7 @@ const file_api_alarm_proto_rawDesc = "" +
 	"updated_at\x18\x06 \x01(\tR\n" +
 	"updated_at\x12\x1c\n" +
 	"\tis_active\x18\a \x01(\bR\tis_active\x12\x18\n" +
-	"\auser_id\x18\b \x01(\x03R\auser_id\x122\n" +
+	"\auser_id\x18\b \x01(\tR\auser_id\x122\n" +
 	"\x14receiver_device_type\x18\t \x01(\x03R\x14receiver_device_type\x122\n" +
 	"\x14receiver_device_name\x18\n" +
 	" \x01(\tR\x14receiver_device_name\"6\n" +
@@ -2605,7 +2525,7 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\x1bListAlarmAutomationResponse\x12,\n" +
 	"\x06result\x18\x01 \x03(\v2\x14.api.AlarmAutomationR\x06result\"_\n" +
 	"\x1cCreateAlarmAutomationRequest\x12?\n" +
-	"\x10alarm_automation\x18\x01 \x01(\v2\x14.api.AlarmAutomationR\x0falarmAutomation\"\x83\t\n" +
+	"\x10alarm_automation\x18\x01 \x01(\v2\x14.api.AlarmAutomationR\x0falarmAutomation\"\xc6\x06\n" +
 	"\x05Alarm\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\adev_eui\x18\x02 \x01(\tR\x06devEUI\x12!\n" +
@@ -2628,44 +2548,34 @@ const file_api_alarm_proto_rawDesc = "" +
 	"start_time\x18\x0f \x01(\x02R\n" +
 	"start_time\x12\x1a\n" +
 	"\bend_time\x18\x10 \x01(\x02R\bend_time\x12$\n" +
-	"\rzone_category\x18\x11 \x01(\x03R\rzone_category\x12&\n" +
-	"\x0ecold_room_time\x18\x12 \x01(\x03R\x0ecold_room_time\x120\n" +
-	"\x13cold_room_frecuancy\x18\x13 \x01(\x03R\x13cold_room_frecuancy\x12\"\n" +
-	"\fnotification\x18\x14 \x01(\bR\fnotification\x12<\n" +
-	"\x0falarm_date_time\x18\x15 \x03(\v2\x12.api.AlarmDateTimeR\x0falarm_date_time\x12(\n" +
-	"\x0fis_timer_active\x18\x16 \x01(\bR\x0fis_timer_active\x12 \n" +
-	"\vtimer_value\x18\x17 \x01(\x03R\vtimer_value\x12\x1a\n" +
-	"\bpressure\x18\x18 \x01(\bR\bpressure\x12\x18\n" +
-	"\acurrent\x18\x19 \x01(\x02R\acurrent\x12\x18\n" +
-	"\avoltage\x18\x1a \x01(\x02R\avoltage\x12\x16\n" +
-	"\x06factor\x18\x1b \x01(\x02R\x06factor\x12\x16\n" +
-	"\x06status\x18\x1c \x01(\x03R\x06status\x12\x1b\n" +
-	"\tpower_sum\x18\x1d \x01(\x02R\bpowerSum\x12\x14\n" +
-	"\x05power\x18\x1e \x01(\x02R\x05power\x12-\n" +
-	"\x12notification_sound\x18\x1f \x01(\tR\x11notificationSound\x12\x19\n" +
-	"\buser_ids\x18  \x03(\x03R\auserIds\x12\x1a\n" +
-	"\bdistance\x18! \x01(\bR\bdistance\x12\x12\n" +
-	"\x04time\x18\" \x01(\x03R\x04time\x12\x1b\n" +
-	"\tis_active\x18# \x01(\bR\bisActive\x12!\n" +
-	"\fdefrost_time\x18$ \x01(\x03R\vdefrostTime\"\xad\x01\n" +
+	"\rzone_category\x18\x11 \x01(\x03R\rzone_category\x12\"\n" +
+	"\fnotification\x18\x12 \x01(\bR\fnotification\x12<\n" +
+	"\x0falarm_date_time\x18\x13 \x03(\v2\x12.api.AlarmDateTimeR\x0falarm_date_time\x12\x1a\n" +
+	"\bpressure\x18\x14 \x01(\bR\bpressure\x12-\n" +
+	"\x12notification_sound\x18\x15 \x01(\tR\x11notificationSound\x12\x19\n" +
+	"\buser_ids\x18\x16 \x03(\tR\auserIds\x12\x1a\n" +
+	"\bdistance\x18\x17 \x01(\bR\bdistance\x12\x12\n" +
+	"\x04time\x18\x18 \x01(\x03R\x04time\x12\x1b\n" +
+	"\tis_active\x18\x19 \x01(\bR\bisActive\x12!\n" +
+	"\fdefrost_time\x18\x1a \x01(\x03R\vdefrostTime\"\xad\x01\n" +
 	"\rAlarmDateTime\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x1a\n" +
 	"\balarm_id\x18\x02 \x01(\x03R\balarm_id\x12\x1c\n" +
 	"\talarm_day\x18\x03 \x01(\x03R\talarm_day\x12*\n" +
 	"\x10alarm_start_time\x18\x04 \x01(\x02R\x10alarm_start_time\x12&\n" +
-	"\x0ealarm_end_time\x18\x05 \x01(\x02R\x0ealarm_end_time\"\xb4\x03\n" +
+	"\x0ealarm_end_time\x18\x05 \x01(\x02R\x0ealarm_end_time\"\xa8\x03\n" +
 	"\x15CreateDoorTimeRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\adev_eui\x18\x02 \x01(\tR\x06devEUI\x12\x10\n" +
 	"\x03sms\x18\x03 \x01(\bR\x03sms\x12\x14\n" +
 	"\x05email\x18\x04 \x01(\bR\x05email\x12\"\n" +
 	"\fnotification\x18\x05 \x01(\bR\fnotification\x12\x18\n" +
-	"\auser_id\x18\x06 \x03(\x03R\auser_id\x12D\n" +
+	"\auser_id\x18\x06 \x03(\tR\auser_id\x12D\n" +
 	"\x0fsubmission_date\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x0fsubmission_date\x12\x1c\n" +
 	"\tis_active\x18\b \x01(\bR\tis_active\x12\x12\n" +
-	"\x04time\x18\t \x01(\x03R\x04time\x12(\n" +
-	"\x0forganization_id\x18\n" +
-	" \x01(\x03R\x0forganization_id\x12<\n" +
+	"\x04time\x18\t \x01(\x03R\x04time\x12\x1c\n" +
+	"\ttenant_id\x18\n" +
+	" \x01(\tR\ttenant_id\x12<\n" +
 	"\x0falarm_date_time\x18\v \x03(\v2\x12.api.AlarmDateTimeR\x0falarm_date_time\x12,\n" +
 	"\x11is_time_scheduled\x18\f \x01(\bR\x11is_time_scheduled\"\x9f\x02\n" +
 	"\x16CreateDoorTimeResponse\x12\x0e\n" +
@@ -2674,7 +2584,7 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\x03sms\x18\x03 \x01(\bR\x03sms\x12\x14\n" +
 	"\x05email\x18\x04 \x01(\bR\x05email\x12\"\n" +
 	"\fnotification\x18\x05 \x01(\bR\fnotification\x12\x18\n" +
-	"\auser_id\x18\x06 \x03(\x03R\auser_id\x12D\n" +
+	"\auser_id\x18\x06 \x03(\tR\auser_id\x12D\n" +
 	"\x0fsubmission_date\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x0fsubmission_date\x12\x1c\n" +
 	"\tis_active\x18\b \x01(\bR\tis_active\x12\x12\n" +
 	"\x04time\x18\t \x01(\x03R\x04time\"C\n" +
@@ -2689,7 +2599,7 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\x1bCreateAlarmMultipleResponse\x12 \n" +
 	"\x05alarm\x18\x01 \x03(\v2\n" +
 	".api.AlarmR\x05alarm\x12\x18\n" +
-	"\auserIds\x18\x02 \x03(\x03R\auserIds\",\n" +
+	"\auserIds\x18\x02 \x03(\tR\auserIds\",\n" +
 	"\x0fGetAlarmRequest\x12\x19\n" +
 	"\balarm_id\x18\x01 \x01(\tR\aalarmID\"4\n" +
 	"\x10GetAlarmResponse\x12 \n" +
@@ -2700,11 +2610,11 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\n" +
 	"ip_address\x18\x02 \x01(\tR\tipAddress\"3\n" +
 	"\x16DeleteDoorAlarmRequest\x12\x19\n" +
-	"\balarm_id\x18\x01 \x03(\tR\aalarmID\"H\n" +
-	"\x1dListOrganizationAlarmRequest2\x12'\n" +
-	"\x0forganization_id\x18\x01 \x01(\x03R\x0eorganizationID\"6\n" +
+	"\balarm_id\x18\x01 \x03(\tR\aalarmID\"=\n" +
+	"\x1dListOrganizationAlarmRequest2\x12\x1c\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\ttenant_id\"6\n" +
 	"\x1aDeleteMultipleAlarmRequest\x12\x18\n" +
-	"\auser_id\x18\x01 \x03(\x03R\auserIDs\":\n" +
+	"\auser_id\x18\x01 \x03(\tR\auserIDs\":\n" +
 	"\x1eDeleteMultipleZoneAlarmRequest\x12\x18\n" +
 	"\azone_id\x18\x01 \x03(\x03R\azoneIds\"9\n" +
 	"\x1dDeleteMultipleDevAlarmRequest\x12\x18\n" +
@@ -2734,7 +2644,7 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\vtimer_value\x18\x14 \x01(\x03R\vtimer_value\x12\x1a\n" +
 	"\bpressure\x18\x15 \x01(\bR\bpressure\x12.\n" +
 	"\x12notification_sound\x18\x16 \x01(\tR\x12notification_sound\x12\x1a\n" +
-	"\buser_ids\x18\x17 \x03(\x03R\buser_ids\x12\x1a\n" +
+	"\buser_ids\x18\x17 \x03(\tR\buser_ids\x12\x1a\n" +
 	"\bdistance\x18\x18 \x01(\bR\bdistance\x12\x12\n" +
 	"\x04time\x18\x19 \x01(\x03R\x04time\x12\x1c\n" +
 	"\tis_active\x18\x1a \x01(\bR\tis_active\x12\"\n" +
@@ -2749,9 +2659,9 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\x15ListDoorAlarmResponse\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\x03R\n" +
 	"totalCount\x123\n" +
-	"\x06result\x18\x02 \x03(\v2\x1b.api.CreateDoorTimeResponseR\x06result\"G\n" +
-	"\x1cListOrganizationAlarmRequest\x12'\n" +
-	"\x0forganization_id\x18\x01 \x01(\x03R\x0eorganizationID\"}\n" +
+	"\x06result\x18\x02 \x03(\v2\x1b.api.CreateDoorTimeResponseR\x06result\"<\n" +
+	"\x1cListOrganizationAlarmRequest\x12\x1c\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\ttenant_id\"}\n" +
 	"\x1eListOrganizationAlarmResponse2\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\x03R\n" +
 	"totalCount\x12:\n" +
@@ -2763,7 +2673,7 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\adev_eui\x18\x01 \x01(\tR\x06devEUI\x12!\n" +
 	"\fmin_treshold\x18\x02 \x01(\x02R\vminTreshold\x12!\n" +
 	"\fmax_treshold\x18\x03 \x01(\x02R\vmaxTreshold\x12\x17\n" +
-	"\auser_id\x18\x04 \x01(\x03R\x06userId\x12\x1d\n" +
+	"\auser_id\x18\x04 \x01(\tR\x06userId\x12\x1d\n" +
 	"\n" +
 	"ip_address\x18\x05 \x01(\tR\tipAddress\x12\x1d\n" +
 	"\n" +
@@ -2779,14 +2689,14 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\x13GetAuditLogsRequest\x12\x18\n" +
 	"\adev_eui\x18\x01 \x01(\tR\adev_eui\"=\n" +
 	"\x14GetAuditLogsResponse\x12%\n" +
-	"\x06result\x18\x01 \x03(\v2\r.api.AuditLogR\x06result2\xaf\x10\n" +
+	"\x06result\x18\x01 \x03(\v2\r.api.AuditLogR\x06result2\xa9\x10\n" +
 	"\fAlarmService\x12P\n" +
 	"\x06Create\x12\x17.api.CreateAlarmRequest\x1a\x16.google.protobuf.Empty\"\x15\x82\xd3\xe4\x93\x02\x0f:\x01*\"\n" +
 	"/api/alarm\x12Q\n" +
 	"\x03Get\x12\x14.api.GetAlarmRequest\x1a\x15.api.GetAlarmResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/alarm/{alarm_id}\x12[\n" +
 	"\x06Update\x12\x17.api.UpdateAlarmRequest\x1a\x16.google.protobuf.Empty\" \x82\xd3\xe4\x93\x02\x1a:\x01*\x1a\x15/api/alarm/{alarm_id}\x12W\n" +
-	"\x06Delete\x12\x17.api.DeleteAlarmRequest\x1a\x16.google.protobuf.Empty\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/alarm/delete\x12\xa1\x01\n" +
-	"\x19ListAllOrganizationAlarms\x12\".api.ListOrganizationAlarmRequest2\x1a#.api.ListOrganizationAlarmResponse2\";\x82\xd3\xe4\x93\x025\x123/api/alarm/listOrganizationAlarms/{organization_id}\x12o\n" +
+	"\x06Delete\x12\x17.api.DeleteAlarmRequest\x1a\x16.google.protobuf.Empty\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/alarm/delete\x12\x9b\x01\n" +
+	"\x19ListAllOrganizationAlarms\x12\".api.ListOrganizationAlarmRequest2\x1a#.api.ListOrganizationAlarmResponse2\"5\x82\xd3\xe4\x93\x02/\x12-/api/alarm/listOrganizationAlarms/{tenant_id}\x12o\n" +
 	"\x0eCreateMultiple\x12\x1f.api.CreateMultipleAlarmRequest\x1a\x16.google.protobuf.Empty\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/alarm/createMultiple\x12o\n" +
 	"\x0eDeleteMultiple\x12\x1f.api.DeleteMultipleAlarmRequest\x1a\x16.google.protobuf.Empty\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/alarm/deleteMultiple\x12z\n" +
 	"\x12DeleteSensorAlarms\x12\".api.DeleteMultipleDevAlarmRequest\x1a\x16.google.protobuf.Empty\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/alarm/deleteSensorAlarms\x12w\n" +

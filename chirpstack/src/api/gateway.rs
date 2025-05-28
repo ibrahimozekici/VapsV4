@@ -42,7 +42,7 @@ impl GatewayService for Gateway {
                 return Err(Status::invalid_argument("gateway is missing"));
             }
         };
-        let tenant_id = Uuid::from_str(&req_gw.tenant_id).map_err(|e| e.status())?;
+        let tenant_id = Uuid::from_str(&req_gw.organization_id).map_err(|e| e.status())?;
 
         self.validator
             .validate(
@@ -57,7 +57,7 @@ impl GatewayService for Gateway {
         };
 
         let gw = gateway::Gateway {
-            gateway_id: EUI64::from_str(&req_gw.gateway_id).map_err(|e| e.status())?,
+            gateway_id: EUI64::from_str(&req_gw.id).map_err(|e| e.status())?,
             tenant_id: tenant_id.into(),
             name: req_gw.name.clone(),
             description: req_gw.description.clone(),
@@ -73,7 +73,7 @@ impl GatewayService for Gateway {
 
         let mut resp = Response::new(());
         resp.metadata_mut()
-            .insert("x-log-gateway_id", req_gw.gateway_id.parse().unwrap());
+            .insert("x-log-gateway_id", req_gw.id.parse().unwrap());
 
         Ok(resp)
     }
@@ -96,7 +96,7 @@ impl GatewayService for Gateway {
 
         let mut resp = Response::new(api::GetGatewayResponse {
             gateway: Some(api::Gateway {
-                gateway_id: gw.gateway_id.to_string(),
+                id: gw.gateway_id.to_string(),
                 name: gw.name,
                 description: gw.description,
                 location: Some(common::Location {
@@ -105,7 +105,7 @@ impl GatewayService for Gateway {
                     altitude: gw.altitude as f64,
                     ..Default::default()
                 }),
-                tenant_id: gw.tenant_id.to_string(),
+                organization_id: gw.tenant_id.to_string(),
                 tags: gw.tags.into_hashmap(),
                 metadata: gw.properties.into_hashmap(),
                 stats_interval: gw.stats_interval_secs as u32,
@@ -133,7 +133,7 @@ impl GatewayService for Gateway {
                 return Err(Status::invalid_argument("gateway is missing"));
             }
         };
-        let gw_id = EUI64::from_str(&req_gw.gateway_id).map_err(|e| e.status())?;
+        let gw_id = EUI64::from_str(&req_gw.id).map_err(|e| e.status())?;
 
         self.validator
             .validate(
@@ -164,7 +164,7 @@ impl GatewayService for Gateway {
 
         let mut resp = Response::new(());
         resp.metadata_mut()
-            .insert("x-log-gateway_id", req_gw.gateway_id.parse().unwrap());
+            .insert("x-log-gateway_id", req_gw.id.parse().unwrap());
 
         Ok(resp)
     }
@@ -197,10 +197,10 @@ impl GatewayService for Gateway {
         request: Request<api::ListGatewaysRequest>,
     ) -> Result<Response<api::ListGatewaysResponse>, Status> {
         let req = request.get_ref();
-        let tenant_id = if req.tenant_id.is_empty() {
+        let tenant_id = if req.organization_id.is_empty() {
             None
         } else {
-            Some(Uuid::from_str(&req.tenant_id).map_err(|e| e.status())?)
+            Some(Uuid::from_str(&req.organization_id).map_err(|e| e.status())?)
         };
         let mg_id: Option<Uuid> = if req.multicast_group_id.is_empty() {
             None
@@ -247,8 +247,8 @@ impl GatewayService for Gateway {
             result: result
                 .iter()
                 .map(|gw| api::GatewayListItem {
-                    tenant_id: gw.tenant_id.to_string(),
-                    gateway_id: gw.gateway_id.to_string(),
+                    organization_id: gw.tenant_id.to_string(),
+                    id: gw.gateway_id.to_string(),
                     name: gw.name.clone(),
                     description: gw.description.clone(),
                     location: Some(common::Location {
@@ -282,9 +282,9 @@ impl GatewayService for Gateway {
                 })
                 .collect(),
         });
-        if !req.tenant_id.is_empty() {
+        if !req.organization_id.is_empty() {
             resp.metadata_mut()
-                .insert("x-log-tenant_id", req.tenant_id.parse().unwrap());
+                .insert("x-log-tenant_id", req.organization_id.parse().unwrap());
         }
 
         Ok(resp)
@@ -1015,8 +1015,8 @@ pub mod test {
         // create
         let create_req = api::CreateGatewayRequest {
             gateway: Some(api::Gateway {
-                gateway_id: "0102030405060708".into(),
-                tenant_id: t.id.to_string(),
+                id: "0102030405060708".into(),
+                organization_id: t.id.to_string(),
                 name: "test-gw".into(),
                 location: Some(common::Location {
                     latitude: 1.1,
@@ -1044,8 +1044,8 @@ pub mod test {
         let get_resp = service.get(get_req).await.unwrap();
         assert_eq!(
             Some(api::Gateway {
-                gateway_id: "0102030405060708".into(),
-                tenant_id: t.id.to_string(),
+                id: "0102030405060708".into(),
+                organization_id: t.id.to_string(),
                 name: "test-gw".into(),
                 location: Some(common::Location {
                     latitude: 1.1,
@@ -1061,8 +1061,8 @@ pub mod test {
         // update
         let up_req = api::UpdateGatewayRequest {
             gateway: Some(api::Gateway {
-                gateway_id: "0102030405060708".into(),
-                tenant_id: t.id.to_string(),
+                id: "0102030405060708".into(),
+                organization_id: t.id.to_string(),
                 name: "updated-gw".into(),
                 location: Some(common::Location {
                     latitude: 2.1,
@@ -1090,8 +1090,8 @@ pub mod test {
         let get_resp = service.get(get_req).await.unwrap();
         assert_eq!(
             Some(api::Gateway {
-                gateway_id: "0102030405060708".into(),
-                tenant_id: t.id.to_string(),
+                id: "0102030405060708".into(),
+                organization_id: t.id.to_string(),
                 name: "updated-gw".into(),
                 location: Some(common::Location {
                     latitude: 2.1,
@@ -1107,7 +1107,7 @@ pub mod test {
         // list
         let list_req = api::ListGatewaysRequest {
             search: "updated".into(),
-            tenant_id: t.id.to_string(),
+            organization_id: t.id.to_string(),
             limit: 10,
             offset: 0,
             ..Default::default()
