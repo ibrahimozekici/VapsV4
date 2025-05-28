@@ -48,9 +48,10 @@ use crate::helpers::errors::PrintFullError;
 use crate::monitoring::prometheus;
 use crate::stream;
 
-// pub mod alarm;
+pub mod alarm;
 pub mod application;
 pub mod auth;
+pub mod automation;
 pub mod backend;
 pub mod device;
 pub mod device_profile;

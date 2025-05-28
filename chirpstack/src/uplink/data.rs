@@ -13,6 +13,7 @@ use crate::helpers::errors::PrintFullError;
 use crate::storage::data_uplink::write_data_from_object_json;
 use crate::storage::error::Error as StorageError;
 use crate::storage::{
+    alarm,
     application,
     device::{self, DeviceClass},
     device_gateway, device_profile, device_queue, fields,
@@ -997,7 +998,6 @@ impl<'a> Data<'a> {
 
                     // 👇 This is the new block
                     if let Some(ref device) = self.device {
-        
                         if let Some(pb_struct) = v.as_ref() {
                             match serde_json::to_value(pb_struct) {
                                 Ok(json_val) => {
@@ -1009,6 +1009,17 @@ impl<'a> Data<'a> {
                                     .await
                                     {
                                         warn!(error = %e, "Failed to persist decoded object JSON");
+                                    }
+                                    // ✅ Call check_alarm here
+                                    if let Err(e) = alarm::check_alarm(
+                                        self.db_conn.as_mut(),
+                                        self.application.as_ref().unwrap(),
+                                        device,
+                                        &json_val,
+                                    )
+                                    .await
+                                    {
+                                        warn!(error = %e, "Alarm check failed");
                                     }
                                 }
                                 Err(e) => {

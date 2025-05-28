@@ -23,9 +23,9 @@ diesel::table! {
         pressure -> Nullable<Bool>,
         #[max_length = 50]
         notification_sound -> Nullable<Varchar>,
-        user_id -> Nullable<Array<Nullable<Int8>>>,
         distance -> Nullable<Bool>,
         defrost_time -> Nullable<Int4>,
+        user_id -> Nullable<Array<Nullable<Uuid>>>,
     }
 }
 
@@ -38,9 +38,9 @@ diesel::table! {
         #[max_length = 10]
         change_type -> Nullable<Varchar>,
         changed_at -> Nullable<Timestamp>,
-        changed_by -> Nullable<Int4>,
         old_values -> Nullable<Jsonb>,
         new_values -> Nullable<Jsonb>,
+        changed_by -> Nullable<Uuid>,
     }
 }
 
@@ -136,7 +136,6 @@ diesel::table! {
         created_at -> Nullable<Timestamp>,
         updated_at -> Nullable<Timestamp>,
         is_active -> Nullable<Bool>,
-        user_id -> Int4,
         sender_device_type -> Nullable<Int4>,
         receiver_device_type -> Nullable<Int4>,
         sender_device_name -> Nullable<Text>,
@@ -144,7 +143,8 @@ diesel::table! {
         #[max_length = 50]
         trigger_type -> Nullable<Varchar>,
         trigger_time -> Nullable<Timestamp>,
-        organization_id -> Nullable<Int4>,
+        tenant_id -> Nullable<Uuid>,
+        user_id -> Nullable<Uuid>,
     }
 }
 
@@ -465,8 +465,8 @@ diesel::table! {
         submission_time -> Nullable<Timestamp>,
         is_active -> Nullable<Bool>,
         time -> Nullable<Int8>,
-        user_id -> Nullable<Array<Nullable<Int8>>>,
-        organization_id -> Nullable<Int4>,
+        user_id -> Nullable<Array<Nullable<Uuid>>>,
+        tenant_id -> Nullable<Uuid>,
     }
 }
 

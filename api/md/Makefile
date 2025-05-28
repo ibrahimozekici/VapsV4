@@ -9,6 +9,7 @@ requirements:
 api:
 	protoc -I=../proto --doc_out=./api --doc_opt=markdown,api.md \
 		api/alarm.proto \
+		api/automation.proto \
 		api/application.proto \
 		api/device.proto \
 		api/device_profile.proto \

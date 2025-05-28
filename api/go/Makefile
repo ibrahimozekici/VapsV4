@@ -12,6 +12,7 @@ gw:
 
 api:
 	protoc ${PROTOC_ARGS} api/alarm.proto
+	protoc ${PROTOC_ARGS} api/automation.proto
 	protoc ${PROTOC_ARGS} api/internal.proto
 	protoc ${PROTOC_ARGS} api/user.proto
 	protoc ${PROTOC_ARGS} api/tenant.proto

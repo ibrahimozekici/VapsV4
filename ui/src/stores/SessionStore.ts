@@ -29,7 +29,7 @@ class SessionStore extends EventEmitter {
 
   login = (email: string, password: string, callbackFunc: () => void) => {
     const req = new LoginRequest();
-    req.setEmail(email);
+    req.setUsername(email);
     req.setPassword(password);
     this.client.login(req, {}, (err, resp) => {
       if (err !== null) {

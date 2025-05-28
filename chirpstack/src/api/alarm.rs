@@ -1,22 +1,16 @@
-use super::auth::validator::{self, Validator};
-use crate::storage::{fields, get_async_db_conn};
+use super::auth::validator::{self};
 use std::str::FromStr;
 use tracing::info;
 
 use super::auth::AuthID;
-use super::error::ToStatus;
-use super::helpers::{self, FromProto, ToProto};
+use super::helpers::{self};
+use chirpstack_api::api;
 use chirpstack_api::api::alarm_service_server::AlarmService;
-use chirpstack_api::api::{AlarmDateTime, CreateDoorTimeResponse}; // Import the correct AlarmDateTime type
-use chirpstack_api::{api};
-use lrwn::{EUI64};
+use chirpstack_api::api::CreateDoorTimeResponse; // Import the correct AlarmDateTime type
+use lrwn::EUI64;
 
-use crate::storage::{
-    alarm::{self},
-    error::Error as StorageError,
-    metrics,
-};
-use tonic::{Code, Request, Response, Status};
+use crate::storage::alarm::{self};
+use tonic::{Request, Response, Status};
 
 pub struct Alarm {
     validator: validator::RequestValidator,
@@ -33,7 +27,7 @@ impl AlarmService for Alarm {
     async fn create(
         &self,
         request: Request<api::CreateAlarmRequest>,
-    ) -> Result<Response<api::CreateAlarmResponse>, Status> {
+    ) -> Result<Response<()>, Status> {
         let req = &request.get_ref().create_alarm;
         if req.is_empty() {
             return Err(Status::invalid_argument("No alarms provided"));
@@ -83,7 +77,13 @@ impl AlarmService for Alarm {
                 is_time_limit_active: Some(proto_alarm.is_time_scheduled),
                 alarm_start_time: Some(proto_alarm.start_time as f64),
                 alarm_stop_time: Some(proto_alarm.end_time as f64),
-                user_id: Some(proto_alarm.user_ids.iter().map(|&id| Some(id)).collect()),
+                user_id: Some(
+                    proto_alarm
+                        .user_ids
+                        .iter()
+                        .map(|id| uuid::Uuid::parse_str(id).ok())
+                        .collect(),
+                ),
                 ..Default::default()
             };
 
@@ -99,7 +99,7 @@ impl AlarmService for Alarm {
                 })
                 .collect();
 
-            let stored_alarm = alarm::create(alarm, alarm_dates.clone(), user_id.as_u128() as i64)
+            let stored_alarm = alarm::create(alarm, alarm_dates.clone(), *user_id)
                 .await
                 .map_err(|e| Status::internal(format!("Failed to create alarm: {}", e)))?;
 
@@ -146,9 +146,7 @@ impl AlarmService for Alarm {
             response_alarms.push(api_alarm);
         }
 
-        Ok(Response::new(api::CreateAlarmResponse {
-            alarm: response_alarms,
-        }))
+        Ok(Response::new(()))
     }
 
     async fn get(
@@ -210,7 +208,7 @@ impl AlarmService for Alarm {
                 .user_id
                 .unwrap_or_default()
                 .into_iter()
-                .filter_map(|x| x)
+                .filter_map(|x| x.map(|uuid| uuid.to_string()))
                 .collect(),
             time: chrono::Utc::now().timestamp() as i64,
         };
@@ -225,12 +223,14 @@ impl AlarmService for Alarm {
     ) -> Result<Response<api::ListOrganizationAlarmResponse2>, Status> {
         let req = _request.get_ref();
 
-        let organization_id = req.organization_id.clone();
-        if organization_id == 0 {
+        let tenant_id = &req.tenant_id;
+        if tenant_id.is_empty() {
             return Err(Status::invalid_argument("Organization ID is required"));
         }
+        let tenant_uuid = uuid::Uuid::parse_str(tenant_id)
+            .map_err(|_| Status::invalid_argument("Invalid Organization ID, must be a valid UUID string"))?;
 
-        let alarms = alarm::get_organization_alarm_list(organization_id as i32)
+        let alarms = alarm::get_organization_alarm_list(tenant_uuid)
             .await
             .map_err(|e| Status::internal(format!("Failed to list alarms: {}", e)))?;
 
@@ -265,6 +265,7 @@ impl AlarmService for Alarm {
                     .unwrap_or_default()
                     .into_iter()
                     .filter_map(|x| x)
+                    .map(|uuid| uuid.to_string())
                     .collect(),
                 time: chrono::Utc::now().timestamp() as i64,
                 device_name: alarm.device_name.clone().unwrap_or_default(),
@@ -289,9 +290,9 @@ impl AlarmService for Alarm {
             return Err(Status::invalid_argument("No alarms provided"));
         }
 
-        let mut response_alarms: Vec<api::Alarm> = Vec::new();
+        let mut _response_alarms: Vec<api::Alarm> = Vec::new();
 
-        for proto_alarm in req {
+        if let Some(proto_alarm) = req {
             let dev_eui = EUI64::from_str(&proto_alarm.dev_eui).map_err(|_| {
                 Status::invalid_argument("Invalid dev_eui, must be a valid EUI64 string")
             })?;
@@ -333,7 +334,13 @@ impl AlarmService for Alarm {
                 is_time_limit_active: Some(proto_alarm.is_time_scheduled),
                 alarm_start_time: Some(proto_alarm.start_time as f64),
                 alarm_stop_time: Some(proto_alarm.end_time as f64),
-                user_id: Some(proto_alarm.user_ids.iter().map(|&id| Some(id)).collect()),
+                user_id: Some(
+                    proto_alarm
+                        .user_ids
+                        .iter()
+                        .map(|id| uuid::Uuid::parse_str(id).ok())
+                        .collect(),
+                ),
                 ..Default::default()
             };
 
@@ -354,7 +361,7 @@ impl AlarmService for Alarm {
                 Status::internal(format!("Failed to fetch alarm for audit log: {}", e))
             })?;
 
-            let result = alarm::update_alarm(alarm, alarm_dates.clone(), user_id.as_u128() as i64)
+            let result = alarm::update_alarm(alarm, alarm_dates.clone(), *user_id)
                 .await
                 .map_err(|e| Status::internal(format!("Failed to update alarm: {}", e)))?;
         }
@@ -391,7 +398,7 @@ impl AlarmService for Alarm {
                 Status::internal(format!("Failed to fetch alarm for audit log: {}", e))
             })?;
 
-            alarm::delete_alarm(alarm_id, user_id.as_u128() as i64)
+            alarm::delete_alarm(alarm_id, *user_id)
                 .await
                 .map_err(|e| Status::internal(format!("Failed to delete alarm: {}", e)))?;
         }
@@ -452,7 +459,13 @@ impl AlarmService for Alarm {
                 is_time_limit_active: Some(proto_alarm.is_time_scheduled),
                 alarm_start_time: Some(proto_alarm.start_time as f64),
                 alarm_stop_time: Some(proto_alarm.end_time as f64),
-                user_id: Some(proto_alarm.user_ids.iter().cloned().map(Some).collect()),
+                user_id: Some(
+                    proto_alarm
+                        .user_ids
+                        .iter()
+                        .map(|id| uuid::Uuid::parse_str(id).ok())
+                        .collect(),
+                ),
                 ..Default::default()
             };
 
@@ -468,7 +481,7 @@ impl AlarmService for Alarm {
                 })
                 .collect();
 
-            let stored_alarm = alarm::create(alarm, alarm_dates.clone(), user_id.as_u128() as i64)
+            let stored_alarm = alarm::create(alarm, alarm_dates.clone(), *user_id)
                 .await
                 .map_err(|e| Status::internal(format!("Failed to create alarm: {}", e)))?;
 
@@ -536,8 +549,11 @@ impl AlarmService for Alarm {
             }
         };
 
-        for &user_id in req {
-            alarm::delete_user_alarm(user_id, sent_user_id.as_u128() as i64)
+        for user_id_str in req {
+            let user_uuid = uuid::Uuid::parse_str(user_id_str).map_err(|_| {
+                Status::invalid_argument("Invalid user_id, must be a valid UUID string")
+            })?;
+            alarm::delete_user_alarm(user_uuid, *sent_user_id)
                 .await
                 .map_err(|e| Status::internal(format!("Failed to delete alarm: {}", e)))?;
         }
@@ -568,7 +584,7 @@ impl AlarmService for Alarm {
             let dev_eui = EUI64::from_str(dev_eui).map_err(|_| {
                 Status::invalid_argument("Invalid dev_eui, must be a valid EUI64 string")
             })?;
-            alarm::delete_sensor_alarm(&dev_eui.to_string(), sent_user_id.as_u128() as i64)
+            alarm::delete_sensor_alarm(&dev_eui.to_string(), *sent_user_id)
                 .await
                 .map_err(|e| Status::internal(format!("Failed to delete alarm: {}", e)))?;
         }
@@ -596,7 +612,7 @@ impl AlarmService for Alarm {
         };
 
         for zone_id in req {
-            alarm::delete_zone_alarm(*zone_id as i32, sent_user_id.as_u128() as i64)
+            alarm::delete_zone_alarm(*zone_id as i32, *sent_user_id)
                 .await
                 .map_err(|e| Status::internal(format!("Failed to delete alarm: {}", e)))?;
         }
@@ -638,16 +654,22 @@ impl AlarmService for Alarm {
             email: Some(req.email),
             notification: Some(req.notification),
             is_active: Some(req.is_active),
-            user_id: Some(req.user_id.iter().map(|&id| Some(id)).collect()), // fix: Vec<i64> → Option<Vec<Option<i64>>>
-            organization_id: Some(req.organization_id as i32), // fix: expected Option<i32>
+            user_id: Some(
+                req.user_id
+                    .iter()
+                    .map(|id| uuid::Uuid::parse_str(id).ok())
+                    .collect(),
+            ),
+            tenant_id: Some(uuid::Uuid::parse_str(&req.tenant_id).map_err(|_| {
+                Status::invalid_argument("Invalid tenant_id, must be a valid UUID string")
+            })?),
             submission_time: None,
-            is_time_limit_active: Some(req.is_time_scheduled),
         };
 
         let stored_alarm = alarm::create_door_time_alarm(
             create_alarm_req,
             alarm_dates.clone(),
-            user_id.as_u128() as i64,
+            *user_id,
         )
         .await
         .map_err(|e| Status::internal(format!("Failed to create alarm: {}", e)))?;
@@ -664,7 +686,7 @@ impl AlarmService for Alarm {
                 .user_id
                 .unwrap_or_default()
                 .into_iter()
-                .filter_map(|id| id)
+                .filter_map(|id| id.map(|uuid| uuid.to_string()))
                 .collect(),
             submission_date: Some(helpers::datetime_to_prost_timestamp(&chrono::Utc::now())),
         };
@@ -688,7 +710,6 @@ impl AlarmService for Alarm {
         let resp: Vec<CreateDoorTimeResponse> = alarm::list_door_time_alarms(dev_eui.to_string())
             .await
             .map_err(|e| Status::internal(format!("Failed to list door alarms: {}", e)))?;
-
 
         let total_count = resp.len() as i64;
         Ok(Response::new(api::ListDoorAlarmResponse {
@@ -761,14 +782,19 @@ impl AlarmService for Alarm {
                 email: Some(create_req.email),
                 notification: Some(create_req.notification),
                 is_active: Some(true),
-                user_id: Some(create_req.user_id.iter().cloned().map(Some).collect()),
-                organization_id: Some(create_req.organization_id as i32),
+                user_id: Some(
+                    create_req
+                        .user_id
+                        .iter()
+                        .map(|id| uuid::Uuid::parse_str(id).ok())
+                        .collect(),
+                ),
+                tenant_id: Some(uuid::Uuid::parse_str(&create_req.tenant_id).map_err(|_| Status::invalid_argument("Invalid tenant_id, must be a valid UUID string"))?),
                 submission_time: None,
-                is_time_limit_active: Some(create_req.is_time_scheduled),
-                id: 0, // or create_req.id as i64 if needed
+                id: 0,
             };
 
-            alarm::create_door_time_alarm(create_alarm_req, alarm_dates, user_id.as_u128() as i64)
+            alarm::create_door_time_alarm(create_alarm_req, alarm_dates, *user_id)
                 .await
                 .map_err(|e| {
                     Status::internal(format!("Failed to create door time alarm: {}", e))
@@ -816,32 +842,40 @@ impl AlarmService for Alarm {
         }
 
         // Fetch logs from storage
-        let logs = crate::storage::alarm::get_audit_logs(dev_eui)
+        let logs = crate::storage::alarm::get_alarm_audit_logs(dev_eui)
             .await
             .map_err(|e| Status::internal(format!("Failed to get audit logs: {}", e)))?;
 
         let mut result = Vec::new();
+
         for log in logs {
-            let changed_at = log.changed_at.map(|naive| {
-                let dt_utc = chrono::DateTime::<chrono::Utc>::from_utc(naive, chrono::Utc);
-                helpers::datetime_to_prost_timestamp(&dt_utc)
+            let changed_at = log.changed_at.map(|dt| {
+                let datetime_utc = chrono::DateTime::<chrono::Utc>::from_utc(dt, chrono::Utc);
+                prost_types::Timestamp {
+                    seconds: datetime_utc.timestamp(),
+                    nanos: datetime_utc.timestamp_subsec_nanos() as i32,
+                }
             });
+
             let row = api::AuditLog {
                 log_id: log.id as i64,
                 alarm_id: log.alarm_id as i64,
                 dev_eui: log.dev_eui.clone().unwrap_or_default(),
                 change_type: log.change_type.clone().unwrap_or_default(),
-                changed_by: log.changed_by.unwrap_or_default() as i64,
+                changed_by: log.changed_by.map(|v| v.to_string()).unwrap_or_default(),
                 old_values: log
                     .old_values
                     .as_ref()
-                    .map_or(String::new(), |v| v.to_string()),
+                    .map(|v| v.to_string())
+                    .unwrap_or_default(),
                 new_values: log
                     .new_values
                     .as_ref()
-                    .map_or(String::new(), |v| v.to_string()),
+                    .map(|v| v.to_string())
+                    .unwrap_or_default(),
                 changed_at,
             };
+
             result.push(row);
         }
 

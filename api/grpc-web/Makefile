@@ -20,6 +20,7 @@ gw:
 api:
 	mkdir -p api
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/alarm.proto
+	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/automation.proto
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/internal.proto
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/user.proto
 	$(PROTOC_PATH) $(PROTOC_ARGS) ../proto/api/tenant.proto

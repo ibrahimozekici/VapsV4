@@ -50,7 +50,7 @@ service AlarmService {
 
     rpc ListAllOrganizationAlarms(ListOrganizationAlarmRequest2) returns (ListOrganizationAlarmResponse2) {
         option (google.api.http) = {
-            get: "/api/alarm/listOrganizationAlarms/{organization_id}"
+            get: "/api/alarm/listOrganizationAlarms/{tenant_id}"
         }; 
     }
      // Create creates the alarm
@@ -146,7 +146,7 @@ message AuditLog {
     string dev_eui = 3;
     string change_type = 4;
     google.protobuf.Timestamp changed_at = 5;
-    int64 changed_by = 6;
+    string changed_by = 6;
     string old_values = 7;
     string new_values = 8;
 }
@@ -158,7 +158,7 @@ message AlarmAutomation {
     string created_at = 5 [json_name = "created_at"];
     string updated_at = 6 [json_name = "updated_at"];
     bool is_active = 7 [json_name = "is_active"];
-    int64 user_id = 8 [json_name = "user_id"];
+    string user_id = 8 [json_name = "user_id"];
     int64 receiver_device_type = 9 [json_name = "receiver_device_type"];
     string receiver_device_name = 10 [json_name = "receiver_device_name"];
 }
@@ -220,25 +220,15 @@ message Alarm {
    float start_time = 15 [json_name = "start_time"];
    float end_time = 16 [json_name = "end_time"];
    int64 zone_category = 17 [json_name = "zone_category"];
-   int64 cold_room_time = 18  [json_name = "cold_room_time"];
-   int64 cold_room_frecuancy = 19  [json_name = "cold_room_frecuancy"];
-   bool notification = 20 [json_name = "notification"];
-   repeated AlarmDateTime alarm_date_time = 21  [json_name = "alarm_date_time"];
-    bool is_timer_active = 22 [json_name = "is_timer_active"];
-    int64 timer_value = 23 [json_name = "timer_value"];
-    bool pressure = 24 [json_name = "pressure"];
-	float current = 25;
-	float voltage = 26;
-	float factor = 27;
-	int64 status = 28;
-	float power_sum = 29;
-    float power = 30;
-    string notification_sound = 31;
-    repeated int64 user_ids = 32;
-    bool distance = 33;
-    int64 time = 34;
-    bool is_active = 35;
-    int64 defrost_time = 36;
+   bool notification = 18 [json_name = "notification"];
+   repeated AlarmDateTime alarm_date_time = 19  [json_name = "alarm_date_time"];
+    bool pressure = 20 [json_name = "pressure"];
+    string notification_sound = 21;
+    repeated string user_ids = 22;
+    bool distance = 23;
+    int64 time = 24;
+    bool is_active = 25;
+    int64 defrost_time = 26;
 }
 
 message AlarmDateTime {
@@ -266,7 +256,7 @@ message CreateDoorTimeRequest {
 
     bool notification = 5 [json_name = "notification"];
 
-    repeated int64 user_id = 6 [json_name = "user_id"];
+    repeated string user_id = 6 [json_name = "user_id"];
 
     google.protobuf.Timestamp submission_date = 7 [json_name = "submission_date"];
 
@@ -274,7 +264,7 @@ message CreateDoorTimeRequest {
 
     int64 time = 9 [json_name = "time"];
 
-    int64 organization_id = 10[json_name = "organization_id"];
+    string tenant_id = 10[json_name = "tenant_id"];
 
     repeated AlarmDateTime alarm_date_time = 11  [json_name = "alarm_date_time"];
     bool is_time_scheduled = 12 [json_name = "is_time_scheduled"];
@@ -294,7 +284,7 @@ message CreateDoorTimeResponse {
 
     bool notification = 5 [json_name = "notification"];
 
-    repeated int64 user_id = 6 [json_name = "user_id"];
+    repeated string user_id = 6 [json_name = "user_id"];
 
     google.protobuf.Timestamp submission_date = 7 [json_name = "submission_date"];
 
@@ -315,7 +305,7 @@ message CreateMultipleDoorAlarmRequest {
 }
 message CreateAlarmMultipleResponse {
     repeated Alarm alarm = 1;
-    repeated int64 userIds = 2;
+    repeated string userIds = 2;
 }
 message GetAlarmRequest {
     // Device EUI (HEX encoded).
@@ -339,12 +329,12 @@ message DeleteDoorAlarmRequest {
     repeated string alarm_id = 1 [json_name = "alarmID"];
 }
 message ListOrganizationAlarmRequest2 {
-	int64 organization_id = 1 [json_name = "organizationID"];
+	string tenant_id = 1 [json_name = "tenant_id"];
 }
 
 message DeleteMultipleAlarmRequest {
     // Alarm Id (HEX encoded).
-    repeated int64 user_id = 1 [json_name = "userIDs"];
+    repeated string user_id = 1 [json_name = "userIDs"];
 }
 message DeleteMultipleZoneAlarmRequest {
     // Alarm Id (HEX encoded).
@@ -398,7 +388,7 @@ message ListOrganizationAlarmResponse {
     int64 timer_value = 20 [json_name = "timer_value"];
     bool pressure = 21 [json_name = "pressure"];
     string notification_sound = 22[json_name = "notification_sound"];
-    repeated int64 user_ids = 23[json_name = "user_ids"];
+    repeated string user_ids = 23[json_name = "user_ids"];
     bool distance = 24 [json_name = "distance"];
     int64 time = 25 [json_name = "time"];
     bool is_active = 26 [json_name = "is_active"];
@@ -427,7 +417,7 @@ message ListDoorAlarmResponse {
 
 message ListOrganizationAlarmRequest {
     // Max number of devices to return in the result-set.
-    int64 organization_id = 1 [json_name = "organizationID"];
+    string tenant_id = 1 [json_name = "tenant_id"];
 }
 
 message ListOrganizationAlarmResponse2 {
@@ -451,7 +441,7 @@ message AlarmLogs {
      // Value of alarm
      float max_treshold = 3 [json_name = "maxTreshold"];
 
-     int64 user_id = 4;
+     string user_id = 4;
 
     string ip_address = 5;
 
