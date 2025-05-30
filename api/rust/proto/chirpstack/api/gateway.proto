@@ -28,14 +28,14 @@ service GatewayService {
     // Get returns the gateway for the given Gateway ID.
     rpc Get(GetGatewayRequest) returns (GetGatewayResponse) {
         option(google.api.http) = {
-            get: "/api/gateways/{gateway_id}"
+            get: "/api/gateways/{id}"
         };
     }
 
     // Update updates the given gateway.
     rpc Update(UpdateGatewayRequest) returns (google.protobuf.Empty) {
         option(google.api.http) = {
-            put: "/api/gateways/{gateway.gateway_id}"
+            put: "/api/gateways/{gateway.id}"
             body: "*"
         };
     }
@@ -43,7 +43,7 @@ service GatewayService {
     // Delete deletes the gateway matching the given Gateway ID.
     rpc Delete(DeleteGatewayRequest) returns (google.protobuf.Empty) {
         option(google.api.http) = {
-            delete: "/api/gateways/{gateway_id}"
+            delete: "/api/gateways/{id}"
         };
     }
 
@@ -57,14 +57,14 @@ service GatewayService {
     // Generate client-certificate for the gateway.
     rpc GenerateClientCertificate(GenerateGatewayClientCertificateRequest) returns (GenerateGatewayClientCertificateResponse) {
         option(google.api.http) = {
-            post: "/api/gateways/{gateway_id}/generate-certificate"
+            post: "/api/gateways/{id}/generate-certificate"
         };
     }
 
     // GetMetrics returns the gateway metrics.
     rpc GetMetrics(GetGatewayMetricsRequest) returns (GetGatewayMetricsResponse) {
         option(google.api.http) = {
-            get: "/api/gateways/{gateway_id}/metrics"
+            get: "/api/gateways/{id}/metrics"
         };
     }
 
@@ -72,7 +72,7 @@ service GatewayService {
     // Note that only the last 2 hours of data are stored. Currently only per minute aggregation is available.
     rpc GetDutyCycleMetrics(GetGatewayDutyCycleMetricsRequest) returns (GetGatewayDutyCycleMetricsResponse) {
         option(google.api.http) = {
-            get: "/api/gateways/{gateway_id}/duty-cycle-metrics"
+            get: "/api/gateways/{id}/duty-cycle-metrics"
         };
     }
 
@@ -186,7 +186,7 @@ message CreateGatewayRequest {
 
 message GetGatewayRequest {
     // Gateway ID (EUI64).
-    string gateway_id = 1;
+    string id = 1;
 }
 
 message GetGatewayResponse {
@@ -210,7 +210,7 @@ message UpdateGatewayRequest {
 
 message DeleteGatewayRequest {
     // Gateway ID (EUI64).
-    string gateway_id = 1;
+    string id = 1;
 }
 
 message ListGatewaysRequest {
@@ -241,7 +241,7 @@ message ListGatewaysResponse {
 
 message GenerateGatewayClientCertificateRequest {
     // Gateway ID (EUI64).
-    string gateway_id = 1;
+    string id = 1;
 }
 
 message GenerateGatewayClientCertificateResponse {
@@ -260,7 +260,7 @@ message GenerateGatewayClientCertificateResponse {
 
 message GetGatewayMetricsRequest {
     // Gateway ID (EUI64).
-    string gateway_id = 1;
+    string id = 1;
 
     // Interval start timestamp.
     google.protobuf.Timestamp start = 2;
@@ -297,7 +297,7 @@ message GetGatewayMetricsResponse {
 
 message GetGatewayDutyCycleMetricsRequest {
     // Gateway ID (EUI64).
-    string gateway_id = 1;
+    string id = 1;
 
     // Interval start timestamp.
     google.protobuf.Timestamp start = 2;
@@ -421,3 +421,4 @@ message RelayGateway {
     // Region configuration ID.
     string region_config_id = 6;
 }
+

@@ -83,7 +83,7 @@ impl GatewayService for Gateway {
         request: Request<api::GetGatewayRequest>,
     ) -> Result<Response<api::GetGatewayResponse>, Status> {
         let req = request.get_ref();
-        let gw_id = EUI64::from_str(&req.gateway_id).map_err(|e| e.status())?;
+        let gw_id = EUI64::from_str(&req.id).map_err(|e| e.status())?;
 
         self.validator
             .validate(
@@ -118,7 +118,7 @@ impl GatewayService for Gateway {
                 .map(helpers::datetime_to_prost_timestamp),
         });
         resp.metadata_mut()
-            .insert("x-log-gateway_id", req.gateway_id.parse().unwrap());
+            .insert("x-log-gateway_id", req.id.parse().unwrap());
 
         Ok(resp)
     }
@@ -174,7 +174,7 @@ impl GatewayService for Gateway {
         request: Request<api::DeleteGatewayRequest>,
     ) -> Result<Response<()>, Status> {
         let req = request.get_ref();
-        let gw_id = EUI64::from_str(&req.gateway_id).map_err(|e| e.status())?;
+        let gw_id = EUI64::from_str(&req.id).map_err(|e| e.status())?;
 
         self.validator
             .validate(
@@ -187,7 +187,7 @@ impl GatewayService for Gateway {
 
         let mut resp = Response::new(());
         resp.metadata_mut()
-            .insert("x-log-gateway_id", req.gateway_id.parse().unwrap());
+            .insert("x-log-gateway_id", req.id.parse().unwrap());
 
         Ok(resp)
     }
@@ -298,7 +298,7 @@ impl GatewayService for Gateway {
         request: Request<api::GenerateGatewayClientCertificateRequest>,
     ) -> Result<Response<api::GenerateGatewayClientCertificateResponse>, Status> {
         let req = request.get_ref();
-        let gw_id = EUI64::from_str(&req.gateway_id).map_err(|e| e.status())?;
+        let gw_id = EUI64::from_str(&req.id).map_err(|e| e.status())?;
 
         self.validator
             .validate(
@@ -328,7 +328,7 @@ impl GatewayService for Gateway {
             expires_at: Some(ttl.into()),
         });
         resp.metadata_mut()
-            .insert("x-log-gateway_id", req.gateway_id.parse().unwrap());
+            .insert("x-log-gateway_id", req.id.parse().unwrap());
 
         Ok(resp)
     }
@@ -338,7 +338,7 @@ impl GatewayService for Gateway {
         request: Request<api::GetGatewayMetricsRequest>,
     ) -> Result<Response<api::GetGatewayMetricsResponse>, Status> {
         let req = request.get_ref();
-        let gateway_id = EUI64::from_str(&req.gateway_id).map_err(|e| e.status())?;
+        let gateway_id = EUI64::from_str(&req.id).map_err(|e| e.status())?;
 
         self.validator
             .validate(
@@ -615,7 +615,7 @@ impl GatewayService for Gateway {
 
         let mut resp = Response::new(out);
         resp.metadata_mut()
-            .insert("x-log-gateway_id", req.gateway_id.parse().unwrap());
+            .insert("x-log-gateway_id", req.id.parse().unwrap());
 
         Ok(resp)
     }
@@ -625,7 +625,7 @@ impl GatewayService for Gateway {
         request: Request<api::GetGatewayDutyCycleMetricsRequest>,
     ) -> Result<Response<api::GetGatewayDutyCycleMetricsResponse>, Status> {
         let req = request.get_ref();
-        let gateway_id = EUI64::from_str(&req.gateway_id).map_err(|e| e.status())?;
+        let gateway_id = EUI64::from_str(&req.id).map_err(|e| e.status())?;
 
         self.validator
             .validate(
@@ -782,7 +782,7 @@ impl GatewayService for Gateway {
 
         let mut resp = Response::new(out);
         resp.metadata_mut()
-            .insert("x-log-gateway_id", req.gateway_id.parse().unwrap());
+            .insert("x-log-gateway_id", req.id.parse().unwrap());
 
         Ok(resp)
     }
@@ -1038,7 +1038,7 @@ pub mod test {
 
         // get
         let get_req = api::GetGatewayRequest {
-            gateway_id: "0102030405060708".into(),
+            id: "0102030405060708".into(),
         };
         let mut get_req = Request::new(get_req);
         get_req
@@ -1084,7 +1084,7 @@ pub mod test {
 
         // get
         let get_req = api::GetGatewayRequest {
-            gateway_id: "0102030405060708".into(),
+            id: "0102030405060708".into(),
         };
         let mut get_req = Request::new(get_req);
         get_req
@@ -1125,7 +1125,7 @@ pub mod test {
 
         // delete
         let del_req = api::DeleteGatewayRequest {
-            gateway_id: "0102030405060708".into(),
+            id: "0102030405060708".into(),
         };
         let mut del_req = Request::new(del_req);
         del_req
@@ -1134,7 +1134,7 @@ pub mod test {
         let _ = service.delete(del_req).await.unwrap();
 
         let del_req = api::DeleteGatewayRequest {
-            gateway_id: "0102030405060708".into(),
+            id: "0102030405060708".into(),
         };
         let mut del_req = Request::new(del_req);
         del_req
@@ -1209,7 +1209,7 @@ pub mod test {
         // request stats
         let now_st: SystemTime = now.into();
         let stats_req = api::GetGatewayMetricsRequest {
-            gateway_id: "0102030405060708".into(),
+            id: "0102030405060708".into(),
             start: Some(now_st.into()),
             end: Some(now_st.into()),
             aggregation: common::Aggregation::Day.into(),
@@ -1303,7 +1303,7 @@ pub mod test {
         // request stats
         let now_st: SystemTime = now.into();
         let stats_req = api::GetGatewayDutyCycleMetricsRequest {
-            gateway_id: "0102030405060708".into(),
+            id: "0102030405060708".into(),
             start: Some(now_st.into()),
             end: Some(now_st.into()),
         };

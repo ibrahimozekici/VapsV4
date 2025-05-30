@@ -363,7 +363,7 @@ func (x *CreateGatewayRequest) GetGateway() *Gateway {
 type GetGatewayRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Gateway ID (EUI64).
-	GatewayId     string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -398,9 +398,9 @@ func (*GetGatewayRequest) Descriptor() ([]byte, []int) {
 	return file_api_gateway_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *GetGatewayRequest) GetGatewayId() string {
+func (x *GetGatewayRequest) GetId() string {
 	if x != nil {
-		return x.GatewayId
+		return x.Id
 	}
 	return ""
 }
@@ -525,7 +525,7 @@ func (x *UpdateGatewayRequest) GetGateway() *Gateway {
 type DeleteGatewayRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Gateway ID (EUI64).
-	GatewayId     string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -560,9 +560,9 @@ func (*DeleteGatewayRequest) Descriptor() ([]byte, []int) {
 	return file_api_gateway_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *DeleteGatewayRequest) GetGatewayId() string {
+func (x *DeleteGatewayRequest) GetId() string {
 	if x != nil {
-		return x.GatewayId
+		return x.Id
 	}
 	return ""
 }
@@ -706,7 +706,7 @@ func (x *ListGatewaysResponse) GetResult() []*GatewayListItem {
 type GenerateGatewayClientCertificateRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Gateway ID (EUI64).
-	GatewayId     string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	Id            string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -741,9 +741,9 @@ func (*GenerateGatewayClientCertificateRequest) Descriptor() ([]byte, []int) {
 	return file_api_gateway_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *GenerateGatewayClientCertificateRequest) GetGatewayId() string {
+func (x *GenerateGatewayClientCertificateRequest) GetId() string {
 	if x != nil {
-		return x.GatewayId
+		return x.Id
 	}
 	return ""
 }
@@ -823,7 +823,7 @@ func (x *GenerateGatewayClientCertificateResponse) GetExpiresAt() *timestamppb.T
 type GetGatewayMetricsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Gateway ID (EUI64).
-	GatewayId string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Interval start timestamp.
 	Start *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
 	// Interval end timestamp.
@@ -864,9 +864,9 @@ func (*GetGatewayMetricsRequest) Descriptor() ([]byte, []int) {
 	return file_api_gateway_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *GetGatewayMetricsRequest) GetGatewayId() string {
+func (x *GetGatewayMetricsRequest) GetId() string {
 	if x != nil {
-		return x.GatewayId
+		return x.Id
 	}
 	return ""
 }
@@ -994,7 +994,7 @@ func (x *GetGatewayMetricsResponse) GetTxPacketsPerStatus() *common.Metric {
 type GetGatewayDutyCycleMetricsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Gateway ID (EUI64).
-	GatewayId string `protobuf:"bytes,1,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Interval start timestamp.
 	Start *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=start,proto3" json:"start,omitempty"`
 	// Interval end timestamp.
@@ -1033,9 +1033,9 @@ func (*GetGatewayDutyCycleMetricsRequest) Descriptor() ([]byte, []int) {
 	return file_api_gateway_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *GetGatewayDutyCycleMetricsRequest) GetGatewayId() string {
+func (x *GetGatewayDutyCycleMetricsRequest) GetId() string {
 	if x != nil {
-		return x.GatewayId
+		return x.Id
 	}
 	return ""
 }
@@ -1703,10 +1703,9 @@ const file_api_gateway_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\">\n" +
 	"\x14CreateGatewayRequest\x12&\n" +
-	"\agateway\x18\x01 \x01(\v2\f.api.GatewayR\agateway\"2\n" +
-	"\x11GetGatewayRequest\x12\x1d\n" +
-	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\"\xf0\x01\n" +
+	"\agateway\x18\x01 \x01(\v2\f.api.GatewayR\agateway\"#\n" +
+	"\x11GetGatewayRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xf0\x01\n" +
 	"\x12GetGatewayResponse\x12&\n" +
 	"\agateway\x18\x01 \x01(\v2\f.api.GatewayR\agateway\x129\n" +
 	"\n" +
@@ -1716,10 +1715,9 @@ const file_api_gateway_proto_rawDesc = "" +
 	"\flast_seen_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"lastSeenAt\">\n" +
 	"\x14UpdateGatewayRequest\x12&\n" +
-	"\agateway\x18\x01 \x01(\v2\f.api.GatewayR\agateway\"5\n" +
-	"\x14DeleteGatewayRequest\x12\x1d\n" +
-	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\"\xb2\x01\n" +
+	"\agateway\x18\x01 \x01(\v2\f.api.GatewayR\agateway\"&\n" +
+	"\x14DeleteGatewayRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xb2\x01\n" +
 	"\x13ListGatewaysRequest\x12\x14\n" +
 	"\x05limit\x18\x01 \x01(\rR\x05limit\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\rR\x06offset\x12\x16\n" +
@@ -1729,19 +1727,17 @@ const file_api_gateway_proto_rawDesc = "" +
 	"\x14ListGatewaysResponse\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\rR\n" +
 	"totalCount\x12,\n" +
-	"\x06result\x18\x02 \x03(\v2\x14.api.GatewayListItemR\x06result\"H\n" +
-	"'GenerateGatewayClientCertificateRequest\x12\x1d\n" +
-	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\"\xb2\x01\n" +
+	"\x06result\x18\x02 \x03(\v2\x14.api.GatewayListItemR\x06result\"9\n" +
+	"'GenerateGatewayClientCertificateRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\xb2\x01\n" +
 	"(GenerateGatewayClientCertificateResponse\x12\x19\n" +
 	"\btls_cert\x18\x01 \x01(\tR\atlsCert\x12\x17\n" +
 	"\atls_key\x18\x02 \x01(\tR\x06tlsKey\x12\x17\n" +
 	"\aca_cert\x18\x03 \x01(\tR\x06caCert\x129\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xd0\x01\n" +
-	"\x18GetGatewayMetricsRequest\x12\x1d\n" +
-	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x120\n" +
+	"expires_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xc1\x01\n" +
+	"\x18GetGatewayMetricsRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x120\n" +
 	"\x05start\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
 	"\x03end\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\x125\n" +
 	"\vaggregation\x18\x04 \x01(\x0e2\x13.common.AggregationR\vaggregation\"\xb0\x03\n" +
@@ -1754,10 +1750,9 @@ const file_api_gateway_proto_rawDesc = "" +
 	"\x13rx_packets_per_freq\x18\x04 \x01(\v2\x0e.common.MetricR\x10rxPacketsPerFreq\x129\n" +
 	"\x11tx_packets_per_dr\x18\x05 \x01(\v2\x0e.common.MetricR\x0etxPacketsPerDr\x129\n" +
 	"\x11rx_packets_per_dr\x18\x06 \x01(\v2\x0e.common.MetricR\x0erxPacketsPerDr\x12A\n" +
-	"\x15tx_packets_per_status\x18\a \x01(\v2\x0e.common.MetricR\x12txPacketsPerStatus\"\xa2\x01\n" +
-	"!GetGatewayDutyCycleMetricsRequest\x12\x1d\n" +
-	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\x120\n" +
+	"\x15tx_packets_per_status\x18\a \x01(\v2\x0e.common.MetricR\x12txPacketsPerStatus\"\x93\x01\n" +
+	"!GetGatewayDutyCycleMetricsRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x120\n" +
 	"\x05start\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x05start\x12,\n" +
 	"\x03end\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x03end\"\xa1\x01\n" +
 	"\"GetGatewayDutyCycleMetricsResponse\x12>\n" +
@@ -1813,17 +1808,17 @@ const file_api_gateway_proto_rawDesc = "" +
 	"NEVER_SEEN\x10\x00\x12\n" +
 	"\n" +
 	"\x06ONLINE\x10\x01\x12\v\n" +
-	"\aOFFLINE\x10\x022\xee\v\n" +
+	"\aOFFLINE\x10\x022\xbe\v\n" +
 	"\x0eGatewayService\x12U\n" +
-	"\x06Create\x12\x19.api.CreateGatewayRequest\x1a\x16.google.protobuf.Empty\"\x18\x82\xd3\xe4\x93\x02\x12:\x01*\"\r/api/gateways\x12Z\n" +
-	"\x03Get\x12\x16.api.GetGatewayRequest\x1a\x17.api.GetGatewayResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/api/gateways/{gateway_id}\x12j\n" +
-	"\x06Update\x12\x19.api.UpdateGatewayRequest\x1a\x16.google.protobuf.Empty\"-\x82\xd3\xe4\x93\x02':\x01*\x1a\"/api/gateways/{gateway.gateway_id}\x12_\n" +
-	"\x06Delete\x12\x19.api.DeleteGatewayRequest\x1a\x16.google.protobuf.Empty\"\"\x82\xd3\xe4\x93\x02\x1c*\x1a/api/gateways/{gateway_id}\x12R\n" +
-	"\x04List\x12\x18.api.ListGatewaysRequest\x1a\x19.api.ListGatewaysResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/api/gateways\x12\xb1\x01\n" +
-	"\x19GenerateClientCertificate\x12,.api.GenerateGatewayClientCertificateRequest\x1a-.api.GenerateGatewayClientCertificateResponse\"7\x82\xd3\xe4\x93\x021\"//api/gateways/{gateway_id}/generate-certificate\x12w\n" +
+	"\x06Create\x12\x19.api.CreateGatewayRequest\x1a\x16.google.protobuf.Empty\"\x18\x82\xd3\xe4\x93\x02\x12:\x01*\"\r/api/gateways\x12R\n" +
+	"\x03Get\x12\x16.api.GetGatewayRequest\x1a\x17.api.GetGatewayResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/api/gateways/{id}\x12b\n" +
+	"\x06Update\x12\x19.api.UpdateGatewayRequest\x1a\x16.google.protobuf.Empty\"%\x82\xd3\xe4\x93\x02\x1f:\x01*\x1a\x1a/api/gateways/{gateway.id}\x12W\n" +
+	"\x06Delete\x12\x19.api.DeleteGatewayRequest\x1a\x16.google.protobuf.Empty\"\x1a\x82\xd3\xe4\x93\x02\x14*\x12/api/gateways/{id}\x12R\n" +
+	"\x04List\x12\x18.api.ListGatewaysRequest\x1a\x19.api.ListGatewaysResponse\"\x15\x82\xd3\xe4\x93\x02\x0f\x12\r/api/gateways\x12\xa9\x01\n" +
+	"\x19GenerateClientCertificate\x12,.api.GenerateGatewayClientCertificateRequest\x1a-.api.GenerateGatewayClientCertificateResponse\"/\x82\xd3\xe4\x93\x02)\"'/api/gateways/{id}/generate-certificate\x12o\n" +
 	"\n" +
-	"GetMetrics\x12\x1d.api.GetGatewayMetricsRequest\x1a\x1e.api.GetGatewayMetricsResponse\"*\x82\xd3\xe4\x93\x02$\x12\"/api/gateways/{gateway_id}/metrics\x12\x9d\x01\n" +
-	"\x13GetDutyCycleMetrics\x12&.api.GetGatewayDutyCycleMetricsRequest\x1a'.api.GetGatewayDutyCycleMetricsResponse\"5\x82\xd3\xe4\x93\x02/\x12-/api/gateways/{gateway_id}/duty-cycle-metrics\x12\x89\x01\n" +
+	"GetMetrics\x12\x1d.api.GetGatewayMetricsRequest\x1a\x1e.api.GetGatewayMetricsResponse\"\"\x82\xd3\xe4\x93\x02\x1c\x12\x1a/api/gateways/{id}/metrics\x12\x95\x01\n" +
+	"\x13GetDutyCycleMetrics\x12&.api.GetGatewayDutyCycleMetricsRequest\x1a'.api.GetGatewayDutyCycleMetricsResponse\"-\x82\xd3\xe4\x93\x02'\x12%/api/gateways/{id}/duty-cycle-metrics\x12\x89\x01\n" +
 	"\x0fGetRelayGateway\x12\x1b.api.GetRelayGatewayRequest\x1a\x1c.api.GetRelayGatewayResponse\";\x82\xd3\xe4\x93\x025\x123/api/gateways/relay-gateways/{tenant_id}/{relay_id}\x12x\n" +
 	"\x11ListRelayGateways\x12\x1d.api.ListRelayGatewaysRequest\x1a\x1e.api.ListRelayGatewaysResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/api/gateways/relay-gateways\x12\xa8\x01\n" +
 	"\x12UpdateRelayGateway\x12\x1e.api.UpdateRelayGatewayRequest\x1a\x16.google.protobuf.Empty\"Z\x82\xd3\xe4\x93\x02T:\x01*\x1aO/api/gateways/relay-gateways/{relay_gateway.tenant_id}/{relay_gateway.relay_id}\x12\x89\x01\n" +
