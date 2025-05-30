@@ -197,11 +197,14 @@ impl GatewayService for Gateway {
         request: Request<api::ListGatewaysRequest>,
     ) -> Result<Response<api::ListGatewaysResponse>, Status> {
         let req = request.get_ref();
+        println!("Listing gateways for tenant: {:?}", req);
+        println!("Listing gateways for tenant: {:?}", req.organization_id);
         let tenant_id = if req.organization_id.is_empty() {
             None
         } else {
             Some(Uuid::from_str(&req.organization_id).map_err(|e| e.status())?)
         };
+        println!("Listing gateways after valid 1",);
         let mg_id: Option<Uuid> = if req.multicast_group_id.is_empty() {
             None
         } else {
@@ -217,7 +220,7 @@ impl GatewayService for Gateway {
                 ),
             )
             .await?;
-
+        println!("Listing gateways after self validator",);
         if let Some(mg_id) = mg_id {
             self.validator
                 .validate(
@@ -241,7 +244,7 @@ impl GatewayService for Gateway {
         let result = gateway::list(req.limit as i64, req.offset as i64, &filters)
             .await
             .map_err(|e| e.status())?;
-
+        println!("Listing gateways after self result",);
         let mut resp = Response::new(api::ListGatewaysResponse {
             total_count: count as u32,
             result: result

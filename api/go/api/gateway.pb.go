@@ -88,7 +88,7 @@ type Gateway struct {
 	// Gateway location.
 	Location *common.Location `protobuf:"bytes,4,opt,name=location,proto3" json:"location,omitempty"`
 	// Tenant ID (UUID).
-	OrganizationID string `protobuf:"bytes,5,opt,name=organizationID,proto3" json:"organizationID,omitempty"`
+	OrganizationId string `protobuf:"bytes,5,opt,name=organization_id,json=organizationID,proto3" json:"organization_id,omitempty"`
 	// Tags.
 	Tags map[string]string `protobuf:"bytes,6,rep,name=tags,proto3" json:"tags,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// Metadata (provided by the gateway).
@@ -159,9 +159,9 @@ func (x *Gateway) GetLocation() *common.Location {
 	return nil
 }
 
-func (x *Gateway) GetOrganizationID() string {
+func (x *Gateway) GetOrganizationId() string {
 	if x != nil {
-		return x.OrganizationID
+		return x.OrganizationId
 	}
 	return ""
 }
@@ -190,7 +190,7 @@ func (x *Gateway) GetStatsInterval() uint32 {
 type GatewayListItem struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Tenant ID.
-	OrganizationID string `protobuf:"bytes,1,opt,name=organizationID,proto3" json:"organizationID,omitempty"`
+	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,json=organizationID,proto3" json:"organization_id,omitempty"`
 	// Gateway ID (EUI64).
 	Id string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	// Name.
@@ -245,9 +245,9 @@ func (*GatewayListItem) Descriptor() ([]byte, []int) {
 	return file_api_gateway_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *GatewayListItem) GetOrganizationID() string {
+func (x *GatewayListItem) GetOrganizationId() string {
 	if x != nil {
-		return x.OrganizationID
+		return x.OrganizationId
 	}
 	return ""
 }
@@ -577,7 +577,7 @@ type ListGatewaysRequest struct {
 	Search string `protobuf:"bytes,3,opt,name=search,proto3" json:"search,omitempty"`
 	// Tenant ID (UUID) to filter gateways on.
 	// To list all gateways as a global admin user, this field can be left blank.
-	OrganizationID string `protobuf:"bytes,4,opt,name=organizationID,proto3" json:"organizationID,omitempty"`
+	OrganizationId string `protobuf:"bytes,4,opt,name=organization_id,json=organizationID,proto3" json:"organization_id,omitempty"`
 	// Multicast-group ID (UUID) to filter gateways on.
 	MulticastGroupId string `protobuf:"bytes,5,opt,name=multicast_group_id,json=multicastGroupId,proto3" json:"multicast_group_id,omitempty"`
 	unknownFields    protoimpl.UnknownFields
@@ -635,9 +635,9 @@ func (x *ListGatewaysRequest) GetSearch() string {
 	return ""
 }
 
-func (x *ListGatewaysRequest) GetOrganizationID() string {
+func (x *ListGatewaysRequest) GetOrganizationId() string {
 	if x != nil {
-		return x.OrganizationID
+		return x.OrganizationId
 	}
 	return ""
 }
@@ -1666,13 +1666,13 @@ var File_api_gateway_proto protoreflect.FileDescriptor
 
 const file_api_gateway_proto_rawDesc = "" +
 	"\n" +
-	"\x11api/gateway.proto\x12\x03api\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x13common/common.proto\"\xa6\x03\n" +
+	"\x11api/gateway.proto\x12\x03api\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x13common/common.proto\"\xa7\x03\n" +
 	"\aGateway\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12,\n" +
-	"\blocation\x18\x04 \x01(\v2\x10.common.LocationR\blocation\x12&\n" +
-	"\x0eorganizationID\x18\x05 \x01(\tR\x0eorganizationID\x12*\n" +
+	"\blocation\x18\x04 \x01(\v2\x10.common.LocationR\blocation\x12'\n" +
+	"\x0forganization_id\x18\x05 \x01(\tR\x0eorganizationID\x12*\n" +
 	"\x04tags\x18\x06 \x03(\v2\x16.api.Gateway.TagsEntryR\x04tags\x126\n" +
 	"\bmetadata\x18\a \x03(\v2\x1a.api.Gateway.MetadataEntryR\bmetadata\x12%\n" +
 	"\x0estats_interval\x18\b \x01(\rR\rstatsInterval\x1a7\n" +
@@ -1681,9 +1681,9 @@ const file_api_gateway_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x8f\x04\n" +
-	"\x0fGatewayListItem\x12&\n" +
-	"\x0eorganizationID\x18\x01 \x01(\tR\x0eorganizationID\x12\x0e\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x90\x04\n" +
+	"\x0fGatewayListItem\x12'\n" +
+	"\x0forganization_id\x18\x01 \x01(\tR\x0eorganizationID\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x03 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x04 \x01(\tR\vdescription\x12,\n" +
@@ -1719,12 +1719,12 @@ const file_api_gateway_proto_rawDesc = "" +
 	"\agateway\x18\x01 \x01(\v2\f.api.GatewayR\agateway\"5\n" +
 	"\x14DeleteGatewayRequest\x12\x1d\n" +
 	"\n" +
-	"gateway_id\x18\x01 \x01(\tR\tgatewayId\"\xb1\x01\n" +
+	"gateway_id\x18\x01 \x01(\tR\tgatewayId\"\xb2\x01\n" +
 	"\x13ListGatewaysRequest\x12\x14\n" +
 	"\x05limit\x18\x01 \x01(\rR\x05limit\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\rR\x06offset\x12\x16\n" +
-	"\x06search\x18\x03 \x01(\tR\x06search\x12&\n" +
-	"\x0eorganizationID\x18\x04 \x01(\tR\x0eorganizationID\x12,\n" +
+	"\x06search\x18\x03 \x01(\tR\x06search\x12'\n" +
+	"\x0forganization_id\x18\x04 \x01(\tR\x0eorganizationID\x12,\n" +
 	"\x12multicast_group_id\x18\x05 \x01(\tR\x10multicastGroupId\"e\n" +
 	"\x14ListGatewaysResponse\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\rR\n" +

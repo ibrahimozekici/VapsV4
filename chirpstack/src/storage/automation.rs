@@ -559,17 +559,17 @@ pub async fn execute_automation_action(rule: &Automation) -> Result<(), Error> {
             },
         };
 
-        let client = Client::new();
-        let token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // shortened for brevity
+        // let client = Client::new();
+        // let token = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // shortened for brevity
 
-        let res = client
-            .post(url)
-            .header("Content-Type", "application/json")
-            .header("grpc-metadata-authorization", token)
-            .json(&payload)
-            .send()
-            .await
-            .map_err(|e| Error::Validation(format!("HTTP error: {}", e)))?;
+        // let res = client
+        //     .post(url)
+        //     .header("Content-Type", "application/json")
+        //     .header("grpc-metadata-authorization", token)
+        //     .json(&payload)
+        //     .send()
+        //     .await
+        //     .map_err(|e| Error::Validation(format!("HTTP error: {}", e)))?;
 
     }
 
