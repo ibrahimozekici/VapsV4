@@ -60,7 +60,7 @@ pub struct Alarm {
     pub notification_sound: Option<String>,
     pub distance: Option<bool>,
     pub defrost_time: Option<i32>,
-    pub user_id: Option<Vec<Option<Uuid>>>,
+    pub user_id: Vec<Option<Uuid>>,
 }
 
 impl Default for Alarm {
@@ -85,26 +85,26 @@ impl Default for Alarm {
             is_active: Some(true),
             pressure: None,
             notification_sound: Some("default".to_string()),
-            user_id: Some(vec![None]),
+            user_id: vec![None],
             distance: None,
             defrost_time: Some(0),
         }
     }
 }
-#[derive(Debug, Queryable, QueryableByName, Serialize, Deserialize)]
+#[derive(Debug, QueryableByName, Serialize, Deserialize)]
 #[diesel(check_for_backend(Pg))]
 pub struct OrganizationAlarm {
-    #[diesel(sql_type = Int8)]
-    pub id: i64,
+    #[diesel(sql_type = Integer)]
+    pub id: i32,
 
     #[diesel(sql_type = Text)]
     pub dev_eui: String,
 
-    #[diesel(sql_type = Nullable<Float4>)]
-    pub min_treshold: Option<f32>,
+    #[diesel(sql_type = Nullable<Double>)]
+    pub min_treshold: Option<f64>,
 
-    #[diesel(sql_type = Nullable<Float4>)]
-    pub max_treshold: Option<f32>,
+    #[diesel(sql_type = Nullable<Double>)]
+    pub max_treshold: Option<f64>,
 
     #[diesel(sql_type = Nullable<Bool>)]
     pub sms: Option<bool>,
@@ -130,23 +130,20 @@ pub struct OrganizationAlarm {
     #[diesel(sql_type = Nullable<Bool>)]
     pub w_leak: Option<bool>,
 
-    #[diesel(sql_type = Nullable<Array<Nullable<DieselUuid>>>)]
-    pub user_id: Option<Vec<Option<Uuid>>>,
-
-    #[diesel(sql_type = Nullable<Text>)]
-    pub ip_address: Option<String>,
+    #[diesel(sql_type = Array<Nullable<DieselUuid>>)]
+    pub user_id: Vec<Option<Uuid>>,
 
     #[diesel(sql_type = Nullable<Bool>)]
     pub is_time_limit_active: Option<bool>,
 
-    #[diesel(sql_type = Nullable<Float4>)]
-    pub alarm_start_time: Option<f32>,
+    #[diesel(sql_type = Nullable<Double>)]
+    pub alarm_start_time: Option<f64>,
 
-    #[diesel(sql_type = Nullable<Float4>)]
-    pub alarm_stop_time: Option<f32>,
+    #[diesel(sql_type = Nullable<Double>)]
+    pub alarm_stop_time: Option<f64>,
 
-    #[diesel(sql_type = Nullable<Int8>)]
-    pub zone_category: Option<i64>,
+    #[diesel(sql_type = Nullable<Integer>)]
+    pub zone_category: Option<i32>,
 
     #[diesel(sql_type = Nullable<Bool>)]
     pub is_active: Option<bool>,
@@ -163,35 +160,16 @@ pub struct OrganizationAlarm {
     #[diesel(sql_type = Nullable<Bool>)]
     pub pressure: Option<bool>,
 
-    #[diesel(sql_type = Nullable<Float4>)]
-    pub current: Option<f32>,
-
-    #[diesel(sql_type = Nullable<Float4>)]
-    pub factor: Option<f32>,
-
-    #[diesel(sql_type = Nullable<Float4>)]
-    pub power: Option<f32>,
-
-    #[diesel(sql_type = Nullable<Float4>)]
-    pub voltage: Option<f32>,
-
-    #[diesel(sql_type = Nullable<Int8>)]
-    pub status: Option<i64>,
-
-    #[diesel(sql_type = Nullable<Float4>)]
-    pub power_sum: Option<f32>,
-
     #[diesel(sql_type = Nullable<Text>)]
     pub notification_sound: Option<String>,
 
     #[diesel(sql_type = Nullable<Bool>)]
     pub distance: Option<bool>,
 
-    #[diesel(sql_type = Nullable<Int8>)]
-    pub time: Option<i64>,
-
-    #[diesel(sql_type = Nullable<Int8>)]
-    pub defrost_time: Option<i64>,
+    #[diesel(sql_type = Nullable<Int4>)]
+    pub time: Option<i32>,
+    #[diesel(sql_type = Nullable<Integer>)]
+    pub defrost_time: Option<i32>,
 }
 
 #[derive(Queryable, QueryableByName, Debug, Clone, Serialize, Deserialize)]
@@ -497,7 +475,7 @@ pub async fn get_alarm_dates(alarm_id: i32) -> Result<Vec<AlarmDateTime>, Error>
 
 pub async fn get_organization_alarm_list(tenant_id: Uuid) -> Result<Vec<OrganizationAlarm>, Error> {
     let mut conn = get_async_db_conn().await?;
-
+    info!("Alarm get_organization_alarm_list start");
     let alarms = diesel::sql_query(
         r#"
         SELECT 
@@ -514,7 +492,6 @@ pub async fn get_organization_alarm_list(tenant_id: Uuid) -> Result<Vec<Organiza
             a.door,
             a.w_leak,
             a.user_id,
-            d.ip_address,
             a.is_time_limit_active,
             a.alarm_start_time,
             a.alarm_stop_time,
@@ -524,12 +501,6 @@ pub async fn get_organization_alarm_list(tenant_id: Uuid) -> Result<Vec<Organiza
             d.name AS device_name,
             '' AS username,
             a.pressure,
-            d.current,
-            d.factor,
-            d.power,
-            d.voltage,
-            d.status,
-            d.power_sum,
             a.notification_sound,
             a.distance,
             0 AS time,
@@ -654,7 +625,7 @@ pub async fn delete_user_alarm(user_id: Uuid, sent_user_id: Uuid) -> Result<(), 
         .map_err(|e| Error::from_diesel(e, user_id.to_string()))?;
 
     for alarm in &alarms {
-        if let Some(user_ids) = &alarm.user_id {
+        if let user_ids = &alarm.user_id {
             if user_ids.is_empty() {
                 log_audit(
                     alarm.id as i64,
@@ -1446,13 +1417,10 @@ pub async fn execute_alarm2(
         #[diesel(sql_type = Text)]
         name: String,
     }
-    let organization_name: String = if let Some(org_id) = device.organization_id {
-        let hex = format!("{:032x}", org_id as i64); // pad to 32-char hex
-        let fake_uuid = Uuid::parse_str(&hex).expect("Invalid UUID hex");
-
+    let organization_name: String = if let Some(org_id) = device.tenant_id {
         let org_query = r#"SELECT name FROM public.tenant WHERE id = $1"#;
         let org_rows: Vec<OrganizationRow> = sql_query(org_query)
-            .bind::<diesel::sql_types::Nullable<diesel::sql_types::Uuid>, _>(Some(fake_uuid))
+            .bind::<Nullable<DieselUuid>, _>(device.tenant_id)
             .load(conn)
             .await
             .unwrap_or_default();

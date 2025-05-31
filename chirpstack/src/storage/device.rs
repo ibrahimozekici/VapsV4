@@ -6,9 +6,9 @@ use anyhow::{Context, Result};
 use chrono::{DateTime, Duration, Utc};
 use diesel::{backend::Backend, deserialize, dsl, prelude::*, serialize, sql_types::Text};
 use diesel_async::RunQueryDsl;
+use serde::Serialize;
 use tracing::info;
 use uuid::Uuid;
-use serde::Serialize;
 
 use chirpstack_api::internal;
 use lrwn::{DevAddr, EUI64};
@@ -89,7 +89,7 @@ impl serialize::ToSql<Text, diesel::sqlite::Sqlite> for DeviceClass {
     }
 }
 
-#[derive(Queryable, QueryableByName,Selectable, PartialEq, Debug, Clone, Serialize)]
+#[derive(Queryable, QueryableByName, Selectable, PartialEq, Debug, Clone, Serialize)]
 #[diesel(table_name = device)]
 #[diesel(check_for_backend(diesel::pg::Pg))] // ✅ HINT for Diesel to implement Selectable<Pg>
 
@@ -120,22 +120,22 @@ pub struct Device {
     pub tags: fields::KeyValue,
     #[serde(skip_serializing)]
     pub variables: fields::KeyValue,
-    
+
     pub join_eui: EUI64,
     pub secondary_dev_addr: Option<DevAddr>,
     #[serde(skip_serializing)]
     pub device_session: Option<fields::DeviceSession>,
     // Additional fields (from Go definition)
     pub data_time: Option<i32>,
-    pub organization_id: Option<i32>,
     #[serde(skip_serializing)]
     pub temperature_calibration: Option<fields::BigDecimal>,
     #[serde(skip_serializing)]
     pub humadity_calibration: Option<fields::BigDecimal>,
     pub device_profile_name: Option<String>,
-    pub device_type: Option<i32>,   
+    pub device_type: Option<i32>,
+    pub tenant_id: Option<fields::Uuid>,
 }
-#[derive(Insertable,QueryableByName, Debug)]
+#[derive(Insertable, QueryableByName, Debug)]
 #[diesel(table_name = device)]
 pub struct NewDevice {
     pub dev_eui: EUI64,
@@ -160,11 +160,11 @@ pub struct NewDevice {
     pub secondary_dev_addr: Option<DevAddr>,
     pub device_session: Option<fields::DeviceSession>,
     pub data_time: Option<i32>,
-    pub organization_id: Option<i32>,
     pub temperature_calibration: Option<fields::BigDecimal>,
     pub humadity_calibration: Option<fields::BigDecimal>,
     pub device_profile_name: Option<String>,
     pub device_type: Option<i32>,
+    pub tenant_id: Option<fields::Uuid>,
 }
 impl From<Device> for NewDevice {
     fn from(d: Device) -> Self {
@@ -191,11 +191,11 @@ impl From<Device> for NewDevice {
             secondary_dev_addr: d.secondary_dev_addr,
             device_session: d.device_session,
             data_time: d.data_time,
-            organization_id: d.organization_id,
             temperature_calibration: d.temperature_calibration,
             humadity_calibration: d.humadity_calibration,
             device_profile_name: d.device_profile_name,
             device_type: d.device_type,
+            tenant_id: d.tenant_id,
         }
     }
 }
@@ -273,11 +273,11 @@ impl Default for Device {
             secondary_dev_addr: None,
             device_session: None,
             data_time: None,
-            organization_id: None,
             temperature_calibration: None,
             humadity_calibration: None,
             device_profile_name: None,
             device_type: None,
+            tenant_id: None,
         }
     }
 }
@@ -352,7 +352,7 @@ pub async fn create(d: Device) -> Result<Device, Error> {
 
             diesel::insert_into(device::table)
                 .values(&new_device)
-                .returning(Device::as_returning()) 
+                .returning(Device::as_returning())
                 .get_result(c)
                 .await
                 .map_err(|e| Error::from_diesel(e, d.dev_eui.to_string()))
@@ -363,7 +363,6 @@ pub async fn create(d: Device) -> Result<Device, Error> {
     info!(dev_eui = %d.dev_eui, "Device created");
     Ok(d)
 }
-
 
 pub async fn get(dev_eui: &EUI64) -> Result<Device, Error> {
     let d = device::dsl::device

@@ -50,7 +50,7 @@ service AlarmService {
 
     rpc ListAllOrganizationAlarms(ListOrganizationAlarmRequest2) returns (ListOrganizationAlarmResponse2) {
         option (google.api.http) = {
-            get: "/api/alarm/listOrganizationAlarms/{tenant_id}"
+            get: "/api/alarm/listOrganizationAlarms/{organization_id}"
         }; 
     }
      // Create creates the alarm
@@ -264,7 +264,7 @@ message CreateDoorTimeRequest {
 
     int64 time = 9 [json_name = "time"];
 
-    string tenant_id = 10[json_name = "tenant_id"];
+    string organization_id = 10[json_name = "organization_id"];
 
     repeated AlarmDateTime alarm_date_time = 11  [json_name = "alarm_date_time"];
     bool is_time_scheduled = 12 [json_name = "is_time_scheduled"];
@@ -329,7 +329,7 @@ message DeleteDoorAlarmRequest {
     repeated string alarm_id = 1 [json_name = "alarmID"];
 }
 message ListOrganizationAlarmRequest2 {
-	string tenant_id = 1 [json_name = "tenant_id"];
+	string organization_id = 1 [json_name = "organization_id"];
 }
 
 message DeleteMultipleAlarmRequest {
@@ -417,7 +417,7 @@ message ListDoorAlarmResponse {
 
 message ListOrganizationAlarmRequest {
     // Max number of devices to return in the result-set.
-    string tenant_id = 1 [json_name = "tenant_id"];
+    string organization_id = 1 [json_name = "organization_id"];
 }
 
 message ListOrganizationAlarmResponse2 {

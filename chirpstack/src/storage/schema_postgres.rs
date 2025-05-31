@@ -25,7 +25,7 @@ diesel::table! {
         notification_sound -> Nullable<Varchar>,
         distance -> Nullable<Bool>,
         defrost_time -> Nullable<Int4>,
-        user_id -> Nullable<Array<Nullable<Uuid>>>,
+        user_id -> Array<Nullable<Uuid>>,
     }
 }
 
@@ -191,12 +191,12 @@ diesel::table! {
         secondary_dev_addr -> Nullable<Bytea>,
         device_session -> Nullable<Bytea>,
         data_time -> Nullable<Int4>,
-        organization_id -> Nullable<Int4>,
         temperature_calibration -> Nullable<Numeric>,
         humadity_calibration -> Nullable<Numeric>,
         #[max_length = 100]
         device_profile_name -> Nullable<Varchar>,
         device_type -> Nullable<Int4>,
+        tenant_id -> Nullable<Uuid>,
     }
 }
 

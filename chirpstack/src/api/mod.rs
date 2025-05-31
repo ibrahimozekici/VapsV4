@@ -7,6 +7,7 @@ use std::{
 
 use anyhow::Result;
 use axum::{response::IntoResponse, routing::get, Router};
+use chirpstack_api::api::alarm_service_server::AlarmServiceServer;
 use chirpstack_api::api::notification_service_server::NotificationServiceServer;
 use http::{
     header::{self, HeaderMap, HeaderValue},
@@ -188,6 +189,10 @@ pub async fn setup() -> Result<()> {
         ))
         .add_service(NotificationServiceServer::with_interceptor(
             notification::NotificationServiceImpl::new(validator::RequestValidator::new()),
+            auth::auth_interceptor,
+        ))
+        .add_service(AlarmServiceServer::with_interceptor(
+            alarm::Alarm::new(validator::RequestValidator::new()),
             auth::auth_interceptor,
         ))
       ;

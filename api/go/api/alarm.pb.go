@@ -900,7 +900,7 @@ type CreateDoorTimeRequest struct {
 	SubmissionDate  *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=submission_date,proto3" json:"submission_date,omitempty"`
 	IsActive        bool                   `protobuf:"varint,8,opt,name=is_active,proto3" json:"is_active,omitempty"`
 	Time            int64                  `protobuf:"varint,9,opt,name=time,proto3" json:"time,omitempty"`
-	TenantId        string                 `protobuf:"bytes,10,opt,name=tenant_id,proto3" json:"tenant_id,omitempty"`
+	OrganizationId  string                 `protobuf:"bytes,10,opt,name=organization_id,proto3" json:"organization_id,omitempty"`
 	AlarmDateTime   []*AlarmDateTime       `protobuf:"bytes,11,rep,name=alarm_date_time,proto3" json:"alarm_date_time,omitempty"`
 	IsTimeScheduled bool                   `protobuf:"varint,12,opt,name=is_time_scheduled,proto3" json:"is_time_scheduled,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -1000,9 +1000,9 @@ func (x *CreateDoorTimeRequest) GetTime() int64 {
 	return 0
 }
 
-func (x *CreateDoorTimeRequest) GetTenantId() string {
+func (x *CreateDoorTimeRequest) GetOrganizationId() string {
 	if x != nil {
-		return x.TenantId
+		return x.OrganizationId
 	}
 	return ""
 }
@@ -1504,10 +1504,10 @@ func (x *DeleteDoorAlarmRequest) GetAlarmId() []string {
 }
 
 type ListOrganizationAlarmRequest2 struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,proto3" json:"tenant_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	OrganizationId string                 `protobuf:"bytes,1,opt,name=organization_id,proto3" json:"organization_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ListOrganizationAlarmRequest2) Reset() {
@@ -1540,9 +1540,9 @@ func (*ListOrganizationAlarmRequest2) Descriptor() ([]byte, []int) {
 	return file_api_alarm_proto_rawDescGZIP(), []int{21}
 }
 
-func (x *ListOrganizationAlarmRequest2) GetTenantId() string {
+func (x *ListOrganizationAlarmRequest2) GetOrganizationId() string {
 	if x != nil {
-		return x.TenantId
+		return x.OrganizationId
 	}
 	return ""
 }
@@ -2103,9 +2103,9 @@ func (x *ListDoorAlarmResponse) GetResult() []*CreateDoorTimeResponse {
 type ListOrganizationAlarmRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Max number of devices to return in the result-set.
-	TenantId      string `protobuf:"bytes,1,opt,name=tenant_id,proto3" json:"tenant_id,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	OrganizationId string `protobuf:"bytes,1,opt,name=organization_id,proto3" json:"organization_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *ListOrganizationAlarmRequest) Reset() {
@@ -2138,9 +2138,9 @@ func (*ListOrganizationAlarmRequest) Descriptor() ([]byte, []int) {
 	return file_api_alarm_proto_rawDescGZIP(), []int{29}
 }
 
-func (x *ListOrganizationAlarmRequest) GetTenantId() string {
+func (x *ListOrganizationAlarmRequest) GetOrganizationId() string {
 	if x != nil {
-		return x.TenantId
+		return x.OrganizationId
 	}
 	return ""
 }
@@ -2563,7 +2563,7 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\balarm_id\x18\x02 \x01(\x03R\balarm_id\x12\x1c\n" +
 	"\talarm_day\x18\x03 \x01(\x03R\talarm_day\x12*\n" +
 	"\x10alarm_start_time\x18\x04 \x01(\x02R\x10alarm_start_time\x12&\n" +
-	"\x0ealarm_end_time\x18\x05 \x01(\x02R\x0ealarm_end_time\"\xa8\x03\n" +
+	"\x0ealarm_end_time\x18\x05 \x01(\x02R\x0ealarm_end_time\"\xb4\x03\n" +
 	"\x15CreateDoorTimeRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x17\n" +
 	"\adev_eui\x18\x02 \x01(\tR\x06devEUI\x12\x10\n" +
@@ -2573,9 +2573,9 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\auser_id\x18\x06 \x03(\tR\auser_id\x12D\n" +
 	"\x0fsubmission_date\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x0fsubmission_date\x12\x1c\n" +
 	"\tis_active\x18\b \x01(\bR\tis_active\x12\x12\n" +
-	"\x04time\x18\t \x01(\x03R\x04time\x12\x1c\n" +
-	"\ttenant_id\x18\n" +
-	" \x01(\tR\ttenant_id\x12<\n" +
+	"\x04time\x18\t \x01(\x03R\x04time\x12(\n" +
+	"\x0forganization_id\x18\n" +
+	" \x01(\tR\x0forganization_id\x12<\n" +
 	"\x0falarm_date_time\x18\v \x03(\v2\x12.api.AlarmDateTimeR\x0falarm_date_time\x12,\n" +
 	"\x11is_time_scheduled\x18\f \x01(\bR\x11is_time_scheduled\"\x9f\x02\n" +
 	"\x16CreateDoorTimeResponse\x12\x0e\n" +
@@ -2610,9 +2610,9 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\n" +
 	"ip_address\x18\x02 \x01(\tR\tipAddress\"3\n" +
 	"\x16DeleteDoorAlarmRequest\x12\x19\n" +
-	"\balarm_id\x18\x01 \x03(\tR\aalarmID\"=\n" +
-	"\x1dListOrganizationAlarmRequest2\x12\x1c\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\ttenant_id\"6\n" +
+	"\balarm_id\x18\x01 \x03(\tR\aalarmID\"I\n" +
+	"\x1dListOrganizationAlarmRequest2\x12(\n" +
+	"\x0forganization_id\x18\x01 \x01(\tR\x0forganization_id\"6\n" +
 	"\x1aDeleteMultipleAlarmRequest\x12\x18\n" +
 	"\auser_id\x18\x01 \x03(\tR\auserIDs\":\n" +
 	"\x1eDeleteMultipleZoneAlarmRequest\x12\x18\n" +
@@ -2659,9 +2659,9 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\x15ListDoorAlarmResponse\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\x03R\n" +
 	"totalCount\x123\n" +
-	"\x06result\x18\x02 \x03(\v2\x1b.api.CreateDoorTimeResponseR\x06result\"<\n" +
-	"\x1cListOrganizationAlarmRequest\x12\x1c\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\ttenant_id\"}\n" +
+	"\x06result\x18\x02 \x03(\v2\x1b.api.CreateDoorTimeResponseR\x06result\"H\n" +
+	"\x1cListOrganizationAlarmRequest\x12(\n" +
+	"\x0forganization_id\x18\x01 \x01(\tR\x0forganization_id\"}\n" +
 	"\x1eListOrganizationAlarmResponse2\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\x03R\n" +
 	"totalCount\x12:\n" +
@@ -2689,14 +2689,14 @@ const file_api_alarm_proto_rawDesc = "" +
 	"\x13GetAuditLogsRequest\x12\x18\n" +
 	"\adev_eui\x18\x01 \x01(\tR\adev_eui\"=\n" +
 	"\x14GetAuditLogsResponse\x12%\n" +
-	"\x06result\x18\x01 \x03(\v2\r.api.AuditLogR\x06result2\xa9\x10\n" +
+	"\x06result\x18\x01 \x03(\v2\r.api.AuditLogR\x06result2\xaf\x10\n" +
 	"\fAlarmService\x12P\n" +
 	"\x06Create\x12\x17.api.CreateAlarmRequest\x1a\x16.google.protobuf.Empty\"\x15\x82\xd3\xe4\x93\x02\x0f:\x01*\"\n" +
 	"/api/alarm\x12Q\n" +
 	"\x03Get\x12\x14.api.GetAlarmRequest\x1a\x15.api.GetAlarmResponse\"\x1d\x82\xd3\xe4\x93\x02\x17\x12\x15/api/alarm/{alarm_id}\x12[\n" +
 	"\x06Update\x12\x17.api.UpdateAlarmRequest\x1a\x16.google.protobuf.Empty\" \x82\xd3\xe4\x93\x02\x1a:\x01*\x1a\x15/api/alarm/{alarm_id}\x12W\n" +
-	"\x06Delete\x12\x17.api.DeleteAlarmRequest\x1a\x16.google.protobuf.Empty\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/alarm/delete\x12\x9b\x01\n" +
-	"\x19ListAllOrganizationAlarms\x12\".api.ListOrganizationAlarmRequest2\x1a#.api.ListOrganizationAlarmResponse2\"5\x82\xd3\xe4\x93\x02/\x12-/api/alarm/listOrganizationAlarms/{tenant_id}\x12o\n" +
+	"\x06Delete\x12\x17.api.DeleteAlarmRequest\x1a\x16.google.protobuf.Empty\"\x1c\x82\xd3\xe4\x93\x02\x16:\x01*\"\x11/api/alarm/delete\x12\xa1\x01\n" +
+	"\x19ListAllOrganizationAlarms\x12\".api.ListOrganizationAlarmRequest2\x1a#.api.ListOrganizationAlarmResponse2\";\x82\xd3\xe4\x93\x025\x123/api/alarm/listOrganizationAlarms/{organization_id}\x12o\n" +
 	"\x0eCreateMultiple\x12\x1f.api.CreateMultipleAlarmRequest\x1a\x16.google.protobuf.Empty\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/alarm/createMultiple\x12o\n" +
 	"\x0eDeleteMultiple\x12\x1f.api.DeleteMultipleAlarmRequest\x1a\x16.google.protobuf.Empty\"$\x82\xd3\xe4\x93\x02\x1e:\x01*\"\x19/api/alarm/deleteMultiple\x12z\n" +
 	"\x12DeleteSensorAlarms\x12\".api.DeleteMultipleDevAlarmRequest\x1a\x16.google.protobuf.Empty\"(\x82\xd3\xe4\x93\x02\":\x01*\"\x1d/api/alarm/deleteSensorAlarms\x12w\n" +

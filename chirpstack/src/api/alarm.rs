@@ -8,7 +8,6 @@ use chirpstack_api::api;
 use chirpstack_api::api::alarm_service_server::AlarmService;
 use chirpstack_api::api::CreateDoorTimeResponse; // Import the correct AlarmDateTime type
 use lrwn::EUI64;
-use prost_types::Timestamp;
 
 use crate::storage::alarm::{self};
 use tonic::{Request, Response, Status};
@@ -78,13 +77,12 @@ impl AlarmService for Alarm {
                 is_time_limit_active: Some(proto_alarm.is_time_scheduled),
                 alarm_start_time: Some(proto_alarm.start_time as f64),
                 alarm_stop_time: Some(proto_alarm.end_time as f64),
-                user_id: Some(
+                user_id: 
                     proto_alarm
                         .user_ids
                         .iter()
                         .map(|id| uuid::Uuid::parse_str(id).ok())
                         .collect(),
-                ),
                 ..Default::default()
             };
 
@@ -207,7 +205,6 @@ impl AlarmService for Alarm {
             is_time_scheduled: stored_alarm.is_time_limit_active.unwrap_or(false),
             user_ids: stored_alarm
                 .user_id
-                .unwrap_or_default()
                 .into_iter()
                 .filter_map(|x| x.map(|uuid| uuid.to_string()))
                 .collect(),
@@ -224,7 +221,7 @@ impl AlarmService for Alarm {
     ) -> Result<Response<api::ListOrganizationAlarmResponse2>, Status> {
         let req = _request.get_ref();
 
-        let tenant_id = &req.tenant_id;
+        let tenant_id = &req.organization_id;
         if tenant_id.is_empty() {
             return Err(Status::invalid_argument("Organization ID is required"));
         }
@@ -264,7 +261,6 @@ impl AlarmService for Alarm {
                 alarm_date_time: vec![],
                 user_ids: alarm
                     .user_id
-                    .unwrap_or_default()
                     .into_iter()
                     .filter_map(|x| x)
                     .map(|uuid| uuid.to_string())
@@ -336,13 +332,12 @@ impl AlarmService for Alarm {
                 is_time_limit_active: Some(proto_alarm.is_time_scheduled),
                 alarm_start_time: Some(proto_alarm.start_time as f64),
                 alarm_stop_time: Some(proto_alarm.end_time as f64),
-                user_id: Some(
+                user_id: 
                     proto_alarm
                         .user_ids
                         .iter()
                         .map(|id| uuid::Uuid::parse_str(id).ok())
                         .collect(),
-                ),
                 ..Default::default()
             };
 
@@ -461,13 +456,11 @@ impl AlarmService for Alarm {
                 is_time_limit_active: Some(proto_alarm.is_time_scheduled),
                 alarm_start_time: Some(proto_alarm.start_time as f64),
                 alarm_stop_time: Some(proto_alarm.end_time as f64),
-                user_id: Some(
-                    proto_alarm
+                user_id: proto_alarm
                         .user_ids
                         .iter()
                         .map(|id| uuid::Uuid::parse_str(id).ok())
                         .collect(),
-                ),
                 ..Default::default()
             };
 
@@ -662,7 +655,7 @@ impl AlarmService for Alarm {
                     .map(|id| uuid::Uuid::parse_str(id).ok())
                     .collect(),
             ),
-            tenant_id: Some(uuid::Uuid::parse_str(&req.tenant_id).map_err(|_| {
+            tenant_id: Some(uuid::Uuid::parse_str(&req.organization_id).map_err(|_| {
                 Status::invalid_argument("Invalid tenant_id, must be a valid UUID string")
             })?),
             submission_time: None,
@@ -788,7 +781,7 @@ impl AlarmService for Alarm {
                         .map(|id| uuid::Uuid::parse_str(id).ok())
                         .collect(),
                 ),
-                tenant_id: Some(uuid::Uuid::parse_str(&create_req.tenant_id).map_err(|_| {
+                tenant_id: Some(uuid::Uuid::parse_str(&create_req.organization_id).map_err(|_| {
                     Status::invalid_argument("Invalid tenant_id, must be a valid UUID string")
                 })?),
                 submission_time: None,
