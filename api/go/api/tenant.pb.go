@@ -1365,20 +1365,20 @@ const file_api_tenant_proto_rawDesc = "" +
 	"\x17ListTenantUsersResponse\x12\x1f\n" +
 	"\vtotal_count\x18\x01 \x01(\rR\n" +
 	"totalCount\x12/\n" +
-	"\x06result\x18\x02 \x03(\v2\x17.api.TenantUserListItemR\x06result2\xa2\b\n" +
-	"\rTenantService\x12V\n" +
-	"\x06Create\x12\x18.api.CreateTenantRequest\x1a\x19.api.CreateTenantResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/api/tenants\x12O\n" +
-	"\x03Get\x12\x15.api.GetTenantRequest\x1a\x16.api.GetTenantResponse\"\x19\x82\xd3\xe4\x93\x02\x13\x12\x11/api/tenants/{id}\x12_\n" +
-	"\x06Update\x12\x18.api.UpdateTenantRequest\x1a\x16.google.protobuf.Empty\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\x1a\x18/api/tenants/{tenant.id}\x12U\n" +
-	"\x06Delete\x12\x18.api.DeleteTenantRequest\x1a\x16.google.protobuf.Empty\"\x19\x82\xd3\xe4\x93\x02\x13*\x11/api/tenants/{id}\x12O\n" +
-	"\x04List\x12\x17.api.ListTenantsRequest\x1a\x18.api.ListTenantsResponse\"\x14\x82\xd3\xe4\x93\x02\x0e\x12\f/api/tenants\x12s\n" +
-	"\aAddUser\x12\x19.api.AddTenantUserRequest\x1a\x16.google.protobuf.Empty\"5\x82\xd3\xe4\x93\x02/:\x01*\"*/api/tenants/{tenant_user.tenant_id}/users\x12r\n" +
-	"\aGetUser\x12\x19.api.GetTenantUserRequest\x1a\x1a.api.GetTenantUserResponse\"0\x82\xd3\xe4\x93\x02*\x12(/api/tenants/{tenant_id}/users/{user_id}\x12\x8f\x01\n" +
+	"\x06result\x18\x02 \x03(\v2\x17.api.TenantUserListItemR\x06result2\xde\b\n" +
+	"\rTenantService\x12\\\n" +
+	"\x06Create\x12\x18.api.CreateTenantRequest\x1a\x19.api.CreateTenantResponse\"\x1d\x82\xd3\xe4\x93\x02\x17:\x01*\"\x12/api/organizations\x12U\n" +
+	"\x03Get\x12\x15.api.GetTenantRequest\x1a\x16.api.GetTenantResponse\"\x1f\x82\xd3\xe4\x93\x02\x19\x12\x17/api/organizations/{id}\x12e\n" +
+	"\x06Update\x12\x18.api.UpdateTenantRequest\x1a\x16.google.protobuf.Empty\")\x82\xd3\xe4\x93\x02#:\x01*\x1a\x1e/api/organizations/{tenant.id}\x12[\n" +
+	"\x06Delete\x12\x18.api.DeleteTenantRequest\x1a\x16.google.protobuf.Empty\"\x1f\x82\xd3\xe4\x93\x02\x19*\x17/api/organizations/{id}\x12U\n" +
+	"\x04List\x12\x17.api.ListTenantsRequest\x1a\x18.api.ListTenantsResponse\"\x1a\x82\xd3\xe4\x93\x02\x14\x12\x12/api/organizations\x12y\n" +
+	"\aAddUser\x12\x19.api.AddTenantUserRequest\x1a\x16.google.protobuf.Empty\";\x82\xd3\xe4\x93\x025:\x01*\"0/api/organizations/{tenant_user.tenant_id}/users\x12x\n" +
+	"\aGetUser\x12\x19.api.GetTenantUserRequest\x1a\x1a.api.GetTenantUserResponse\"6\x82\xd3\xe4\x93\x020\x12./api/organizations/{tenant_id}/users/{user_id}\x12\x95\x01\n" +
 	"\n" +
-	"UpdateUser\x12\x1c.api.UpdateTenantUserRequest\x1a\x16.google.protobuf.Empty\"K\x82\xd3\xe4\x93\x02E:\x01*\x1a@/api/tenants/{tenant_user.tenant_id}/users/{tenant_user.user_id}\x12t\n" +
+	"UpdateUser\x12\x1c.api.UpdateTenantUserRequest\x1a\x16.google.protobuf.Empty\"Q\x82\xd3\xe4\x93\x02K:\x01*\x1aF/api/organizations/{tenant_user.tenant_id}/users/{tenant_user.user_id}\x12z\n" +
 	"\n" +
-	"DeleteUser\x12\x1c.api.DeleteTenantUserRequest\x1a\x16.google.protobuf.Empty\"0\x82\xd3\xe4\x93\x02**(/api/tenants/{tenant_id}/users/{user_id}\x12n\n" +
-	"\tListUsers\x12\x1b.api.ListTenantUsersRequest\x1a\x1c.api.ListTenantUsersResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/api/tenants/{tenant_id}/usersB\x91\x01\n" +
+	"DeleteUser\x12\x1c.api.DeleteTenantUserRequest\x1a\x16.google.protobuf.Empty\"6\x82\xd3\xe4\x93\x020*./api/organizations/{tenant_id}/users/{user_id}\x12t\n" +
+	"\tListUsers\x12\x1b.api.ListTenantUsersRequest\x1a\x1c.api.ListTenantUsersResponse\",\x82\xd3\xe4\x93\x02&\x12$/api/organizations/{tenant_id}/usersB\x91\x01\n" +
 	"\x11io.chirpstack.apiB\vTenantProtoP\x01Z.github.com/ibrahimozekici/VapsV4/api/go/v4/api\xaa\x02\x0eChirpstack.Api\xca\x02\x0eChirpstack\\Api\xe2\x02\x1aGPBMetadata\\Chirpstack\\Apib\x06proto3"
 
 var (

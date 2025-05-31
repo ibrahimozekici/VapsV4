@@ -19,7 +19,7 @@ service TenantService {
   // Create a new tenant.
   rpc Create(CreateTenantRequest) returns (CreateTenantResponse) {
     option (google.api.http) = {
-      post : "/api/tenants"
+      post : "/api/organizations"
       body : "*"
     };
   }
@@ -27,14 +27,14 @@ service TenantService {
   // Get the tenant for the given ID.
   rpc Get(GetTenantRequest) returns (GetTenantResponse) {
     option (google.api.http) = {
-      get : "/api/tenants/{id}"
+      get : "/api/organizations/{id}"
     };
   }
 
   // Update the given tenant.
   rpc Update(UpdateTenantRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      put : "/api/tenants/{tenant.id}"
+      put : "/api/organizations/{tenant.id}"
       body : "*"
     };
   }
@@ -42,14 +42,14 @@ service TenantService {
   // Delete the tenant with the given ID.
   rpc Delete(DeleteTenantRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/api/tenants/{id}"
+      delete : "/api/organizations/{id}"
     };
   }
 
   // Get the list of tenants.
   rpc List(ListTenantsRequest) returns (ListTenantsResponse) {
     option (google.api.http) = {
-      get : "/api/tenants"
+      get : "/api/organizations"
     };
   }
 
@@ -57,7 +57,7 @@ service TenantService {
   // Note: the user must already exist.
   rpc AddUser(AddTenantUserRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      post : "/api/tenants/{tenant_user.tenant_id}/users"
+      post : "/api/organizations/{tenant_user.tenant_id}/users"
       body : "*"
     };
   }
@@ -65,14 +65,14 @@ service TenantService {
   // Get the the tenant user for the given tenant and user IDs.
   rpc GetUser(GetTenantUserRequest) returns (GetTenantUserResponse) {
     option (google.api.http) = {
-      get : "/api/tenants/{tenant_id}/users/{user_id}"
+      get : "/api/organizations/{tenant_id}/users/{user_id}"
     };
   }
 
   // Update the given tenant user.
   rpc UpdateUser(UpdateTenantUserRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      put : "/api/tenants/{tenant_user.tenant_id}/users/{tenant_user.user_id}"
+      put : "/api/organizations/{tenant_user.tenant_id}/users/{tenant_user.user_id}"
       body : "*"
     };
   }
@@ -80,14 +80,14 @@ service TenantService {
   // Delete the given tenant user.
   rpc DeleteUser(DeleteTenantUserRequest) returns (google.protobuf.Empty) {
     option (google.api.http) = {
-      delete : "/api/tenants/{tenant_id}/users/{user_id}"
+      delete : "/api/organizations/{tenant_id}/users/{user_id}"
     };
   }
 
   // Get the list of tenant users.
   rpc ListUsers(ListTenantUsersRequest) returns (ListTenantUsersResponse) {
     option (google.api.http) = {
-      get : "/api/tenants/{tenant_id}/users"
+      get : "/api/organizations/{tenant_id}/users"
     };
   }
 }
