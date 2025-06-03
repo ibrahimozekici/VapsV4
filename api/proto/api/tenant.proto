@@ -129,6 +129,12 @@ message Tenant {
   // These tags can be used to add additional information to the tenant. These
   // tags are NOT exposed in the integration events.
   map<string, string> tags = 9;
+
+  bool license_payment = 10;
+
+	bool pro_license = 11;
+
+	bool kitchen_management_license = 12;
 }
 
 message TenantListItem {
@@ -269,8 +275,26 @@ message TenantUserListItem {
 
   // User is able to modify gateways.
   bool is_gateway_admin = 8;
+
+  string username = 9;
+	// Name of the user
+	string name = 10;
+  TempZone zones = 11;
+
+	string phone_number= 12;
 }
 
+message TempZone {
+	repeated OrganizationUserZone zones = 1;
+}
+
+message OrganizationUserZone {
+	// Zone ID 
+	int64 zone_id = 1;
+
+	// Name of Zone
+	string zone_name = 2 [json_name = "zoneName"];
+}
 message AddTenantUserRequest {
   // Tenant user object.
   TenantUser tenant_user = 1;

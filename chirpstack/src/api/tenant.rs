@@ -91,6 +91,9 @@ impl TenantService for Tenant {
                 private_gateways_up: t.private_gateways_up,
                 private_gateways_down: t.private_gateways_down,
                 tags: t.tags.into_hashmap(),
+                license_payment: true,
+                pro_license: true,
+                kitchen_management_license: false
             }),
             created_at: Some(helpers::datetime_to_prost_timestamp(&t.created_at)),
             updated_at: Some(helpers::datetime_to_prost_timestamp(&t.updated_at)),
@@ -436,6 +439,20 @@ impl TenantService for Tenant {
                     is_admin: tu.is_admin,
                     is_device_admin: tu.is_device_admin,
                     is_gateway_admin: tu.is_gateway_admin,
+                    username: tu.username.clone(),
+                    name: tu.name.clone(),
+                    phone_number: tu.phone_number.clone(),
+                    zones: Some(api::TempZone {
+                        zones: tu
+                            .zones
+                            .zones
+                            .iter()
+                            .map(|z| api::OrganizationUserZone {
+                                zone_id: z.zone_id,
+                                zone_name: z.zone_name.clone(),
+                            })
+                            .collect(),
+                    }),
                 })
                 .collect(),
         });

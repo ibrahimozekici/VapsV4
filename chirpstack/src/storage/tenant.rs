@@ -2,13 +2,16 @@ use std::collections::HashMap;
 
 use anyhow::Result;
 use chrono::{DateTime, Utc};
+use diesel::sql_types::{Bool, Jsonb, Text, Uuid as SqlUuid};
 use diesel::{dsl, prelude::*};
 use diesel_async::RunQueryDsl;
+use serde::Deserialize;
+use serde::Serialize;
 use tracing::info;
 use uuid::Uuid;
-
+use diesel::sql_query;
 use super::error::Error;
-use super::schema::{tenant, tenant_user, user};
+use super::schema::{tenant, tenant_user, user, zone};
 use super::{fields, get_async_db_conn};
 
 #[derive(Queryable, Insertable, PartialEq, Eq, Debug, Clone)]
@@ -89,21 +92,66 @@ impl Default for TenantUser {
             is_admin: false,
             is_device_admin: false,
             is_gateway_admin: false,
-            is_visible:  Some(true),
+            is_visible: Some(true),
         }
     }
 }
 
-#[derive(Queryable, PartialEq, Eq, Debug)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OrganizationUserZone {
+    pub zone_id: i64,
+    pub zone_name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct TempZone {
+    pub zones: Vec<OrganizationUserZone>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct TenantUserListItem {
-    pub tenant_id: fields::Uuid,
-    pub user_id: fields::Uuid,
+    pub tenant_id: Uuid,
+    pub user_id: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub email: String,
     pub is_admin: bool,
     pub is_device_admin: bool,
     pub is_gateway_admin: bool,
+    pub name: String,
+    pub username: String,
+    pub phone_number: String,
+    pub zones: TempZone,
+}
+
+#[derive(Debug, QueryableByName)]
+pub struct UserRow {
+    #[sql_type = "SqlUuid"]
+    pub user_id: Uuid,
+
+    #[sql_type = "Text"]
+    pub email: String,
+
+    #[sql_type = "Text"]
+    pub username: String,
+
+    #[sql_type = "Text"]
+    pub name: String,
+
+    #[sql_type = "Text"]
+    pub phone_number: String,
+
+    #[sql_type = "Bool"]
+    pub is_gateway_admin: bool,
+
+    #[sql_type = "Bool"]
+    pub is_device_admin: bool,
+
+    #[sql_type = "Bool"]
+    pub is_admin: bool,
+
+    #[sql_type = "Jsonb"]
+    pub zones: serde_json::Value,
 }
 
 #[derive(Default, Clone)]
@@ -280,26 +328,69 @@ pub async fn get_users(
     limit: i64,
     offset: i64,
 ) -> Result<Vec<TenantUserListItem>, Error> {
-    let items = tenant_user::dsl::tenant_user
-        .inner_join(user::table)
-        .select((
-            tenant_user::dsl::tenant_id,
-            tenant_user::dsl::user_id,
-            tenant_user::dsl::created_at,
-            tenant_user::dsl::updated_at,
-            user::dsl::email,
-            tenant_user::dsl::is_admin,
-            tenant_user::dsl::is_device_admin,
-            tenant_user::dsl::is_gateway_admin,
-        ))
-        .filter(tenant_user::dsl::tenant_id.eq(&fields::Uuid::from(tenant_id)))
-        .order_by(user::dsl::email)
-        .limit(limit)
-        .offset(offset)
-        .load(&mut get_async_db_conn().await?)
+    let mut query = r#"
+       select
+				u.id as user_id,
+				u.email as email,
+				u.username as username,
+				u.name as name,
+				u.phone_number as phone_number,
+				ou.is_gateway_admin as is_gateway_admin,
+				ou.is_device_admin as is_device_admin,
+				ou.is_admin as is_admin,
+				json_build_object( 
+					'zones', CASE WHEN count(zl) = 0 THEN ARRAY[]::json[] ELSE array_agg(zl.list) END 
+				) as zones
+			from organization_user ou
+
+			inner join "user" u
+				on u.id = ou.user_id
+			left join (
+				select z.* 
+				,json_build_object(
+						'zone_id',z.zone_id
+						,'zone_name',z.zone_name
+					) as list
+				FROM public.zone as z
+				group by z.zone_id
+			)zl
+			ON zl.zone_id = ANY(u.zone_id_list)
+			where
+				ou.organization_id = $1  and ou.is_visible = true
+				group by u.id, ou.id 
+			order by u.id
+    "#
+    .to_string();
+    let mut conn = get_async_db_conn().await?;
+    let rows: Vec<UserRow> = sql_query(query)
+        .bind::<SqlUuid, _>(tenant_id)
+        .load(&mut conn)
         .await?;
 
-    Ok(items)
+    let users = rows
+        .into_iter()
+        .map(|row| {
+            let temp_zone: TempZone =
+                serde_json::from_value(row.zones).unwrap_or_else(|_| TempZone { zones: vec![] });
+
+            TenantUserListItem {
+                tenant_id: *tenant_id,
+                user_id: row.user_id,
+                created_at: Utc::now(), // Fill in if needed
+                updated_at: Utc::now(),
+                email: row.email,
+                is_admin: row.is_admin,
+                is_device_admin: row.is_device_admin,
+                is_gateway_admin: row.is_gateway_admin,
+                name: row.name,
+                username: row.username,
+                phone_number: row.phone_number,
+                zones: temp_zone,
+            }
+        })
+        .collect();
+
+    Ok(users)
 }
 
 pub async fn delete_user(tenant_id: &Uuid, user_id: &Uuid) -> Result<(), Error> {
@@ -360,8 +451,8 @@ pub mod test {
             private_gateways_down: true,
             tags: fields::KeyValue::new(HashMap::new()),
             license: Some(true),
-            pro_license:  Some(true),
-            kitchen_management_license:  Some(false),
+            pro_license: Some(true),
+            kitchen_management_license: Some(false),
             sms_count: Some(0),
         };
         create(t).await.unwrap()
@@ -512,7 +603,7 @@ pub mod test {
 
         // get users
         let users = get_users(&t.id, 10, 0).await.unwrap();
-        assert_eq!(user.id, users[0].user_id);
+        assert_eq!(user.id, users[0].user_id.inner());
 
         // delete
         delete_user(&t.id, &user.id).await.unwrap();
