@@ -251,10 +251,10 @@ message TenantUser {
 
 message TenantUserListItem {
   // Tenant ID (UUID).
-  string tenant_id = 1;
+  string tenant_id = 1[json_name = "organizationID"];
 
   // User ID (UUID).
-  string user_id = 2;
+  string user_id = 2 [json_name = "userID"];
 
   // Created at timestamp.
   google.protobuf.Timestamp created_at = 3;
@@ -279,7 +279,7 @@ message TenantUserListItem {
   string username = 9;
 	// Name of the user
 	string name = 10;
-TempZone zones = 11;
+  TempZone zones = 11;
 
 	string phone_number= 12;
 }

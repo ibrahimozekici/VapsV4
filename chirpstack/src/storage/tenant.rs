@@ -1,18 +1,18 @@
 use std::collections::HashMap;
 
+use super::error::Error;
+use super::schema::{tenant, tenant_user, user, zone};
+use super::{fields, get_async_db_conn};
 use anyhow::Result;
 use chrono::{DateTime, Utc};
-use diesel::sql_types::{Bool, Jsonb, Text, Uuid as SqlUuid};
+use diesel::sql_query;
+use diesel::sql_types::{Bool, Json, Text, Uuid as SqlUuid};
 use diesel::{dsl, prelude::*};
 use diesel_async::RunQueryDsl;
 use serde::Deserialize;
 use serde::Serialize;
 use tracing::info;
 use uuid::Uuid;
-use diesel::sql_query;
-use super::error::Error;
-use super::schema::{tenant, tenant_user, user, zone};
-use super::{fields, get_async_db_conn};
 
 #[derive(Queryable, Insertable, PartialEq, Eq, Debug, Clone)]
 #[diesel(table_name = tenant)]
@@ -150,7 +150,7 @@ pub struct UserRow {
     #[sql_type = "Bool"]
     pub is_admin: bool,
 
-    #[sql_type = "Jsonb"]
+    #[sql_type = "Json"]
     pub zones: serde_json::Value,
 }
 
@@ -327,43 +327,59 @@ pub async fn get_users(
     tenant_id: &Uuid,
     limit: i64,
     offset: i64,
-) -> Result<Vec<TenantUserListItem>, Error> {
-    let mut query = r#"
-       select
-				u.id as user_id,
-				u.email as email,
-				u.username as username,
-				u.name as name,
-				u.phone_number as phone_number,
-				ou.is_gateway_admin as is_gateway_admin,
-				ou.is_device_admin as is_device_admin,
-				ou.is_admin as is_admin,
-				json_build_object( 
-					'zones', CASE WHEN count(zl) = 0 THEN ARRAY[]::json[] ELSE array_agg(zl.list) END 
-				) as zones
-			from organization_user ou
+) -> Result<Vec<TenantUserListItem>, Box<dyn std::error::Error>> {
+    let query = r#"
+        SELECT
+            u.id AS user_id,
+            u.email AS email,
+            u.username AS username,
+            u.name AS name,
+            u.phone_number AS phone_number,
+            ou.is_gateway_admin AS is_gateway_admin,
+            ou.is_device_admin AS is_device_admin,
+            ou.is_admin AS is_admin,
+            CAST(
+                json_build_object(
+                    'zones',
+                    CASE
+                        WHEN COUNT(zl.zone_id) = 0 THEN '[]'::json
+                        ELSE to_json(ARRAY_AGG(zl.list))
+                    END
+                ) AS json
+            ) AS zones
+        FROM tenant_user ou
+        INNER JOIN "user" u ON u.id = ou.user_id
+        LEFT JOIN (
+            SELECT 
+                z.zone_id,
+                json_build_object(
+                    'zone_id', z.zone_id,
+                    'zone_name', z.zone_name
+                ) AS list
+            FROM public.zone z
+            GROUP BY z.zone_id
+        ) zl ON zl.zone_id = ANY(u.zone_id_list)
+        WHERE
+            ou.tenant_id = $1  
+            AND ou.is_visible = true
+        GROUP BY 
+            u.id, 
+            u.email, 
+            u.username, 
+            u.name, 
+            u.phone_number,
+            ou.is_gateway_admin,
+            ou.is_device_admin,
+            ou.is_admin
+        ORDER BY u.id
+    "#;
 
-			inner join "user" u
-				on u.id = ou.user_id
-			left join (
-				select z.* 
-				,json_build_object(
-						'zone_id',z.zone_id
-						,'zone_name',z.zone_name
-					) as list
-				FROM public.zone as z
-				group by z.zone_id
-			)zl
-			ON zl.zone_id = ANY(u.zone_id_list)
-			where
-				ou.organization_id = $1  and ou.is_visible = true
-				group by u.id, ou.id 
-			order by u.id
-    "#
-    .to_string();
     let mut conn = get_async_db_conn().await?;
+
     let rows: Vec<UserRow> = sql_query(query)
         .bind::<SqlUuid, _>(tenant_id)
+        .bind::<diesel::sql_types::BigInt, _>(limit)
+        .bind::<diesel::sql_types::BigInt, _>(offset)
         .load(&mut conn)
         .await?;
 
@@ -376,7 +392,7 @@ pub async fn get_users(
             TenantUserListItem {
                 tenant_id: *tenant_id,
                 user_id: row.user_id,
-                created_at: Utc::now(), // Fill in if needed
+                created_at: Utc::now(),
                 updated_at: Utc::now(),
                 email: row.email,
                 is_admin: row.is_admin,
@@ -390,6 +406,7 @@ pub async fn get_users(
         })
         .collect();
 
+    info!("Finished get_users query successfully.");
     Ok(users)
 }
 

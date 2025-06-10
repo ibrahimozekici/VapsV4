@@ -804,9 +804,9 @@ func (x *TenantUser) GetEmail() string {
 type TenantUserListItem struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Tenant ID (UUID).
-	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=organizationID,proto3" json:"tenant_id,omitempty"`
 	// User ID (UUID).
-	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	UserId string `protobuf:"bytes,2,opt,name=user_id,json=userID,proto3" json:"user_id,omitempty"`
 	// Created at timestamp.
 	CreatedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	// Last update timestamp.
@@ -1487,10 +1487,10 @@ const file_api_tenant_proto_rawDesc = "" +
 	"\bis_admin\x18\x03 \x01(\bR\aisAdmin\x12&\n" +
 	"\x0fis_device_admin\x18\x04 \x01(\bR\risDeviceAdmin\x12(\n" +
 	"\x10is_gateway_admin\x18\x05 \x01(\bR\x0eisGatewayAdmin\x12\x14\n" +
-	"\x05email\x18\x06 \x01(\tR\x05email\"\xbb\x03\n" +
-	"\x12TenantUserListItem\x12\x1b\n" +
-	"\ttenant_id\x18\x01 \x01(\tR\btenantId\x12\x17\n" +
-	"\auser_id\x18\x02 \x01(\tR\x06userId\x129\n" +
+	"\x05email\x18\x06 \x01(\tR\x05email\"\xc1\x03\n" +
+	"\x12TenantUserListItem\x12!\n" +
+	"\ttenant_id\x18\x01 \x01(\tR\x0eorganizationID\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userID\x129\n" +
 	"\n" +
 	"created_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
