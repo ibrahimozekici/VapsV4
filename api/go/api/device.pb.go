@@ -57,9 +57,21 @@ type Device struct {
 	// cases it must be pre-configured. For example to allow OTAA using a Relay.
 	// In this case the Relay needs to know the JoinEUI + DevEUI combinations
 	// of the devices for which it needs to forward uplinks.
-	JoinEui       string `protobuf:"bytes,10,opt,name=join_eui,json=joinEui,proto3" json:"join_eui,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	JoinEui  string `protobuf:"bytes,10,opt,name=join_eui,json=joinEui,proto3" json:"join_eui,omitempty"`
+	DataTime int64  `protobuf:"varint,11,opt,name=data_time,json=dataTime,proto3" json:"data_time,omitempty"`
+	// Device lat value
+	Latitude float64 `protobuf:"fixed64,12,opt,name=latitude,proto3" json:"latitude,omitempty"`
+	// Device lng value
+	Longitude float64 `protobuf:"fixed64,13,opt,name=longitude,proto3" json:"longitude,omitempty"`
+	// Device Profile Name
+	DeviceProfileName      string  `protobuf:"bytes,14,opt,name=device_profile_name,json=deviceProfileName,proto3" json:"device_profile_name,omitempty"`
+	DeviceType             int64   `protobuf:"varint,15,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
+	OrganizationId         int64   `protobuf:"varint,16,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	ZoneId                 int64   `protobuf:"varint,17,opt,name=zone_id,json=zoneId,proto3" json:"zone_id,omitempty"`
+	TemperatureCalibration float64 `protobuf:"fixed64,18,opt,name=temperature_calibration,json=temperatureCalibration,proto3" json:"temperature_calibration,omitempty"`
+	HumadityCalibration    float64 `protobuf:"fixed64,19,opt,name=humadity_calibration,json=humadityCalibration,proto3" json:"humadity_calibration,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *Device) Reset() {
@@ -160,6 +172,69 @@ func (x *Device) GetJoinEui() string {
 		return x.JoinEui
 	}
 	return ""
+}
+
+func (x *Device) GetDataTime() int64 {
+	if x != nil {
+		return x.DataTime
+	}
+	return 0
+}
+
+func (x *Device) GetLatitude() float64 {
+	if x != nil {
+		return x.Latitude
+	}
+	return 0
+}
+
+func (x *Device) GetLongitude() float64 {
+	if x != nil {
+		return x.Longitude
+	}
+	return 0
+}
+
+func (x *Device) GetDeviceProfileName() string {
+	if x != nil {
+		return x.DeviceProfileName
+	}
+	return ""
+}
+
+func (x *Device) GetDeviceType() int64 {
+	if x != nil {
+		return x.DeviceType
+	}
+	return 0
+}
+
+func (x *Device) GetOrganizationId() int64 {
+	if x != nil {
+		return x.OrganizationId
+	}
+	return 0
+}
+
+func (x *Device) GetZoneId() int64 {
+	if x != nil {
+		return x.ZoneId
+	}
+	return 0
+}
+
+func (x *Device) GetTemperatureCalibration() float64 {
+	if x != nil {
+		return x.TemperatureCalibration
+	}
+	return 0
+}
+
+func (x *Device) GetHumadityCalibration() float64 {
+	if x != nil {
+		return x.HumadityCalibration
+	}
+	return 0
 }
 
 type DeviceStatus struct {
@@ -2316,7 +2391,7 @@ var File_api_device_proto protoreflect.FileDescriptor
 
 const file_api_device_proto_rawDesc = "" +
 	"\n" +
-	"\x10api/device.proto\x12\x03api\x1a\x13common/common.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xea\x03\n" +
+	"\x10api/device.proto\x12\x03api\x1a\x13common/common.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xc0\x06\n" +
 	"\x06Device\x12\x17\n" +
 	"\adev_eui\x18\x01 \x01(\tR\x06devEui\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
@@ -2329,7 +2404,17 @@ const file_api_device_proto_rawDesc = "" +
 	"\tvariables\x18\b \x03(\v2\x1a.api.Device.VariablesEntryR\tvariables\x12)\n" +
 	"\x04tags\x18\t \x03(\v2\x15.api.Device.TagsEntryR\x04tags\x12\x19\n" +
 	"\bjoin_eui\x18\n" +
-	" \x01(\tR\ajoinEui\x1a<\n" +
+	" \x01(\tR\ajoinEui\x12\x1b\n" +
+	"\tdata_time\x18\v \x01(\x03R\bdataTime\x12\x1a\n" +
+	"\blatitude\x18\f \x01(\x01R\blatitude\x12\x1c\n" +
+	"\tlongitude\x18\r \x01(\x01R\tlongitude\x12.\n" +
+	"\x13device_profile_name\x18\x0e \x01(\tR\x11deviceProfileName\x12\x1f\n" +
+	"\vdevice_type\x18\x0f \x01(\x03R\n" +
+	"deviceType\x12'\n" +
+	"\x0forganization_id\x18\x10 \x01(\x03R\x0eorganizationId\x12\x17\n" +
+	"\azone_id\x18\x11 \x01(\x03R\x06zoneId\x127\n" +
+	"\x17temperature_calibration\x18\x12 \x01(\x01R\x16temperatureCalibration\x121\n" +
+	"\x14humadity_calibration\x18\x13 \x01(\x01R\x13humadityCalibration\x1a<\n" +
 	"\x0eVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +

@@ -16,6 +16,7 @@ use uuid::Uuid;
 
 use super::error::Error;
 use super::schema::{application, application_integration};
+use super::schema::device_type_tb;
 use super::{fields, get_async_db_conn};
 
 #[derive(Clone, Queryable, Insertable, PartialEq, Eq, Debug)]
@@ -374,7 +375,27 @@ pub async fn update_mqtt_cls_cert(id: &Uuid, cert: &[u8]) -> Result<Application,
 
     Ok(app)
 }
+pub async fn get_internal(device_type_id: i64) -> Result<Uuid, Error> {
+    use application::dsl as a;
+    use device_type_tb::dsl as dt;
 
+    let mut conn = get_async_db_conn().await?;
+
+    let query = a::application
+        .inner_join(dt::device_type_tb.on(a::name.eq(dt::application_name)))
+        .filter(dt::id.eq(device_type_id as i32))
+        .order_by(a::created_at.desc())
+        .select(a::id);
+
+    let result: Option<Uuid> = query.first::<Uuid>(&mut conn).await.optional()?;
+    match result {
+        Some(uuid) => Ok(uuid),
+        None => Err(anyhow::anyhow!(
+            "application not found for device_type_id {}",
+            device_type_id
+        ).into()),
+    }
+}
 pub async fn delete(id: &Uuid) -> Result<(), Error> {
     let ra = diesel::delete(application::dsl::application.find(fields::Uuid::from(id)))
         .execute(&mut get_async_db_conn().await?)

@@ -25,7 +25,7 @@ function GatewayFrames(props: IProps) {
 
   useEffect(() => {
     const req = new StreamGatewayFramesRequest();
-    req.setGatewayId(props.gateway.getGatewayId());
+    req.setGatewayId(props.gateway.getId());
     return InternalStore.streamGatewayFrames(req, onMessage);
   }, [props, onMessage]);
 

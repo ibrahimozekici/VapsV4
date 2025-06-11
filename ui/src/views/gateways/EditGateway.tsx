@@ -19,14 +19,14 @@ function EditGateway(props: IProps) {
     req.setGateway(obj);
 
     GatewayStore.update(req, () => {
-      navigate(`/tenants/${obj.getTenantId()}/gateways/${obj.getGatewayId()}`);
+      navigate(`/tenants/${obj.getOrganizationId()}/gateways/${obj.getId()}`);
     });
   };
 
   const disabled = !(
     SessionStore.isAdmin() ||
-    SessionStore.isTenantAdmin(props.gateway.getTenantId()) ||
-    SessionStore.isTenantGatewayAdmin(props.gateway.getTenantId())
+    SessionStore.isTenantAdmin(props.gateway.getOrganizationId()) ||
+    SessionStore.isTenantGatewayAdmin(props.gateway.getOrganizationId())
   );
   return <GatewayForm initialValues={props.gateway} onFinish={onFinish} disabled={disabled} update />;
 }

@@ -34,7 +34,7 @@ function GatewayLayout(props: IProps) {
 
   useEffect(() => {
     const req = new GetGatewayRequest();
-    req.setGatewayId(gatewayId!);
+    req.setId(gatewayId!);
 
     GatewayStore.get(req, (resp: GetGatewayResponse) => {
       setGateway(resp.getGateway());
@@ -47,7 +47,7 @@ function GatewayLayout(props: IProps) {
 
   const deleteGateway = () => {
     const req = new DeleteGatewayRequest();
-    req.setGatewayId(gatewayId!);
+    req.setId(gatewayId!);
 
     GatewayStore.delete(req, () => {
       navigate(`/tenants/${props.tenant.getId()}/gateways`);
@@ -102,7 +102,7 @@ function GatewayLayout(props: IProps) {
           </Breadcrumb>
         )}
         title={gw.getName()}
-        subTitle={`gateway id: ${gw.getGatewayId()}`}
+        subTitle={`gateway id: ${gw.getId()}`}
         extra={[
           <Admin tenantId={props.tenant.getId()} isGatewayAdmin>
             <DeleteConfirm confirm={gw.getName()} typ="gateway" onConfirm={deleteGateway}>
@@ -116,18 +116,18 @@ function GatewayLayout(props: IProps) {
       <Card>
         <Menu mode="horizontal" selectedKeys={[tab]} style={{ marginBottom: 24 }}>
           <Menu.Item key="dashboard">
-            <Link to={`/tenants/${tenant.getId()}/gateways/${gw.getGatewayId()}`}>Dashboard</Link>
+            <Link to={`/tenants/${tenant.getId()}/gateways/${gw.getId()}`}>Dashboard</Link>
           </Menu.Item>
           <Menu.Item key="edit">
-            <Link to={`/tenants/${tenant.getId()}/gateways/${gw.getGatewayId()}/edit`}>Configuration</Link>
+            <Link to={`/tenants/${tenant.getId()}/gateways/${gw.getId()}/edit`}>Configuration</Link>
           </Menu.Item>
           {isGatewayAdmin && (
             <Menu.Item key="cert">
-              <Link to={`/tenants/${tenant.getId()}/gateways/${gw.getGatewayId()}/certificate`}>TLS certificate</Link>
+              <Link to={`/tenants/${tenant.getId()}/gateways/${gw.getId()}/certificate`}>TLS certificate</Link>
             </Menu.Item>
           )}
           <Menu.Item key="frames">
-            <Link to={`/tenants/${tenant.getId()}/gateways/${gw.getGatewayId()}/frames`}>LoRaWAN frames</Link>
+            <Link to={`/tenants/${tenant.getId()}/gateways/${gw.getId()}/frames`}>LoRaWAN frames</Link>
           </Menu.Item>
         </Menu>
         <Routes>

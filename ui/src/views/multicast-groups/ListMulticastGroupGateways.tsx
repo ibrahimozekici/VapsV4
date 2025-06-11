@@ -45,7 +45,7 @@ function ListMulticastGroupGateways(props: IProps) {
 
   const getPage = (limit: number, offset: number, callbackFunc: GetPageCallbackFunc) => {
     const req = new ListGatewaysRequest();
-    req.setTenantId(props.application.getTenantId());
+    req.setOrganizationId(props.application.getTenantId());
     req.setMulticastGroupId(props.multicastGroup.getId());
     req.setLimit(limit);
     req.setOffset(offset);

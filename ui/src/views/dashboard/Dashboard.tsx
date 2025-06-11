@@ -72,9 +72,9 @@ function GatewaysMap() {
     markers.push(
       <Marker position={[pos[0], pos[1]]} faIcon="wifi" color={color}>
         <Popup>
-          <Link to={`/tenants/${item.getTenantId()}/gateways/${item.getGatewayId()}`}>{item.getName()}</Link>
+          <Link to={`/tenants/${item.getOrganizationId()}/gateways/${item.getId()}`}>{item.getName()}</Link>
           <br />
-          {item.getGatewayId()}
+          {item.getId()}
           <br />
           <br />
           {lastSeen}

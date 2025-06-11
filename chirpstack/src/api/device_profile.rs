@@ -136,6 +136,7 @@ impl DeviceProfileService for DeviceProfile {
         Ok(resp)
     }
 
+    
     async fn get(
         &self,
         request: Request<api::GetDeviceProfileRequest>,

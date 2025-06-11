@@ -220,6 +220,25 @@ message Device {
   // In this case the Relay needs to know the JoinEUI + DevEUI combinations
   // of the devices for which it needs to forward uplinks.
   string join_eui = 10;
+
+   int64 data_time = 11 [json_name = "dataTime"];	
+    // Device lat value	
+    double latitude = 12;	
+    // Device lng value	
+    double longitude = 13;
+
+    // Device Profile Name
+    string device_profile_name = 14 [json_name = "deviceProfileName"];
+
+    int64 device_type = 15 [json_name = "deviceType"];
+
+    int64 organization_id = 16 [json_name = "organizationId"];
+
+    int64 zone_id = 17 [json_name = "zoneId"];
+
+    double temperature_calibration = 18 [json_name = "temperatureCalibration"];
+
+    double humadity_calibration = 19 [json_name = "humadityCalibration"];
 }
 
 message DeviceStatus {

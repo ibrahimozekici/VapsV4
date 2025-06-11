@@ -22,7 +22,7 @@ function GatewayCertificate(props: IProps) {
     setButtonDisabled(true);
 
     const req = new GenerateGatewayClientCertificateRequest();
-    req.setGatewayId(props.gateway.getGatewayId());
+    req.setId(props.gateway.getId());
 
     GatewayStore.generateClientCertificate(req, (resp: GenerateGatewayClientCertificateResponse) => {
       setCertificate(resp);

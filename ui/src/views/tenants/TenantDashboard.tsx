@@ -70,9 +70,9 @@ function GatewaysMap(props: GatewaysMapProps) {
     markers.push(
       <Marker position={[pos[0], pos[1]]} faIcon="wifi" color={color}>
         <Popup>
-          <Link to={`/tenants/${item.getTenantId()}/gateways/${item.getGatewayId()}`}>{item.getName()}</Link>
+          <Link to={`/tenants/${item.getOrganizationId()}/gateways/${item.getId()}`}>{item.getName()}</Link>
           <br />
-          {item.getGatewayId()}
+          {item.getId()}
           <br />
           <br />
           {lastSeen}
@@ -260,7 +260,7 @@ function TenantDashboard({ tenant }: { tenant: Tenant }) {
 
     {
       const req = new ListGatewaysRequest();
-      req.setTenantId(tenant.getId());
+      req.setOrganizationId(tenant.getId());
       req.setLimit(9999);
 
       GatewayStore.list(req, (resp: ListGatewaysResponse) => {

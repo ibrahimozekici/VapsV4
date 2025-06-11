@@ -70,10 +70,10 @@ function GatewayForm(props: IProps) {
       loc.setLongitude(v.location.longitude);
     }
 
-    gw.setTenantId(v.tenantId);
+    gw.setOrganizationId(v.organizationId);
     gw.setName(v.name);
     gw.setDescription(v.description);
-    gw.setGatewayId(v.gatewayId);
+    gw.setId(v.id);
     gw.setStatsInterval(v.statsInterval);
     gw.setLocation(loc);
 
@@ -115,7 +115,7 @@ function GatewayForm(props: IProps) {
               <EuiInput
                 label="Gateway ID (EUI64)"
                 name="gatewayId"
-                value={props.initialValues.getGatewayId()}
+                value={props.initialValues.getId()}
                 disabled={props.update || props.disabled}
                 required
               />

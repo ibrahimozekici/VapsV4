@@ -11,6 +11,7 @@ use lrwn::region::{CommonName, MacVersion, Revision};
 
 use super::error::Error;
 use super::schema::device_profile;
+use super::schema::device_type_tb;
 use super::{error, fields, get_async_db_conn};
 use crate::api::helpers::ToProto;
 use crate::codec::Codec;
@@ -233,6 +234,27 @@ pub async fn get(id: &Uuid) -> Result<DeviceProfile, Error> {
         .await
         .map_err(|e| error::Error::from_diesel(e, id.to_string()))?;
     Ok(dp)
+}
+pub async fn get_internal(device_type_id: i64) -> Result<Uuid, Error> {
+    use device_profile::dsl as dp;
+    use device_type_tb::dsl as dt;
+
+    let mut conn = get_async_db_conn().await?;
+
+    let query = dp::device_profile
+        .inner_join(dt::device_type_tb.on(dp::name.eq(dt::device_profile_name)))
+        .filter(dt::id.eq(device_type_id as i32))
+        .order_by(dp::created_at.desc())
+        .select(dp::id);
+
+    let result: Option<Uuid> = query.first::<Uuid>(&mut conn).await.optional()?;
+    match result {
+        Some(uuid) => Ok(uuid),
+        None => Err(anyhow::anyhow!(
+            "device_profile not found for device_type_id {}",
+            device_type_id
+        ).into()),
+    }
 }
 
 pub async fn update(dp: DeviceProfile) -> Result<DeviceProfile, Error> {

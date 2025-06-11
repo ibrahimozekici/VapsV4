@@ -19,13 +19,13 @@ function CreateGateway(props: IProps) {
   useTitle("Tenants", props.tenant.getName(), "Gateways", "Add");
 
   const onFinish = (obj: Gateway) => {
-    obj.setTenantId(props.tenant.getId());
+    obj.setOrganizationId(props.tenant.getId());
 
     const req = new CreateGatewayRequest();
     req.setGateway(obj);
 
     GatewayStore.create(req, () => {
-      navigate(`/tenants/${props.tenant.getId()}/gateways/${obj.getGatewayId()}`);
+      navigate(`/tenants/${props.tenant.getId()}/gateways/${obj.getId()}`);
     });
   };
 

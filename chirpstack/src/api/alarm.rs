@@ -9,7 +9,7 @@ use chirpstack_api::api::alarm_service_server::AlarmService;
 use chirpstack_api::api::CreateDoorTimeResponse; // Import the correct AlarmDateTime type
 use lrwn::EUI64;
 
-use crate::storage::alarm::{self};
+use crate::storage::alarm::{self, AlarmDateTime, UpdateAlarm};
 use tonic::{Request, Response, Status};
 
 pub struct Alarm {
@@ -56,7 +56,7 @@ impl AlarmService for Alarm {
                 ));
             }
 
-            let alarm = alarm::Alarm {
+            let alarm = alarm::NewAlarm {
                 dev_eui: dev_eui.to_string(),
                 min_treshold: Some(proto_alarm.min_treshold as f64),
                 max_treshold: Some(proto_alarm.max_treshold as f64),
@@ -77,12 +77,11 @@ impl AlarmService for Alarm {
                 is_time_limit_active: Some(proto_alarm.is_time_scheduled),
                 alarm_start_time: Some(proto_alarm.start_time as f64),
                 alarm_stop_time: Some(proto_alarm.end_time as f64),
-                user_id: 
-                    proto_alarm
-                        .user_ids
-                        .iter()
-                        .map(|id| uuid::Uuid::parse_str(id).ok())
-                        .collect(),
+                user_id: proto_alarm
+                    .user_ids
+                    .iter()
+                    .map(|id| uuid::Uuid::parse_str(id).ok())
+                    .collect(),
                 ..Default::default()
             };
 
@@ -258,14 +257,27 @@ impl AlarmService for Alarm {
                 submission_date: Some(helpers::datetime_to_prost_timestamp(
                     (&chrono::Utc::now()).into(),
                 )),
-                alarm_date_time: vec![],
+                alarm_date_time: alarm
+                    .alarm_date_time
+                    .clone()
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|dt| api::AlarmDateTime {
+                        id: dt.id as i64,
+                        alarm_id: dt.alarm_id as i64,
+                        alarm_day: dt.alarm_day as i64,
+                        alarm_start_time: dt.start_time as f32,
+                        alarm_end_time: dt.end_time as f32,
+                        ..Default::default()
+                    })
+                    .collect(),
                 user_ids: alarm
                     .user_id
                     .into_iter()
                     .filter_map(|x| x)
                     .map(|uuid| uuid.to_string())
                     .collect(),
-                time: chrono::Utc::now().timestamp() as i64,
+                time: alarm.time.clone().unwrap_or_default() as i64,
                 device_name: alarm.device_name.clone().unwrap_or_default(),
                 username: alarm.username.clone().unwrap_or_default(),
                 zone_name: alarm.zone_name.clone().unwrap_or_default(),
@@ -310,57 +322,45 @@ impl AlarmService for Alarm {
                     return Err(Status::unauthenticated("no user id"));
                 }
             };
-            let alarm = alarm::Alarm {
-                id: proto_alarm.id as i32,
-                dev_eui: dev_eui.to_string(),
+
+            // Build UpdateAlarm struct only with fields to update
+            let updated_fields = UpdateAlarm {
                 min_treshold: Some(proto_alarm.min_treshold as f64),
                 max_treshold: Some(proto_alarm.max_treshold as f64),
                 sms: Some(proto_alarm.sms),
                 email: Some(proto_alarm.email),
                 notification: Some(proto_alarm.notification),
-                temperature: Some(proto_alarm.temperature),
-                humadity: Some(proto_alarm.humadity),
-                ec: Some(proto_alarm.ec),
-                door: Some(proto_alarm.door),
-                w_leak: Some(proto_alarm.w_leak),
-                is_active: Some(true),
-                zone_category: Some(proto_alarm.zone_category as i32),
-                notification_sound: Some(proto_alarm.notification_sound.clone()),
-                pressure: Some(proto_alarm.pressure),
-                distance: Some(proto_alarm.distance),
-                defrost_time: Some(proto_alarm.defrost_time as i32),
                 is_time_limit_active: Some(proto_alarm.is_time_scheduled),
-                alarm_start_time: Some(proto_alarm.start_time as f64),
-                alarm_stop_time: Some(proto_alarm.end_time as f64),
-                user_id: 
-                    proto_alarm
-                        .user_ids
-                        .iter()
-                        .map(|id| uuid::Uuid::parse_str(id).ok())
-                        .collect(),
-                ..Default::default()
+                notification_sound: Some(proto_alarm.notification_sound.clone()),
+                user_id: proto_alarm
+                    .user_ids
+                    .iter()
+                    .filter_map(|id| uuid::Uuid::parse_str(id).ok())
+                    .collect(),
+                is_active: Some(true),
+                defrost_time: Some(proto_alarm.defrost_time as i32),
             };
 
-            let alarm_dates: Vec<alarm::AlarmDateTime> = proto_alarm
+            // Build date filters (if provided)
+            let alarm_dates: Vec<AlarmDateTime> = proto_alarm
                 .alarm_date_time
                 .iter()
-                .map(|dt| alarm::AlarmDateTime {
+                .map(|dt| AlarmDateTime {
                     id: dt.id as i32,
                     alarm_id: dt.alarm_id as i32,
                     alarm_day: dt.alarm_day as i32,
                     start_time: dt.alarm_start_time as f64,
                     end_time: dt.alarm_end_time as f64,
-                    ..Default::default()
                 })
                 .collect();
 
-            let previous_alarm = alarm::get_alarm(proto_alarm.id as i32).await.map_err(|e| {
-                Status::internal(format!("Failed to fetch alarm for audit log: {}", e))
-            })?;
-
-            let result = alarm::update_alarm(alarm, alarm_dates.clone(), *user_id)
+            // Call your business logic function
+            alarm::update_alarm(proto_alarm.id as i32, updated_fields, alarm_dates, user_id.clone())
                 .await
-                .map_err(|e| Status::internal(format!("Failed to update alarm: {}", e)))?;
+                .map_err(|e| {
+                    eprintln!("Failed to update alarm: {:?}", e);
+                    Status::internal("Failed to update alarm")
+                })?;
         }
         Ok(Response::new(()))
     }
@@ -390,10 +390,6 @@ impl AlarmService for Alarm {
             let alarm_id = alarm_id_str
                 .parse::<i32>()
                 .map_err(|_| Status::invalid_argument("Alarm ID must be a valid integer"))?;
-
-            let previous_alarm = alarm::get_alarm(alarm_id).await.map_err(|e| {
-                Status::internal(format!("Failed to fetch alarm for audit log: {}", e))
-            })?;
 
             alarm::delete_alarm(alarm_id, *user_id)
                 .await
@@ -435,7 +431,7 @@ impl AlarmService for Alarm {
                 ));
             }
 
-            let alarm = alarm::Alarm {
+            let alarm = alarm::NewAlarm {
                 dev_eui: dev_eui.to_string(),
                 min_treshold: Some(proto_alarm.min_treshold as f64),
                 max_treshold: Some(proto_alarm.max_treshold as f64),
@@ -457,10 +453,10 @@ impl AlarmService for Alarm {
                 alarm_start_time: Some(proto_alarm.start_time as f64),
                 alarm_stop_time: Some(proto_alarm.end_time as f64),
                 user_id: proto_alarm
-                        .user_ids
-                        .iter()
-                        .map(|id| uuid::Uuid::parse_str(id).ok())
-                        .collect(),
+                    .user_ids
+                    .iter()
+                    .map(|id| uuid::Uuid::parse_str(id).ok())
+                    .collect(),
                 ..Default::default()
             };
 
@@ -781,9 +777,9 @@ impl AlarmService for Alarm {
                         .map(|id| uuid::Uuid::parse_str(id).ok())
                         .collect(),
                 ),
-                tenant_id: Some(uuid::Uuid::parse_str(&create_req.organization_id).map_err(|_| {
-                    Status::invalid_argument("Invalid tenant_id, must be a valid UUID string")
-                })?),
+                tenant_id: Some(uuid::Uuid::parse_str(&create_req.organization_id).map_err(
+                    |_| Status::invalid_argument("Invalid tenant_id, must be a valid UUID string"),
+                )?),
                 submission_time: None,
                 id: 0,
             };

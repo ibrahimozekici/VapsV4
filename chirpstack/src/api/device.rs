@@ -17,7 +17,7 @@ use super::error::ToStatus;
 use super::helpers::{self, FromProto, ToProto};
 use crate::storage::{
     device::{self, DeviceClass},
-    device_keys, device_profile, device_queue,
+    device_keys, device_profile, application, device_queue,
     error::Error as StorageError,
     fields, metrics,
 };
@@ -47,13 +47,31 @@ impl DeviceService for Device {
         };
 
         let dev_eui = EUI64::from_str(&req_d.dev_eui).map_err(|e| e.status())?;
-        let app_id = Uuid::from_str(&req_d.application_id).map_err(|e| e.status())?;
-        let dp_id = Uuid::from_str(&req_d.device_profile_id).map_err(|e| e.status())?;
+        // let app_id = Uuid::from_str(&req_d.application_id).map_err(|e| e.status())?;
+        // let dp_id = Uuid::from_str(&req_d.device_profile_id).map_err(|e| e.status())?;
         let join_eui = if req_d.join_eui.is_empty() {
             EUI64::default()
         } else {
             EUI64::from_str(&req_d.join_eui).map_err(|e| e.status())?
         };
+
+        // OrganizationId kontrol
+        let organization_id = Uuid::from_str(&req_d.organization_id)
+            .map_err(|_| Status::invalid_argument("organization_id is invalid"))?;
+        if organization_id.is_nil() {
+            return Err(Status::invalid_argument("OrganizationId boş olamaz"));
+        }
+
+        // Device Profile al (storage.GetDeviceProfileInternal)
+        let dp_id = device_profile::get_internal(req_d.device_type)
+            .await
+            .map_err(|e| e.status())?;
+
+        // Application al (storage.GetApplicationInternal)
+        let app_id = application::get_internal(req_d.device_type)
+            .await
+            .map_err(|e| e.status())?;
+        // let app_id = application.id;
 
         self.validator
             .validate(
@@ -69,7 +87,7 @@ impl DeviceService for Device {
             name: req_d.name.clone(),
             description: req_d.description.clone(),
             skip_fcnt_check: req_d.skip_fcnt_check,
-            is_disabled: req_d.is_disabled,
+            is_disabled: false,
             tags: fields::KeyValue::new(req_d.tags.clone()),
             variables: fields::KeyValue::new(req_d.variables.clone()),
             join_eui,

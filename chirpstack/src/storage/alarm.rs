@@ -22,8 +22,9 @@ use diesel_async::AsyncPgConnection;
 use diesel_async::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use std::collections::HashMap;
 use std::fmt::Write;
-use tracing::info;
+use tracing::{info, warn};
 use uuid::Uuid;
 
 #[derive(
@@ -63,6 +64,31 @@ pub struct Alarm {
     pub user_id: Vec<Option<Uuid>>,
 }
 
+#[derive(Insertable)]
+#[diesel(table_name = alarm)]
+pub struct NewAlarm {
+    pub dev_eui: String,
+    pub min_treshold: Option<f64>,
+    pub max_treshold: Option<f64>,
+    pub sms: Option<bool>,
+    pub email: Option<bool>,
+    pub temperature: Option<bool>,
+    pub humadity: Option<bool>,
+    pub ec: Option<bool>,
+    pub door: Option<bool>,
+    pub w_leak: Option<bool>,
+    pub is_time_limit_active: Option<bool>,
+    pub alarm_start_time: Option<f64>,
+    pub alarm_stop_time: Option<f64>,
+    pub zone_category: Option<i32>,
+    pub notification: Option<bool>,
+    pub is_active: Option<bool>,
+    pub pressure: Option<bool>,
+    pub notification_sound: Option<String>,
+    pub distance: Option<bool>,
+    pub defrost_time: Option<i32>,
+    pub user_id: Vec<Option<Uuid>>,
+}
 impl Default for Alarm {
     fn default() -> Self {
         Self {
@@ -91,9 +117,37 @@ impl Default for Alarm {
         }
     }
 }
+
+impl Default for NewAlarm {
+    fn default() -> Self {
+        Self {
+            dev_eui: String::new(),
+            min_treshold: None,
+            max_treshold: None,
+            sms: None,
+            email: None,
+            temperature: None,
+            humadity: None,
+            ec: None,
+            door: None,
+            w_leak: None,
+            is_time_limit_active: None,
+            alarm_start_time: None,
+            alarm_stop_time: None,
+            zone_category: None,
+            notification: None,
+            is_active: Some(true),
+            pressure: None,
+            notification_sound: Some("default".to_string()),
+            user_id: vec![None],
+            distance: None,
+            defrost_time: Some(0),
+        }
+    }
+}
 #[derive(Debug, QueryableByName, Serialize, Deserialize)]
 #[diesel(check_for_backend(Pg))]
-pub struct OrganizationAlarm {
+pub struct OrganizationAlarmRaw {
     #[diesel(sql_type = Integer)]
     pub id: i32,
 
@@ -166,10 +220,52 @@ pub struct OrganizationAlarm {
     #[diesel(sql_type = Nullable<Bool>)]
     pub distance: Option<bool>,
 
-    #[diesel(sql_type = Nullable<Int4>)]
+    #[diesel(sql_type = Nullable<Integer>)]
     pub time: Option<i32>,
+
     #[diesel(sql_type = Nullable<Integer>)]
     pub defrost_time: Option<i32>,
+    // pub alarm_date_time: Option<AlarmDateTime>,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct OrganizationAlarm {
+    pub id: i32,
+    pub dev_eui: String,
+    pub min_treshold: Option<f64>,
+    pub max_treshold: Option<f64>,
+    pub sms: Option<bool>,
+    pub email: Option<bool>,
+    pub notification: Option<bool>,
+    pub temperature: Option<bool>,
+    pub humadity: Option<bool>,
+    pub ec: Option<bool>,
+    pub door: Option<bool>,
+    pub w_leak: Option<bool>,
+    pub user_id: Vec<Option<Uuid>>,
+    pub is_time_limit_active: Option<bool>,
+    pub alarm_start_time: Option<f64>,
+    pub alarm_stop_time: Option<f64>,
+    pub zone_category: Option<i32>,
+    pub is_active: Option<bool>,
+    pub zone_name: Option<String>,
+    pub device_name: Option<String>,
+    pub username: Option<String>,
+    pub pressure: Option<bool>,
+    pub notification_sound: Option<String>,
+    pub distance: Option<bool>,
+    pub time: Option<i32>,
+    pub defrost_time: Option<i32>,
+    pub alarm_date_time: Option<Vec<AlarmDateTime>>,
+}
+
+#[derive(Queryable, Insertable, PartialEq, Debug, Clone, Serialize, Deserialize)]
+#[diesel(table_name = alarm_date_time)]
+pub struct AlarmDateTime {
+    pub alarm_id: i32,
+    pub alarm_day: i32,
+    pub start_time: f64,
+    pub end_time: f64,
+    pub id: i32,
 }
 
 #[derive(Queryable, QueryableByName, Debug, Clone, Serialize, Deserialize)]
@@ -307,16 +403,6 @@ pub struct AlarmAuditLog {
     pub new_values: Option<serde_json::Value>,
 }
 
-#[derive(Queryable, Insertable, PartialEq, Debug, Clone)]
-#[diesel(table_name = alarm_date_time)]
-pub struct AlarmDateTime {
-    pub alarm_id: i32,
-    pub alarm_day: i32,
-    pub start_time: f64,
-    pub end_time: f64,
-    pub id: i32,
-}
-
 impl Default for AlarmDateTime {
     fn default() -> Self {
         Self {
@@ -368,6 +454,20 @@ pub struct AlarmFilters {
     pub dev_eui: String,
     pub user_id: Uuid,
 }
+#[derive(Debug, AsChangeset)]
+#[diesel(table_name = alarm)]
+pub struct UpdateAlarm {
+    pub min_treshold: Option<f64>,
+    pub max_treshold: Option<f64>,
+    pub sms: Option<bool>,
+    pub email: Option<bool>,
+    pub notification: Option<bool>,
+    pub is_time_limit_active: Option<bool>,
+    pub notification_sound: Option<String>,
+    pub user_id: Vec<uuid::Uuid>,
+    pub is_active: Option<bool>,
+    pub defrost_time: Option<i32>,
+}
 
 #[derive(
     Queryable, QueryableByName, Insertable, AsChangeset, Debug, Clone, Serialize, Deserialize,
@@ -406,7 +506,7 @@ pub struct AlarmAutomation {
 }
 
 pub async fn create(
-    alarm: Alarm,
+    alarm: NewAlarm,
     date_filters: Vec<AlarmDateTime>,
     sent_user_id: Uuid,
 ) -> Result<Alarm, Error> {
@@ -476,7 +576,7 @@ pub async fn get_alarm_dates(alarm_id: i32) -> Result<Vec<AlarmDateTime>, Error>
 pub async fn get_organization_alarm_list(tenant_id: Uuid) -> Result<Vec<OrganizationAlarm>, Error> {
     let mut conn = get_async_db_conn().await?;
     info!("Alarm get_organization_alarm_list start");
-    let alarms = diesel::sql_query(
+    let raw_alarms = diesel::sql_query(
         r#"
         SELECT 
             a.id,
@@ -512,26 +612,118 @@ pub async fn get_organization_alarm_list(tenant_id: Uuid) -> Result<Vec<Organiza
         "#,
     )
     .bind::<DieselUuid, _>(tenant_id)
-    .load::<OrganizationAlarm>(&mut conn)
+    .load::<OrganizationAlarmRaw>(&mut conn)
     .await
     .map_err(|e| Error::from_diesel(e, tenant_id.to_string()))?;
 
     info!(tenant_id = %tenant_id, "Alarms fetched");
-    Ok(alarms)
+
+    if raw_alarms.is_empty() {
+        return Ok(vec![]);
+    }
+
+    // Step 2: Extract alarm_ids
+    let alarm_ids: Vec<i32> = raw_alarms.iter().map(|a| a.id).collect();
+    info!("Collected alarm_ids: {:?}", alarm_ids);
+
+    // Step 3: Load only related alarm_date_time rows
+    let date_time_map = fetch_alarm_date_times_by_ids(&alarm_ids).await?;
+    // Optionally dump a few entries
+    for (id, dates) in date_time_map.iter().take(5) {
+        info!("alarm_id = {}, dates = {:?}", id, dates);
+    }
+    // Step 4: Map raw alarms with corresponding alarm_date_time entries
+    let enriched_alarms: Vec<OrganizationAlarm> = raw_alarms
+        .into_iter()
+        .map(|raw| {
+            let dates = date_time_map.get(&raw.id).cloned().unwrap_or_default();
+
+            if dates.is_empty() {
+                warn!("No alarm_date_time found for alarm_id = {}", raw.id);
+            } else {
+                info!("Found {} date(s) for alarm_id = {}", dates.len(), raw.id);
+            }
+
+            map_alarm_with_dates(raw, dates)
+        })
+        .collect();
+
+    Ok(enriched_alarms)
+}
+
+pub async fn fetch_alarm_date_times_by_ids(
+    alarm_ids: &[i32],
+) -> Result<HashMap<i32, Vec<AlarmDateTime>>> {
+    let mut conn = get_async_db_conn().await?;
+
+    let results: Vec<AlarmDateTime> = alarm_date_time::table
+        .filter(alarm_date_time::alarm_id.eq_any(alarm_ids))
+        .load::<AlarmDateTime>(&mut conn)
+        .await?;
+
+    let mut map = HashMap::new();
+    for item in results {
+        map.entry(item.alarm_id).or_insert_with(Vec::new).push(item);
+    }
+
+    Ok(map)
+}
+
+pub fn map_alarm_with_dates(
+    raw: OrganizationAlarmRaw,
+    dates: Vec<AlarmDateTime>,
+) -> OrganizationAlarm {
+    OrganizationAlarm {
+        id: raw.id,
+        dev_eui: raw.dev_eui,
+        min_treshold: raw.min_treshold,
+        max_treshold: raw.max_treshold,
+        sms: raw.sms,
+        email: raw.email,
+        notification: raw.notification,
+        temperature: raw.temperature,
+        humadity: raw.humadity,
+        ec: raw.ec,
+        door: raw.door,
+        w_leak: raw.w_leak,
+        user_id: raw.user_id,
+        is_time_limit_active: raw.is_time_limit_active,
+        alarm_start_time: raw.alarm_start_time,
+        alarm_stop_time: raw.alarm_stop_time,
+        zone_category: raw.zone_category,
+        is_active: raw.is_active,
+        zone_name: raw.zone_name,
+        device_name: raw.device_name,
+        username: raw.username,
+        pressure: raw.pressure,
+        notification_sound: raw.notification_sound,
+        distance: raw.distance,
+        time: raw.time,
+        defrost_time: raw.defrost_time,
+        alarm_date_time: Some(dates),
+    }
 }
 
 pub async fn update_alarm(
-    updated_alarm: Alarm,
+    alarm_id: i32,
+    updated_fields: UpdateAlarm,
     date_filters: Vec<AlarmDateTime>,
     sent_user_id: Uuid,
 ) -> Result<(), Error> {
     let mut conn = get_async_db_conn().await?;
 
     let existing_alarm: Alarm = alarm::table
-        .filter(alarm::id.eq(updated_alarm.id))
+        .filter(alarm::id.eq(alarm_id))
         .first(&mut conn)
         .await
-        .map_err(|e| Error::from_diesel(e, updated_alarm.dev_eui.to_string()))?;
+        .map_err(|e| Error::from_diesel(e, alarm_id.to_string()))?;
+
+    // This performs the update and fetches the updated row
+    let updated_alarm: Alarm = diesel::update(alarm::table.filter(alarm::id.eq(alarm_id)))
+        .set(&updated_fields)
+        .get_result(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, alarm_id.to_string()))?;
 
     log_audit(
         updated_alarm.id as i64,
@@ -546,25 +738,18 @@ pub async fn update_alarm(
     )
     .await?;
 
-    diesel::update(alarm::table.filter(alarm::id.eq(updated_alarm.id)))
-        .set(&updated_alarm)
-        .execute(&mut conn)
-        .await
-        .map_err(|e| Error::from_diesel(e, updated_alarm.dev_eui.to_string()))?;
-
     diesel::delete(alarm_date_time::table.filter(alarm_date_time::alarm_id.eq(updated_alarm.id)))
         .execute(&mut conn)
         .await
         .map_err(|e| Error::from_diesel(e, updated_alarm.dev_eui.to_string()))?;
 
     for df in &date_filters {
-        let new_df = AlarmDateTime {
-            id: df.id,
-            alarm_id: updated_alarm.id,
-            alarm_day: df.alarm_day,
-            start_time: df.start_time,
-            end_time: df.end_time,
-        };
+        let new_df = (
+            alarm_date_time::alarm_id.eq(updated_alarm.id),
+            alarm_date_time::alarm_day.eq(df.alarm_day),
+            alarm_date_time::start_time.eq(df.start_time),
+            alarm_date_time::end_time.eq(df.end_time),
+        );
 
         diesel::insert_into(alarm_date_time::table)
             .values(&new_df)

@@ -25,7 +25,7 @@ diesel::table! {
         notification_sound -> Nullable<Varchar>,
         distance -> Nullable<Bool>,
         defrost_time -> Nullable<Int4>,
-        user_id -> Array<Nullable<Uuid>>,
+        user_id -> Nullable<Array<Nullable<Uuid>>>,
     }
 }
 
@@ -46,6 +46,7 @@ diesel::table! {
 
 diesel::table! {
     alarm_automation_rules (id) {
+        id -> Int4,
         alarm_id -> Int4,
         #[max_length = 50]
         receiver_sensor -> Varchar,
@@ -56,7 +57,6 @@ diesel::table! {
         is_active -> Nullable<Bool>,
         receiver_device_type -> Nullable<Int4>,
         receiver_device_name -> Nullable<Text>,
-        id -> Int4,
         user_id -> Nullable<Uuid>,
     }
 }
@@ -445,6 +445,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    device_type_tb (id) {
+        id -> Int4,
+        device_profile_name -> Text,
+        application_name -> Text,
+    }
+}
+
+diesel::table! {
     door_alarm_date_time (id) {
         id -> Int4,
         alarm_id -> Int4,
@@ -669,7 +677,7 @@ diesel::table! {
         dev_eui -> Nullable<Varchar>,
         #[max_length = 80]
         device_name -> Nullable<Varchar>,
-        receiver_id -> Array<Nullable<Uuid>>,
+        receiver_id -> Nullable<Array<Nullable<Uuid>>>,
     }
 }
 
@@ -694,6 +702,23 @@ diesel::table! {
         stats_interval_secs -> Int4,
         #[max_length = 100]
         region_config_id -> Varchar,
+    }
+}
+
+diesel::table! {
+    sanitize_logs (id) {
+        id -> Int8,
+        ingredient_names -> Nullable<Array<Nullable<Text>>>,
+        date -> Timestamp,
+        pre_wash_time -> Timestamp,
+        chlorine_ppm -> Nullable<Int8>,
+        sanitize_time -> Timestamp,
+        wash_time -> Nullable<Timestamp>,
+        end_time -> Timestamp,
+        ozone_wash -> Bool,
+        user_id -> Int8,
+        submission_date -> Timestamp,
+        quantity -> Float8,
     }
 }
 
@@ -896,6 +921,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     device_profile,
     device_profile_template,
     device_queue_item,
+    device_type_tb,
     door_alarm_date_time,
     door_time_alarm,
     em400mud,
@@ -912,6 +938,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     notifications,
     relay_device,
     relay_gateway,
+    sanitize_logs,
     tenant,
     tenant_user,
     uc300,

@@ -78,7 +78,7 @@ function ListGateways(props: IProps) {
       key: "gatewayId",
       width: 250,
       render: (text, record) => (
-        <Link to={`/tenants/${props.tenant.getId()}/gateways/${record.gatewayId}`}>{text}</Link>
+        <Link to={`/tenants/${props.tenant.getId()}/gateways/${record.id}`}>{text}</Link>
       ),
     },
     {
@@ -149,7 +149,7 @@ function ListGateways(props: IProps) {
 
   const getPage = (limit: number, offset: number, callbackFunc: GetPageCallbackFunc) => {
     const req = new ListGatewaysRequest();
-    req.setTenantId(props.tenant.getId());
+    req.setOrganizationId(props.tenant.getId());
     req.setLimit(limit);
     req.setOffset(offset);
 

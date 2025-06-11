@@ -53,7 +53,7 @@ function GatewayDashboard(props: IProps) {
     endPb.fromDate(end);
 
     const req = new GetGatewayMetricsRequest();
-    req.setGatewayId(props.gateway.getGatewayId());
+    req.setId(props.gateway.getId());
     req.setStart(startPb);
     req.setEnd(endPb);
     req.setAggregation(agg);
@@ -71,7 +71,7 @@ function GatewayDashboard(props: IProps) {
     dcStartPb.fromDate(dcStart);
 
     const dcReq = new GetGatewayDutyCycleMetricsRequest();
-    dcReq.setGatewayId(props.gateway.getGatewayId());
+    dcReq.setId(props.gateway.getId());
     dcReq.setStart(dcStartPb);
     dcReq.setEnd(dcEndPb);
 
