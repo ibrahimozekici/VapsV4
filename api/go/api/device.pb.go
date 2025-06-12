@@ -29,7 +29,7 @@ const (
 type Device struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// DevEUI (EUI64).
-	DevEui string `protobuf:"bytes,1,opt,name=dev_eui,json=devEui,proto3" json:"dev_eui,omitempty"`
+	DevEui string `protobuf:"bytes,1,opt,name=dev_eui,json=devEUI,proto3" json:"dev_eui,omitempty"`
 	// Name.
 	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	// Description.
@@ -2393,7 +2393,7 @@ const file_api_device_proto_rawDesc = "" +
 	"\n" +
 	"\x10api/device.proto\x12\x03api\x1a\x13common/common.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xc0\x06\n" +
 	"\x06Device\x12\x17\n" +
-	"\adev_eui\x18\x01 \x01(\tR\x06devEui\x12\x12\n" +
+	"\adev_eui\x18\x01 \x01(\tR\x06devEUI\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12%\n" +
 	"\x0eapplication_id\x18\x04 \x01(\tR\rapplicationId\x12*\n" +

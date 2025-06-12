@@ -13,7 +13,7 @@ use uuid::Uuid;
 use chirpstack_api::internal;
 use lrwn::{DevAddr, EUI64};
 
-use super::schema::{application, device, device_profile, multicast_group_device, tenant, sensors};
+use super::schema::{application, device, device_profile, multicast_group_device, sensors, tenant};
 use super::{db_transaction, error::Error, fields, get_async_db_conn};
 use crate::api::helpers::FromProto;
 use crate::config;
@@ -383,7 +383,7 @@ pub async fn get(dev_eui: &EUI64) -> Result<Device, Error> {
     Ok(d)
 }
 pub async fn get_app_key(dev_eui_param: &str) -> Result<String, Error> {
-    let mut conn = get_async_db_conn().await?;  // senin mevcut async db bağlantı fonksiyonun
+    let mut conn = get_async_db_conn().await?;
 
     let result: SensorModal = sensors::dsl::sensors
         .find(dev_eui_param)
@@ -391,7 +391,13 @@ pub async fn get_app_key(dev_eui_param: &str) -> Result<String, Error> {
         .await
         .map_err(|e| Error::from_diesel(e, dev_eui_param.to_string()))?;
 
-    Ok(result.app_key.expect("app_key is None"))
+    match result.app_key {
+        Some(app_key) => Ok(app_key),
+        None => Err(Error::NotFound(format!(
+            "AppKey not found for dev_eui: {}",
+            dev_eui_param
+        ))),
+    }
 }
 
 // Return the device-session matching the given PhyPayload. This will fetch all device-session

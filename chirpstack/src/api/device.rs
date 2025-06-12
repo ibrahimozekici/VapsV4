@@ -47,16 +47,32 @@ impl DeviceService for Device {
             }
         };
 
-        let dev_eui = EUI64::from_str(&req_d.dev_eui).map_err(|e| e.status())?;
+        let dev_eui = EUI64::from_str(&req_d.dev_eui).map_err(|e| {
+            println!("Failed to parse dev_eui: {}", e);
+            e.status()
+        })?;
+
         // let app_id = Uuid::from_str(&req_d.application_id).map_err(|e| e.status())?;
         // let dp_id = Uuid::from_str(&req_d.device_profile_id).map_err(|e| e.status())?;
-        let app_key = device::get_app_key(&req_d.dev_eui).await.map_err(|e| e.status())?;
-        let join_eui = EUI64::from_str(&app_key).map_err(|e| e.status())?;
+        let app_key = device::get_app_key(&req_d.dev_eui).await.map_err(|e| {
+            println!("Failed to fetch app_key for dev_eui: {}", &req_d.dev_eui);
+            e.status()
+        })?;
 
+        let join_eui = EUI64::from_str(&app_key).map_err(|e| {
+            println!(
+                "Failed to parse app_key as join_eui: {} value: {}",
+                e, app_key
+            );
+            e.status()
+        })?;
 
         // OrganizationId kontrol
-        let organization_id = Uuid::from_str(&req_d.organization_id)
-            .map_err(|_| Status::invalid_argument("organization_id is invalid"))?;
+        let organization_id = Uuid::from_str(&req_d.organization_id).map_err(|_| {
+            println!("Invalid organization_id: {}", &req_d.organization_id);
+            Status::invalid_argument("organization_id is invalid")
+        })?;
+
         if organization_id.is_nil() {
             return Err(Status::invalid_argument("OrganizationId boş olamaz"));
         }
@@ -64,12 +80,25 @@ impl DeviceService for Device {
         // Device Profile al (storage.GetDeviceProfileInternal)
         let dp_id = device_profile::get_internal(req_d.device_type)
             .await
-            .map_err(|e| e.status())?;
+            .map_err(|e| {
+                println!(
+                    "Failed to fetch device_profile for device_type: {}",
+                    req_d.device_type
+                );
+                e.status()
+            })?;
 
         // Application al (storage.GetApplicationInternal)
         let app_id = application::get_internal(req_d.device_type)
             .await
-            .map_err(|e| e.status())?;
+            .map_err(|e| {
+                println!(
+                    "Failed to fetch application for device_type: {}",
+                    req_d.device_type
+                );
+                e.status()
+            })?;
+
         // let app_id = application.id;
 
         self.validator

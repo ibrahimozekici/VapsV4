@@ -182,7 +182,7 @@ service DeviceService {
 
 message Device {
   // DevEUI (EUI64).
-  string dev_eui = 1;
+  string dev_eui = 1 [json_name = "devEUI"];;
 
   // Name.
   string name = 2;
