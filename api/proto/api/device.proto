@@ -232,7 +232,7 @@ message Device {
 
     int64 device_type = 15 [json_name = "deviceType"];
 
-    int64 organization_id = 16 [json_name = "organizationId"];
+    string organization_id = 16 [json_name = "organizationId"];
 
     int64 zone_id = 17 [json_name = "zoneId"];
 

@@ -21,10 +21,19 @@ use pbkdf2::{
     Algorithm, Pbkdf2,
 };
 use rand_core::OsRng;
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 use tonic::Status;
 use tracing::info;
 use uuid::Uuid;
+
+fn null_to_empty_vec<'de, D, T>(deserializer: D) -> Result<Vec<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: Deserialize<'de>,
+{
+    let opt = Option::deserialize(deserializer)?;
+    Ok(opt.unwrap_or_default())
+}
 
 #[derive(Queryable, Insertable, PartialEq, Eq, Debug, Clone)]
 #[diesel(table_name = user)]
@@ -51,6 +60,7 @@ pub struct User {
 
 #[derive(Debug, Deserialize)]
 pub struct SerdeLandingZoneList {
+    #[serde(default, deserialize_with = "null_to_empty_vec")]
     pub zones: Vec<SerdeLandingZone>,
 }
 
@@ -140,6 +150,8 @@ pub struct GetLandingResponseSerde {
     pub note: String,
     pub username: String,
     pub training: bool,
+
+    #[serde(default, deserialize_with = "null_to_empty_vec")]
     pub organization_id_list: Vec<String>,
     pub organizationList: SerdeLandingOrganizationList,
     pub zoneList: SerdeLandingZoneList,
@@ -147,6 +159,7 @@ pub struct GetLandingResponseSerde {
 
 #[derive(Debug, Deserialize)]
 pub struct SerdeLandingOrganizationList {
+    #[serde(default, deserialize_with = "null_to_empty_vec")]
     pub organizations: Vec<SerdeLandingOrganization>,
 }
 

@@ -66,7 +66,7 @@ type Device struct {
 	// Device Profile Name
 	DeviceProfileName      string  `protobuf:"bytes,14,opt,name=device_profile_name,json=deviceProfileName,proto3" json:"device_profile_name,omitempty"`
 	DeviceType             int64   `protobuf:"varint,15,opt,name=device_type,json=deviceType,proto3" json:"device_type,omitempty"`
-	OrganizationId         int64   `protobuf:"varint,16,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
+	OrganizationId         string  `protobuf:"bytes,16,opt,name=organization_id,json=organizationId,proto3" json:"organization_id,omitempty"`
 	ZoneId                 int64   `protobuf:"varint,17,opt,name=zone_id,json=zoneId,proto3" json:"zone_id,omitempty"`
 	TemperatureCalibration float64 `protobuf:"fixed64,18,opt,name=temperature_calibration,json=temperatureCalibration,proto3" json:"temperature_calibration,omitempty"`
 	HumadityCalibration    float64 `protobuf:"fixed64,19,opt,name=humadity_calibration,json=humadityCalibration,proto3" json:"humadity_calibration,omitempty"`
@@ -209,11 +209,11 @@ func (x *Device) GetDeviceType() int64 {
 	return 0
 }
 
-func (x *Device) GetOrganizationId() int64 {
+func (x *Device) GetOrganizationId() string {
 	if x != nil {
 		return x.OrganizationId
 	}
-	return 0
+	return ""
 }
 
 func (x *Device) GetZoneId() int64 {
@@ -2411,7 +2411,7 @@ const file_api_device_proto_rawDesc = "" +
 	"\x13device_profile_name\x18\x0e \x01(\tR\x11deviceProfileName\x12\x1f\n" +
 	"\vdevice_type\x18\x0f \x01(\x03R\n" +
 	"deviceType\x12'\n" +
-	"\x0forganization_id\x18\x10 \x01(\x03R\x0eorganizationId\x12\x17\n" +
+	"\x0forganization_id\x18\x10 \x01(\tR\x0eorganizationId\x12\x17\n" +
 	"\azone_id\x18\x11 \x01(\x03R\x06zoneId\x127\n" +
 	"\x17temperature_calibration\x18\x12 \x01(\x01R\x16temperatureCalibration\x121\n" +
 	"\x14humadity_calibration\x18\x13 \x01(\x01R\x13humadityCalibration\x1a<\n" +

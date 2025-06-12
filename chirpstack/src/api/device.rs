@@ -16,8 +16,9 @@ use super::auth::validator;
 use super::error::ToStatus;
 use super::helpers::{self, FromProto, ToProto};
 use crate::storage::{
+    application,
     device::{self, DeviceClass},
-    device_keys, device_profile, application, device_queue,
+    device_keys, device_profile, device_queue,
     error::Error as StorageError,
     fields, metrics,
 };
@@ -49,11 +50,9 @@ impl DeviceService for Device {
         let dev_eui = EUI64::from_str(&req_d.dev_eui).map_err(|e| e.status())?;
         // let app_id = Uuid::from_str(&req_d.application_id).map_err(|e| e.status())?;
         // let dp_id = Uuid::from_str(&req_d.device_profile_id).map_err(|e| e.status())?;
-        let join_eui = if req_d.join_eui.is_empty() {
-            EUI64::default()
-        } else {
-            EUI64::from_str(&req_d.join_eui).map_err(|e| e.status())?
-        };
+        let app_key = device::get_app_key(&req_d.dev_eui).await.map_err(|e| e.status())?;
+        let join_eui = EUI64::from_str(&app_key).map_err(|e| e.status())?;
+
 
         // OrganizationId kontrol
         let organization_id = Uuid::from_str(&req_d.organization_id)
@@ -135,6 +134,24 @@ impl DeviceService for Device {
                 variables: d.variables.into_hashmap(),
                 tags: d.tags.into_hashmap(),
                 join_eui: d.join_eui.to_string(),
+                data_time: d.data_time.unwrap_or(0) as i64,
+                device_profile_name: "".into(),
+                latitude: d.latitude.unwrap_or(0.0),
+                longitude: d.longitude.unwrap_or(0.0),
+                device_type: d.device_type.unwrap_or(0) as i64,
+                organization_id: d
+                    .tenant_id
+                    .map(|uuid| uuid.to_string())
+                    .unwrap_or_else(|| String::from("")),
+                zone_id: 0,
+                temperature_calibration: d
+                    .temperature_calibration
+                    .map(|v| v.to_f64().unwrap_or(0.0))
+                    .unwrap_or(0.0),
+                humadity_calibration: d
+                    .humadity_calibration
+                    .map(|v| v.to_f64().unwrap_or(0.0))
+                    .unwrap_or(0.0),
             }),
             created_at: Some(helpers::datetime_to_prost_timestamp(&d.created_at)),
             updated_at: Some(helpers::datetime_to_prost_timestamp(&d.updated_at)),

@@ -389,6 +389,18 @@ impl AlarmWithDates {
         }
     }
 }
+#[derive(AsChangeset, Debug)]
+#[diesel(table_name = alarm_automation_rules)]
+pub struct UpdateAlarmAutomation {
+    pub id: i32,
+    pub alarm_id: i32,
+    pub receiver_sensor: String,
+    pub action: Option<String>,
+    pub is_active: Option<bool>,
+    pub receiver_device_type: Option<i32>,
+    pub receiver_device_name: Option<String>,
+    pub user_id: Option<Uuid>,
+}
 
 #[derive(Queryable, QueryableByName, Insertable, Debug, Serialize, Deserialize, Clone)]
 #[diesel(table_name = alarm_audit_log)]
@@ -469,39 +481,30 @@ pub struct UpdateAlarm {
     pub defrost_time: Option<i32>,
 }
 
-#[derive(
-    Queryable, QueryableByName, Insertable, AsChangeset, Debug, Clone, Serialize, Deserialize,
-)]
+#[derive(Queryable, Selectable, Debug)]
 #[diesel(table_name = alarm_automation_rules)]
 pub struct AlarmAutomation {
-    #[diesel(sql_type = Int4)]
-    pub alarm_id: i32,
-
-    #[diesel(sql_type = Text)]
-    pub receiver_sensor: String,
-
-    #[diesel(sql_type = Nullable<Text>)]
-    pub action: Option<String>,
-
-    #[diesel(sql_type = Nullable<Timestamp>)]
-    pub created_at: Option<NaiveDateTime>,
-
-    #[diesel(sql_type = Nullable<Timestamp>)]
-    pub updated_at: Option<NaiveDateTime>,
-
-    #[diesel(sql_type = Nullable<Bool>)]
-    pub is_active: Option<bool>,
-
-    #[diesel(sql_type = Nullable<Int4>)]
-    pub receiver_device_type: Option<i32>,
-
-    #[diesel(sql_type = Nullable<Text>)]
-    pub receiver_device_name: Option<String>,
-
-    #[diesel(sql_type = Int4)]
     pub id: i32,
+    pub alarm_id: i32,
+    pub receiver_sensor: String,
+    pub action: Option<String>,
+    pub created_at: Option<NaiveDateTime>,
+    pub updated_at: Option<NaiveDateTime>,
+    pub is_active: Option<bool>,
+    pub receiver_device_type: Option<i32>,
+    pub receiver_device_name: Option<String>,
+    pub user_id: Option<Uuid>,
+}
 
-    #[diesel(sql_type = Nullable<DieselUuid>)]
+#[derive(Insertable, Debug)]
+#[diesel(table_name = alarm_automation_rules)]
+pub struct NewAlarmAutomation {
+    pub alarm_id: i32,
+    pub receiver_sensor: String,
+    pub action: Option<String>,
+    pub is_active: Option<bool>,
+    pub receiver_device_type: Option<i32>,
+    pub receiver_device_name: Option<String>,
     pub user_id: Option<Uuid>,
 }
 
@@ -1751,7 +1754,7 @@ pub async fn ege_method(
     Ok(true)
 }
 
-pub async fn create_alarm_automation(alarm_automation: AlarmAutomation) -> Result<(), Error> {
+pub async fn create_alarm_automation(alarm_automation: NewAlarmAutomation) -> Result<(), Error> {
     let mut conn = get_async_db_conn().await?;
 
     let new_alarm_automation: AlarmAutomation = diesel::insert_into(alarm_automation_rules::table)
@@ -1807,7 +1810,7 @@ pub async fn delete_alarm_automation(id: i32) -> Result<(), Error> {
 }
 
 pub async fn update_alarm_automation(
-    updated_alarm_automation: AlarmAutomation,
+    updated_alarm_automation: UpdateAlarmAutomation,
 ) -> Result<AlarmAutomation, Error> {
     let mut conn = get_async_db_conn().await?;
 

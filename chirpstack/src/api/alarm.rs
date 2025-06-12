@@ -808,7 +808,7 @@ impl AlarmService for Alarm {
             return Err(Status::invalid_argument("AlarmId must not be nil"));
         }
 
-        let aa = crate::storage::alarm::AlarmAutomation {
+        let aa = crate::storage::alarm::NewAlarmAutomation {
             alarm_id: alarm_automation.alarm_id as i32,
             receiver_sensor: alarm_automation.receiver_sensor.clone(),
             action: Some(alarm_automation.action.clone()),
@@ -819,10 +819,7 @@ impl AlarmService for Alarm {
                 })?,
             ),
             receiver_device_type: Some(alarm_automation.receiver_device_type as i32),
-            receiver_device_name: Some(alarm_automation.receiver_device_name.clone()),
-            created_at: Some(chrono::Utc::now().naive_utc()),
-            id: 0, // Default value, will be set by the database
-            updated_at: Some(chrono::Utc::now().naive_utc()),
+            receiver_device_name: Some(alarm_automation.receiver_device_name.clone())
         };
 
         crate::storage::alarm::create_alarm_automation(aa)
@@ -921,19 +918,18 @@ impl AlarmService for Alarm {
         } else {
             None
         };
-        let auto = crate::storage::alarm::AlarmAutomation {
+        let auto = crate::storage::alarm::UpdateAlarmAutomation {
             id: automation.id as i32,
             alarm_id: automation.alarm_id as i32,
             receiver_sensor: automation.receiver_sensor.clone(),
             action: Some(automation.action.clone()),
-            created_at,
             user_id: Some(uuid::Uuid::parse_str(&automation.user_id).map_err(|_| {
                 Status::invalid_argument("Invalid user_id, must be a valid UUID string")
             })?),
             receiver_device_type: Some(automation.receiver_device_type as i32),
             receiver_device_name: Some(automation.receiver_device_name.clone()),
             is_active: Some(automation.is_active),
-            updated_at: Some(chrono::Utc::now().naive_utc()),
+            // updated_at: Some(chrono::Utc::now().naive_utc()),
         };
 
         crate::storage::alarm::update_alarm_automation(auto)

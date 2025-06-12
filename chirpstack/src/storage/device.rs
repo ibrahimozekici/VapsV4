@@ -13,7 +13,7 @@ use uuid::Uuid;
 use chirpstack_api::internal;
 use lrwn::{DevAddr, EUI64};
 
-use super::schema::{application, device, device_profile, multicast_group_device, tenant};
+use super::schema::{application, device, device_profile, multicast_group_device, tenant, sensors};
 use super::{db_transaction, error::Error, fields, get_async_db_conn};
 use crate::api::helpers::FromProto;
 use crate::config;
@@ -216,7 +216,17 @@ pub struct DeviceChangeset {
     pub scheduler_run_after: Option<Option<DateTime<Utc>>>,
     pub is_disabled: Option<bool>,
 }
-
+#[derive(Queryable, Debug, Serialize)]
+pub struct SensorModal {
+    pub id: i32,
+    pub sn: Option<String>,
+    pub dev_eui: String,
+    pub app_eui: Option<String>,
+    pub app_key: Option<String>,
+    pub dev_addr: Option<String>,
+    pub netskey: Option<String>,
+    pub appskey: Option<String>,
+}
 impl Device {
     fn validate(&self) -> Result<(), Error> {
         if self.name.is_empty() {
@@ -371,6 +381,17 @@ pub async fn get(dev_eui: &EUI64) -> Result<Device, Error> {
         .await
         .map_err(|e| Error::from_diesel(e, dev_eui.to_string()))?;
     Ok(d)
+}
+pub async fn get_app_key(dev_eui_param: &str) -> Result<String, Error> {
+    let mut conn = get_async_db_conn().await?;  // senin mevcut async db bağlantı fonksiyonun
+
+    let result: SensorModal = sensors::dsl::sensors
+        .find(dev_eui_param)
+        .first(&mut conn)
+        .await
+        .map_err(|e| Error::from_diesel(e, dev_eui_param.to_string()))?;
+
+    Ok(result.app_key.expect("app_key is None"))
 }
 
 // Return the device-session matching the given PhyPayload. This will fetch all device-session

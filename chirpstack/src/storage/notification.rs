@@ -125,9 +125,11 @@ pub async fn create_notification(notification: Notification) -> Result<Notificat
 }
 
 pub async fn get_notification(notification_id: i32) -> Result<Notification, Error> {
-    let result = notif_dsl::notifications
+    let mut conn = get_async_db_conn().await?;
+
+    let result: Notification = notif_dsl::notifications
         .find(notification_id)
-        .first(&mut get_async_db_conn().await?)
+        .first::<Notification>(&mut conn)
         .await
         .map_err(|e| Error::from_diesel(e, "get notification".into()))?;
 

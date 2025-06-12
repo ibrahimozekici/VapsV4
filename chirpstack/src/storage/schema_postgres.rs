@@ -25,7 +25,7 @@ diesel::table! {
         notification_sound -> Nullable<Varchar>,
         distance -> Nullable<Bool>,
         defrost_time -> Nullable<Int4>,
-        user_id -> Nullable<Array<Nullable<Uuid>>>,
+        user_id -> Array<Nullable<Uuid>>,
     }
 }
 
@@ -677,7 +677,7 @@ diesel::table! {
         dev_eui -> Nullable<Varchar>,
         #[max_length = 80]
         device_name -> Nullable<Varchar>,
-        receiver_id -> Nullable<Array<Nullable<Uuid>>>,
+        receiver_id -> Array<Nullable<Uuid>>,
     }
 }
 
@@ -719,6 +719,26 @@ diesel::table! {
         user_id -> Int8,
         submission_date -> Timestamp,
         quantity -> Float8,
+    }
+}
+
+diesel::table! {
+    sensors (dev_eui) {
+        id -> Int4,
+        #[max_length = 50]
+        sn -> Nullable<Varchar>,
+        #[max_length = 50]
+        dev_eui -> Varchar,
+        #[max_length = 50]
+        app_eui -> Nullable<Varchar>,
+        #[max_length = 50]
+        app_key -> Nullable<Varchar>,
+        #[max_length = 50]
+        dev_addr -> Nullable<Varchar>,
+        #[max_length = 50]
+        netskey -> Nullable<Varchar>,
+        #[max_length = 50]
+        appskey -> Nullable<Varchar>,
     }
 }
 
@@ -939,6 +959,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     relay_device,
     relay_gateway,
     sanitize_logs,
+    sensors,
     tenant,
     tenant_user,
     uc300,
