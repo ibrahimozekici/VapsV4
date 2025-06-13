@@ -17,18 +17,17 @@ release-amd64:
 
 dist:
 	# Build for x86_64-linux-musl only
-	cross build --target x86_64-unknown-linux-musl --release --no-default-features --features="$(DATABASE)"
+	cross build --target x86_64-unknown-linux-gnu --release
 
 	# Create the .deb and .rpm packages
-	cargo deb --target x86_64-unknown-linux-musl --no-build --no-strip $(VARIANT_FLAGS)
-	cargo generate-rpm --target x86_64-unknown-linux-musl --target-dir ../target $(VARIANT_FLAGS)
+	cargo deb --target x86_64-unknown-linux-musl --no-build --no-strip
+	cargo generate-rpm --target x86_64-unknown-linux-musl --target-dir ../target
 
 	# Package the release into a tarball
 	mkdir -p ../dist
 	cp ../target/x86_64-unknown-linux-musl/debian/*.deb ../dist
 	cp ../target/x86_64-unknown-linux-musl/generate-rpm/*.rpm ../dist
-
-	tar -czvf ../dist/chirpstack_$(PKG_VERSION)_$(DATABASE)_amd64.tar.gz -C ../target/x86_64-unknown-linux-musl/release chirpstack
+	tar -czvf ../dist/chirpstack_amd64.tar.gz -C ../target/x86_64-unknown-linux-musl/release chirpstack
 
 test:
 	cargo fmt --check

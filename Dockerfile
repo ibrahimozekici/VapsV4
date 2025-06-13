@@ -1,30 +1,29 @@
-# Copy binary stage
-FROM --platform=$BUILDPLATFORM alpine:3.21.0 as binary
+# Build stage
+FROM rust:1.86-slim AS builder
 
-ARG TARGETPLATFORM
+RUN apt-get update && apt-get install -y \
+    protobuf-compiler \
+    cmake \
+    pkg-config \
+    libssl-dev \
+    librdkafka-dev \
+    gcc \
+    g++ \
+    make
 
-COPY target/x86_64-unknown-linux-musl/release/chirpstack /usr/bin/chirpstack-x86_64
-# COPY target/armv7-unknown-linux-musleabihf/release/chirpstack /usr/bin/chirpstack-armv7hf
-# COPY target/aarch64-unknown-linux-musl/release/chirpstack /usr/bin/chirpstack-aarch64
+WORKDIR /app
+COPY . .
 
-RUN case "$TARGETPLATFORM" in \
-	"linux/amd64") \
-		cp /usr/bin/chirpstack-x86_64 /usr/bin/chirpstack; \
-		;; \
-	"linux/arm/v7") \
-		cp /usr/bin/chirpstack-armv7hf /usr/bin/chirpstack; \
-		;; \
-	"linux/arm64") \
-		cp /usr/bin/chirpstack-aarch64 /usr/bin/chirpstack; \
-		;; \
-	esac;
+RUN cargo build --release
 
-# Final stage
-FROM alpine:3.21.0
+# Minimal runtime stage
+FROM debian:bookworm-slim
 
-RUN apk --no-cache add \
-    ca-certificates
+RUN apt-get update && apt-get install -y ca-certificates && apt-get clean
 
-COPY --from=binary /usr/bin/chirpstack /usr/bin/chirpstack
-USER nobody:nogroup
+COPY --from=builder /app/target/release/chirpstack /usr/bin/chirpstack
+
+USER nobody
+
 ENTRYPOINT ["/usr/bin/chirpstack"]
+
