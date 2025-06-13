@@ -45,8 +45,8 @@ pub struct UpdateZone {
     pub zone_name: Option<String>,
     pub zone_order: Option<i64>,
     pub content_type: Option<i64>,
-    // pub tanent_id: Option<Uuid>,
-    // pub devices: Option<Vec<Option<String>>>,
+    pub tanent_id: Option<Uuid>,
+    pub devices: Option<Vec<Option<String>>>,
 }
 
 #[derive(Debug, QueryableByName)]
@@ -214,7 +214,7 @@ pub async fn get(id: &i32) -> Result<Zone, Error> {
     Ok(a)
 }
 
-pub async fn update(zone_id: i32, update_data: UpdateZone) -> Result<Zone, Error> {
+pub async fn update_internal(zone_id: i32, update_data: UpdateZone) -> Result<Zone, Error> {
     let updated: Zone = diesel::update(dsl::zone.filter(dsl::zone_id.eq(zone_id)))
         .set(update_data)
         .get_result(&mut get_async_db_conn().await?)

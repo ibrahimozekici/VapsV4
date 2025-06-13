@@ -6,6 +6,7 @@ use std::time::SystemTime;
 use bigdecimal::ToPrimitive;
 use chrono::{DateTime, Local, Utc};
 use tonic::{Request, Response, Status};
+use tracing::info;
 use uuid::Uuid;
 
 use chirpstack_api::api::device_service_server::DeviceService;
@@ -20,7 +21,7 @@ use crate::storage::{
     device::{self, DeviceClass},
     device_keys, device_profile, device_queue,
     error::Error as StorageError,
-    fields, metrics,
+    fields, metrics, zone,
 };
 use crate::{codec, devaddr::get_random_dev_addr};
 
@@ -54,19 +55,19 @@ impl DeviceService for Device {
 
         // let app_id = Uuid::from_str(&req_d.application_id).map_err(|e| e.status())?;
         // let dp_id = Uuid::from_str(&req_d.device_profile_id).map_err(|e| e.status())?;
-        let app_key = device::get_app_key(&req_d.dev_eui).await.map_err(|e| {
-            println!("Failed to fetch app_key for dev_eui: {}", &req_d.dev_eui);
-            e.status()
-        })?;
 
-        let join_eui = EUI64::from_str(&app_key).map_err(|e| {
-            println!(
-                "Failed to parse app_key as join_eui: {} value: {}",
-                e, app_key
-            );
-            e.status()
-        })?;
-
+        // let join_eui = EUI64::from_str(&app_key).map_err(|e| {
+        //     println!(
+        //         "Failed to parse app_key as join_eui: {} value: {}",
+        //         e, app_key
+        //     );
+        //     e.status()
+        // })?;
+        let join_eui = if req_d.join_eui.is_empty() {
+            EUI64::default()
+        } else {
+            EUI64::from_str(&req_d.join_eui).map_err(|e| e.status())?
+        };
         // OrganizationId kontrol
         let organization_id = Uuid::from_str(&req_d.organization_id).map_err(|_| {
             println!("Invalid organization_id: {}", &req_d.organization_id);
@@ -101,14 +102,14 @@ impl DeviceService for Device {
 
         // let app_id = application.id;
 
-        self.validator
-            .validate(
-                request.extensions(),
-                validator::ValidateDevicesAccess::new(validator::Flag::Create, app_id),
-            )
-            .await?;
+        // self.validator
+        //     .validate(
+        //         request.extensions(),
+        //         validator::ValidateDevicesAccess::new(validator::Flag::Create, app_id),
+        //     )
+        //     .await?;
 
-        let d = device::Device {
+        let mut d = device::Device {
             dev_eui,
             application_id: app_id.into(),
             device_profile_id: dp_id.into(),
@@ -121,7 +122,27 @@ impl DeviceService for Device {
             join_eui,
             ..Default::default()
         };
+        // Direkt insert edebilirsin:
+        d.tags.insert("status".to_string(), "active".to_string());
+        d.tags
+            .insert("signal".to_string(), "good-signal".to_string());
 
+        match req_d.device_type {
+            6 => {
+                d.variables
+                    .insert("gpio_in_1".to_string(), "DI 1".to_string());
+                d.variables
+                    .insert("gpio_in_2".to_string(), "DI 2".to_string());
+                d.variables
+                    .insert("gpio_out_1".to_string(), "Röle 1".to_string());
+                d.variables
+                    .insert("gpio_out_2".to_string(), "Röle 2".to_string());
+            }
+            37 => {
+                d.variables.insert("deepness".to_string(), "0".to_string());
+            }
+            _ => {}
+        }
         let _ = device::create(d).await.map_err(|e| e.status())?;
 
         let mut resp = Response::new(());
@@ -132,6 +153,45 @@ impl DeviceService for Device {
             req_d.is_disabled.to_string().parse().unwrap(),
         );
 
+        let nk_key = device::get_app_key(&req_d.dev_eui).await.map_err(|e| {
+            println!("Failed to fetch app_key for dev_eui: {}", &req_d.dev_eui);
+            e.status()
+        })?;
+        let dk = device_keys::DeviceKeys {
+            dev_eui,
+            nwk_key: AES128Key::from_str(&nk_key).map_err(|e| e.status())?,
+            app_key: if !nk_key.is_empty() {
+                AES128Key::from_str(&nk_key).map_err(|e| e.status())?
+            } else {
+                AES128Key::null()
+            },
+            ..Default::default()
+        };
+
+        let _ = device_keys::create(dk).await.map_err(|e| e.status())?;
+
+        // let mut resp = Response::new(());
+        resp.metadata_mut()
+            .insert("x-log-dev_eui", req_d.dev_eui.parse().unwrap());
+
+        let zone_id_i32 = req_d.zone_id as i32;
+
+        let mut z = zone::get(&zone_id_i32).await.map_err(|e| e.status())?;
+
+        // DevEUI stringi oluştur
+        let dev_eui_str = format!("\\x{}", req_d.dev_eui.to_lowercase());
+
+        // Device listesine ekle
+        z.devices.push(Some(dev_eui_str));
+
+        let zu = zone::UpdateZone {
+            zone_name: z.zone_name,
+            zone_order: z.zone_order,
+            content_type: z.content_type,
+            tanent_id: z.tanent_id,
+            devices: Some(z.devices),
+        };
+       let _= zone::update_internal(z.zone_id, zu).await.map_err(|e| e.status())?;
         Ok(resp)
     }
 
@@ -151,6 +211,11 @@ impl DeviceService for Device {
 
         let d = device::get(&dev_eui).await.map_err(|e| e.status())?;
 
+        info!("validators ok, now mapping");
+        info!("Mapping data_time: {:?}", d.data_time);
+        info!("Mapping tenant_id: {:?}", d.tenant_id);
+        info!("Mapping temp_calibration: {:?}", d.temperature_calibration);
+
         let mut resp = Response::new(api::GetDeviceResponse {
             device: Some(api::Device {
                 dev_eui: d.dev_eui.to_string(),
@@ -163,24 +228,15 @@ impl DeviceService for Device {
                 variables: d.variables.into_hashmap(),
                 tags: d.tags.into_hashmap(),
                 join_eui: d.join_eui.to_string(),
-                data_time: d.data_time.unwrap_or(0) as i64,
+                data_time: 0,
                 device_profile_name: "".into(),
-                latitude: d.latitude.unwrap_or(0.0),
-                longitude: d.longitude.unwrap_or(0.0),
-                device_type: d.device_type.unwrap_or(0) as i64,
-                organization_id: d
-                    .tenant_id
-                    .map(|uuid| uuid.to_string())
-                    .unwrap_or_else(|| String::from("")),
+                latitude: 0.0,
+                longitude: 0.0,
+                device_type: 0,
+                organization_id: "".into(),
                 zone_id: 0,
-                temperature_calibration: d
-                    .temperature_calibration
-                    .map(|v| v.to_f64().unwrap_or(0.0))
-                    .unwrap_or(0.0),
-                humadity_calibration: d
-                    .humadity_calibration
-                    .map(|v| v.to_f64().unwrap_or(0.0))
-                    .unwrap_or(0.0),
+                temperature_calibration: 0.0,
+                humadity_calibration: 0.0,
             }),
             created_at: Some(helpers::datetime_to_prost_timestamp(&d.created_at)),
             updated_at: Some(helpers::datetime_to_prost_timestamp(&d.updated_at)),

@@ -380,6 +380,8 @@ pub async fn get(dev_eui: &EUI64) -> Result<Device, Error> {
         .first(&mut get_async_db_conn().await?)
         .await
         .map_err(|e| Error::from_diesel(e, dev_eui.to_string()))?;
+
+     info!( "Device get ok");
     Ok(d)
 }
 pub async fn get_app_key(dev_eui_param: &str) -> Result<String, Error> {
